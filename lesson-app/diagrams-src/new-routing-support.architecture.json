@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Routing · supporto clienti",
+    "subtitle": "Come i pezzi si compongono",
+    "output": "new-routing-support.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "classify",
+          "refund"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ticket",
+      "type": "external",
+      "label": "Ticket",
+      "sublabel": "richiesta utente",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "classify",
+      "type": "backend",
+      "label": "Classificatore",
+      "sublabel": "LLM router",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "reset",
+      "type": "backend",
+      "label": "Reset password",
+      "sublabel": "automatico",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "refund",
+      "type": "messagebus",
+      "label": "Rimborso",
+      "sublabel": "gate umano",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "info",
+      "type": "backend",
+      "label": "Info / FAQ",
+      "sublabel": "risposta diretta",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ticket_classify",
+      "from": "ticket",
+      "to": "classify",
+      "variant": "default"
+    },
+    {
+      "id": "classify_reset",
+      "from": "classify",
+      "to": "reset",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "classify_refund",
+      "from": "classify",
+      "to": "refund",
+      "variant": "default"
+    },
+    {
+      "id": "classify_info",
+      "from": "classify",
+      "to": "info",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Classificatore: Un classificatore smista input eterogenei al sotto-flusso giusto.",
+        "Rimborso: Il rimborso richiede un gate di approvazione; il reset password è automatico."
+      ]
+    }
+  ]
+}

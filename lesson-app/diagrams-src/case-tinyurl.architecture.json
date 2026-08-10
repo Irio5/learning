@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "URL shortener (read-heavy 100:1)",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-tinyurl.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "client",
+          "lb",
+          "app",
+          "kgs",
+          "db",
+          "cache"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load balancer",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App server",
+      "sublabel": "write + redirect",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "kgs",
+      "type": "cloud",
+      "label": "Key Gen Svc",
+      "sublabel": "id → base62",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Cache",
+      "sublabel": "Redis",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "URL DB",
+      "sublabel": "idx short_code",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client_lb",
+      "from": "client",
+      "to": "lb",
+      "variant": "default"
+    },
+    {
+      "id": "lb_app",
+      "from": "lb",
+      "to": "app",
+      "variant": "default"
+    },
+    {
+      "id": "app_cache",
+      "from": "app",
+      "to": "cache",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "app_db",
+      "from": "app",
+      "to": "db",
+      "variant": "default"
+    },
+    {
+      "id": "cache_db",
+      "from": "cache",
+      "to": "db",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          180
+        ],
+        [
+          845,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "app_kgs",
+      "from": "app",
+      "to": "kgs",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "App server: 302 se vuoi contare i click; 301 se vuoi il minimo carico (lo cachea il browser).",
+        "Key Gen Svc: In alternativa hash(url), ma introduce collisioni da gestire.",
+        "Cache: Link raramente cambiano → cache molto efficace; invalida sui rari update."
+      ]
+    }
+  ]
+}

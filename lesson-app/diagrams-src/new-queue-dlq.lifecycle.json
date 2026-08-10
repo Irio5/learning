@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Coda · retry, DLQ e backpressure",
+    "subtitle": "Un messaggio elaborato; se fallisce ritenta, e dopo N tentativi finisce nella dead-letter queue",
+    "output": "new-queue-dlq.html",
+    "viewBox": [980, 600],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "principale", "label": "Percorso", "focus": ["enqueued", "processing", "done"], "note": "Il cammino felice: accodato, elaborato, fatto." },
+      { "id": "guasti", "label": "Guasti", "focus": ["processing", "retry", "dlq"], "note": "Cosa succede quando l'elaborazione fallisce." }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Elaborazione" },
+    { "id": "guasti", "label": "Guasti" }
+  ],
+  "states": [
+    { "id": "enqueued", "type": "start", "label": "Enqueued", "sublabel": "in coda", "lane": "main", "col": 0, "step": "01", "tag": "entry" },
+    { "id": "processing", "type": "active", "label": "Processing", "sublabel": "worker idempotente", "lane": "main", "col": 1, "step": "02", "tag": "at-least-once" },
+    { "id": "done", "type": "success", "label": "Done", "sublabel": "ACK", "lane": "main", "col": 2, "step": "03", "tag": "fatto" },
+    { "id": "retry", "type": "waiting", "label": "Retry", "sublabel": "backoff", "lane": "guasti", "col": 1, "tag": "budget N" },
+    { "id": "dlq", "type": "failure", "label": "Dead-letter", "sublabel": "da ispezionare", "lane": "guasti", "col": 2, "yOffset": 84, "tag": "N esauriti" }
+  ],
+  "transitions": [
+    { "id": "enq-proc", "from": "enqueued", "to": "processing", "variant": "default" },
+    { "id": "proc-done", "from": "processing", "to": "done", "variant": "default" },
+    { "id": "proc-retry", "from": "processing", "to": "retry", "variant": "security", "route": "drop" },
+    { "id": "retry-dlq", "from": "retry", "to": "dlq", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Retry & DLQ", "items": ["Un messaggio può arrivare due volte: il worker è idempotente (dedup per id)", "Con budget di retry rimasto, torna in Processing", "Esauriti i tentativi → dead-letter queue, senza bloccare gli altri"] },
+    { "dot": "cyan", "title": "Backpressure", "items": ["Se gli arrivi superano i consumi, la coda cresce", "È il segnale per aggiungere worker in parallelo", "Se si riempie del tutto, i messaggi si perdono: dimensiona i consumatori"] }
+  ]
+}

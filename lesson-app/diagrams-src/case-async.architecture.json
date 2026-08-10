@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pipeline asincrona a coda",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-async.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "api",
+          "queue",
+          "w1",
+          "w2",
+          "w3",
+          "db",
+          "dlq"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "accetta e delega",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Message queue",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w1",
+      "type": "backend",
+      "label": "Worker",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w2",
+      "type": "backend",
+      "label": "Worker",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w3",
+      "type": "backend",
+      "label": "Worker",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dlq",
+      "type": "security",
+      "label": "Dead-letter",
+      "sublabel": "dopo N retry",
+      "pos": [
+        250,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api_queue",
+      "from": "api",
+      "to": "queue",
+      "variant": "default"
+    },
+    {
+      "id": "queue_w1",
+      "from": "queue",
+      "to": "w1",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "queue_w2",
+      "from": "queue",
+      "to": "w2",
+      "variant": "default"
+    },
+    {
+      "id": "queue_w3",
+      "from": "queue",
+      "to": "w3",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "w1_db",
+      "from": "w1",
+      "to": "db",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          180
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "w2_db",
+      "from": "w2",
+      "to": "db",
+      "variant": "default"
+    },
+    {
+      "id": "w3_db",
+      "from": "w3",
+      "to": "db",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          480
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "queue_dlq",
+      "from": "queue",
+      "to": "dlq",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "API: L'esito non è immediato: adatto solo a lavoro che può avvenire poco dopo.",
+        "Message queue: Devi gestire ordine e duplicati (un messaggio può arrivare due volte).",
+        "Worker: Serve una chiave di deduplica per riconoscere i doppioni.",
+        "Worker: Se la coda si riempie del tutto, i messaggi si perdono: dimensiona i consumatori."
+      ]
+    }
+  ]
+}

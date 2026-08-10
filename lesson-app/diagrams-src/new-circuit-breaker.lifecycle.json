@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Circuit breaker",
+    "subtitle": "Quando un servizio a valle è KO, smetti di chiamarlo (fail-fast) e riprova con cautela",
+    "output": "new-circuit-breaker.html",
+    "viewBox": [980, 600],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "principale", "label": "Ciclo", "focus": ["closed", "open", "halfopen", "recovered"], "note": "Dal traffico normale al recupero, passando per il fail-fast." }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Stato del breaker" }
+  ],
+  "states": [
+    { "id": "closed", "type": "start", "label": "Closed", "sublabel": "traffico normale", "lane": "main", "col": 0, "step": "01", "tag": "sano" },
+    { "id": "open", "type": "failure", "label": "Open", "sublabel": "fail-fast, non chiama", "lane": "main", "col": 1, "step": "02", "tag": "errori > soglia" },
+    { "id": "halfopen", "type": "decision", "label": "Half-open", "sublabel": "1 richiesta di prova", "lane": "main", "col": 2, "step": "03", "tag": "dopo cooldown" },
+    { "id": "recovered", "type": "success", "label": "Closed di nuovo", "sublabel": "servizio recuperato", "lane": "main", "col": 3, "step": "04", "tag": "sano" }
+  ],
+  "transitions": [
+    { "id": "close-open", "from": "closed", "to": "open", "variant": "security" },
+    { "id": "open-half", "from": "open", "to": "halfopen", "variant": "default" },
+    { "id": "half-rec", "from": "halfopen", "to": "recovered", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Perché fail-fast", "items": ["Chiamare un servizio morto spreca risorse e propaga la lentezza", "Open risponde subito con errore invece di aspettare il timeout", "Protegge il chiamante dal collasso a cascata"] },
+    { "dot": "amber", "title": "Il ciclo", "items": ["Troppi errori in Closed → si apre (Open)", "Dopo un cooldown → Half-open lascia passare 1 prova", "Prova ok → torna Closed; prova KO → di nuovo Open"] }
+  ]
+}

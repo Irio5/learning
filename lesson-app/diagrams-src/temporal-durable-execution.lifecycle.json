@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Esecuzione durevole (Temporal)",
+    "subtitle": "Codice deterministico, side effect nelle activity, ripresa da event history dopo un crash, attese via signal",
+    "output": "temporal-durable-execution.html",
+    "viewBox": [1040, 680],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "principale", "label": "Percorso principale", "focus": ["scheduled", "running", "activity", "gate", "completed"], "note": "Dal workflow accodato al risultato durevole." },
+      { "id": "ripresa", "label": "Ripresa dopo crash", "focus": ["running", "crashed", "replay"], "note": "Il crash non perde stato: il replay ricostruisce dalla event history." }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Esecuzione" },
+    { "id": "waiting", "label": "Attese durevoli" },
+    { "id": "recovery", "label": "Ripresa dopo crash" }
+  ],
+  "states": [
+    { "id": "scheduled", "type": "start", "label": "Scheduled", "sublabel": "workflow accodato", "lane": "main", "col": 0, "step": "01", "tag": "entry" },
+    { "id": "running", "type": "active", "label": "Running", "sublabel": "codice deterministico", "lane": "main", "col": 1, "step": "02", "tag": "replay-safe" },
+    { "id": "activity", "type": "active", "label": "Activity", "sublabel": "side effect: I/O, LLM", "lane": "main", "col": 2, "step": "03", "tag": "retry idempotente" },
+    { "id": "gate", "type": "decision", "label": "Approvato?", "sublabel": "human-in-the-loop", "lane": "main", "col": 3, "step": "04", "tag": "gate" },
+    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "risultato durevole", "lane": "main", "col": 4, "step": "05", "tag": "done" },
+    { "id": "crashed", "type": "failure", "label": "Worker crash", "sublabel": "processo muore", "lane": "recovery", "col": 1, "tag": "nessuno stato perso" },
+    { "id": "replay", "type": "active", "label": "Replay", "sublabel": "rigioca la event history", "lane": "recovery", "col": 2, "yOffset": 84, "tag": "→ Running" }
+  ],
+  "transitions": [
+    { "id": "sched-run", "from": "scheduled", "to": "running", "variant": "default" },
+    { "id": "run-act", "from": "running", "to": "activity", "variant": "default" },
+    { "id": "act-gate", "from": "activity", "to": "gate", "variant": "default" },
+    { "id": "gate-done", "from": "gate", "to": "completed", "variant": "default" },
+    { "id": "run-crash", "from": "running", "to": "crashed", "variant": "security", "route": "drop" },
+    { "id": "crash-replay", "from": "crashed", "to": "replay", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Perché deterministico", "items": ["Dopo un crash il codice viene RI-eseguito dalla event history", "Se prendesse strade diverse, il replay non ricostruirebbe lo stato", "I side effect vivono nelle activity: al replay non si rifanno"] },
+    { "dot": "amber", "title": "Attese senza costo", "items": ["Un durable timer è uno sleep persistente, non un thread bloccato", "await condition(approved) sospende il run in modo durevole", "Riparte esattamente dov'era quando arriva il signal"] },
+    { "dot": "rose", "title": "Uscite", "items": ["Un'activity che esaurisce i retry porta a Failed", "Se il signal non arriva entro il timeout → Timed out", "Il crash del worker non è terminale: si fa replay"] }
+  ]
+}

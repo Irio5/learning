@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Carica una volta, guardano in miliardi",
+    "subtitle": "Chi chiama chi, passo per passo",
+    "output": "seq-netflix.html",
+    "viewBox": [
+      825,
+      500
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "studio",
+      "type": "external",
+      "label": "Upload studio"
+    },
+    {
+      "id": "transcode",
+      "type": "backend",
+      "label": "Transcoder"
+    },
+    {
+      "id": "blob",
+      "type": "database",
+      "label": "Object store"
+    },
+    {
+      "id": "cdn",
+      "type": "cloud",
+      "label": "CDN edge"
+    },
+    {
+      "id": "player",
+      "type": "external",
+      "label": "Player"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "studio",
+      "to": "blob",
+      "y": 170,
+      "label": "upload master",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "studio",
+      "to": "transcode",
+      "y": 210,
+      "label": "enqueue encode",
+      "variant": "dashed"
+    },
+    {
+      "id": "m2",
+      "from": "transcode",
+      "to": "blob",
+      "y": 250,
+      "label": "scrivi bitrate+segmenti",
+      "variant": "default"
+    },
+    {
+      "id": "m3",
+      "from": "blob",
+      "to": "cdn",
+      "y": 290,
+      "label": "distribuisci (popolari)",
+      "variant": "dashed"
+    },
+    {
+      "id": "m4",
+      "from": "player",
+      "to": "cdn",
+      "y": 330,
+      "label": "GET segmento",
+      "variant": "default"
+    },
+    {
+      "id": "m5",
+      "from": "cdn",
+      "to": "blob",
+      "y": 370,
+      "label": "miss: fetch origine",
+      "variant": "dashed"
+    },
+    {
+      "id": "m6",
+      "from": "cdn",
+      "to": "player",
+      "y": 410,
+      "label": "segmento video",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "transcode",
+      "from": 210,
+      "to": 250,
+      "type": "backend"
+    },
+    {
+      "participant": "blob",
+      "from": 170,
+      "to": 290,
+      "type": "database"
+    },
+    {
+      "participant": "cdn",
+      "from": 290,
+      "to": 370,
+      "type": "cloud"
+    },
+    {
+      "participant": "blob",
+      "from": 370,
+      "to": 410,
+      "type": "database"
+    }
+  ]
+}

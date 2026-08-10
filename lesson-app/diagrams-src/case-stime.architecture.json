@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "La scala che cresce coi numeri",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-stime.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "client",
+          "lb",
+          "app",
+          "primary",
+          "cache",
+          "replica"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load balancer",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App server",
+      "sublabel": "×N stateless",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Cache",
+      "sublabel": "Redis",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "primary",
+      "type": "database",
+      "label": "DB primary",
+      "sublabel": "scritture",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "replica",
+      "type": "database",
+      "label": "Read replica",
+      "sublabel": "letture",
+      "pos": [
+        670,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client_lb",
+      "from": "client",
+      "to": "lb",
+      "variant": "default"
+    },
+    {
+      "id": "lb_app",
+      "from": "lb",
+      "to": "app",
+      "variant": "default"
+    },
+    {
+      "id": "app_cache",
+      "from": "app",
+      "to": "cache",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "app_primary",
+      "from": "app",
+      "to": "primary",
+      "variant": "default"
+    },
+    {
+      "id": "app_replica",
+      "from": "app",
+      "to": "replica",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "primary_replica",
+      "from": "primary",
+      "to": "replica",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          330
+        ],
+        [
+          845,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "cache_primary",
+      "from": "cache",
+      "to": "primary",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          180
+        ],
+        [
+          845,
+          330
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Load balancer: Va reso ridondante lui stesso.",
+        "App server: Lo stato locale va eliminato.",
+        "DB primary: Regge un tetto di scritture: oltre, serve sharding.",
+        "Cache: Coerenza cache↔DB da gestire con l'invalidazione."
+      ]
+    }
+  ]
+}

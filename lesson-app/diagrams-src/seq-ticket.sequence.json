@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Compra senza doppie vendite",
+    "subtitle": "Chi chiama chi, passo per passo",
+    "output": "seq-ticket.html",
+    "viewBox": [
+      825,
+      540
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "booking",
+      "type": "backend",
+      "label": "Booking Svc"
+    },
+    {
+      "id": "lock",
+      "type": "database",
+      "label": "Redis lock"
+    },
+    {
+      "id": "pay",
+      "type": "cloud",
+      "label": "Payment"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Events DB"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "client",
+      "to": "booking",
+      "y": 170,
+      "label": "prenota posto A1",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "booking",
+      "to": "lock",
+      "y": 210,
+      "label": "SETNX seat:A1 TTL 10m",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "lock",
+      "to": "booking",
+      "y": 250,
+      "label": "OK (è tuo)",
+      "variant": "return"
+    },
+    {
+      "id": "m3",
+      "from": "booking",
+      "to": "client",
+      "y": 290,
+      "label": "posto riservato, paga",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "client",
+      "to": "booking",
+      "y": 330,
+      "label": "conferma pagamento",
+      "variant": "default"
+    },
+    {
+      "id": "m5",
+      "from": "booking",
+      "to": "pay",
+      "y": 370,
+      "label": "charge (Stripe)",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "pay",
+      "to": "booking",
+      "y": 410,
+      "label": "webhook: pagato",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "booking",
+      "to": "db",
+      "y": 450,
+      "label": "INSERT ticket UNIQUE seat",
+      "variant": "default"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "booking",
+      "from": 170,
+      "to": 210,
+      "type": "backend"
+    },
+    {
+      "participant": "lock",
+      "from": 210,
+      "to": 250,
+      "type": "database"
+    },
+    {
+      "participant": "booking",
+      "from": 250,
+      "to": 290,
+      "type": "backend"
+    },
+    {
+      "participant": "client",
+      "from": 290,
+      "to": 330,
+      "type": "external"
+    },
+    {
+      "participant": "booking",
+      "from": 330,
+      "to": 370,
+      "type": "backend"
+    },
+    {
+      "participant": "pay",
+      "from": 370,
+      "to": 410,
+      "type": "backend"
+    },
+    {
+      "participant": "booking",
+      "from": 410,
+      "to": 450,
+      "type": "backend"
+    }
+  ]
+}

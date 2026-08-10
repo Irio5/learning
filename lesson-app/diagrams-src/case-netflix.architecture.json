@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Netflix · streaming globale",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-netflix.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "uploader",
+          "blob",
+          "queue",
+          "transcode",
+          "meta",
+          "cdn",
+          "player"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "uploader",
+      "type": "external",
+      "label": "Upload studio",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Encode queue",
+      "pos": [
+        250,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "transcode",
+      "type": "backend",
+      "label": "Transcoder",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "blob",
+      "type": "database",
+      "label": "Object store",
+      "sublabel": "master + segmenti",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "meta",
+      "type": "database",
+      "label": "Catalog DB",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cdn",
+      "type": "cloud",
+      "label": "CDN edge",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "player",
+      "type": "external",
+      "label": "Player",
+      "sublabel": "adaptive bitrate",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "uploader_queue",
+      "from": "uploader",
+      "to": "queue",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          330
+        ],
+        [
+          215,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "uploader_blob",
+      "from": "uploader",
+      "to": "blob",
+      "variant": "default"
+    },
+    {
+      "id": "queue_transcode",
+      "from": "queue",
+      "to": "transcode",
+      "variant": "default"
+    },
+    {
+      "id": "transcode_blob",
+      "from": "transcode",
+      "to": "blob",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          425,
+          180
+        ],
+        [
+          425,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "blob_cdn",
+      "from": "blob",
+      "to": "cdn",
+      "variant": "default"
+    },
+    {
+      "id": "cdn_player",
+      "from": "cdn",
+      "to": "player",
+      "variant": "default"
+    },
+    {
+      "id": "uploader_meta",
+      "from": "uploader",
+      "to": "meta",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          215,
+          330
+        ],
+        [
+          215,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "player_meta",
+      "from": "player",
+      "to": "meta",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Object store: L'object store non fa query sul contenuto: coordina cancellazioni col DB.",
+        "Transcoder: Transcodificare tutto in anticipo costa storage; le qualità rare si fanno on-demand.",
+        "CDN edge: Push spreca spazio per ciò che nessuno guarda; pull fa pagare il primo utente. Ibrido."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Orchestrator–workers",
+    "subtitle": "Come i pezzi si compongono",
+    "output": "new-orchestrator-workers.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "orch",
+          "w1",
+          "synth"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "task",
+      "type": "external",
+      "label": "Compito",
+      "sublabel": "forma ignota",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "orch",
+      "type": "backend",
+      "label": "Orchestratore",
+      "sublabel": "scompone a runtime",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w1",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "sotto-task",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w2",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "sotto-task",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w3",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "sotto-task",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "synth",
+      "type": "backend",
+      "label": "Sintesi",
+      "sublabel": "unisce i risultati",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "task_orch",
+      "from": "task",
+      "to": "orch",
+      "variant": "default"
+    },
+    {
+      "id": "orch_w1",
+      "from": "orch",
+      "to": "w1",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "orch_w2",
+      "from": "orch",
+      "to": "w2",
+      "variant": "default"
+    },
+    {
+      "id": "orch_w3",
+      "from": "orch",
+      "to": "w3",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "w1_synth",
+      "from": "w1",
+      "to": "synth",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          180
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "w2_synth",
+      "from": "w2",
+      "to": "synth",
+      "variant": "default"
+    },
+    {
+      "id": "w3_synth",
+      "from": "w3",
+      "to": "synth",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          480
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Orchestratore: Decide a runtime quanti e quali sotto-task servono: la forma non è nota in anticipo.",
+        "Worker: I worker girano in parallelo, ognuno con il proprio contesto.",
+        "Sintesi: La sintesi unisce i risultati: base della ricerca/report agentici."
+      ]
+    }
+  ]
+}

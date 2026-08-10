@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Un giro del crawler",
+    "subtitle": "Chi chiama chi, passo per passo",
+    "output": "seq-crawler.html",
+    "viewBox": [
+      825,
+      500
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "frontier",
+      "type": "messagebus",
+      "label": "URL frontier"
+    },
+    {
+      "id": "fetcher",
+      "type": "backend",
+      "label": "Fetcher"
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis"
+    },
+    {
+      "id": "parser",
+      "type": "backend",
+      "label": "Parser"
+    },
+    {
+      "id": "seen",
+      "type": "database",
+      "label": "Seen set"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "frontier",
+      "to": "fetcher",
+      "y": 170,
+      "label": "next URL",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "fetcher",
+      "to": "redis",
+      "y": 210,
+      "label": "robots? rate?",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "redis",
+      "to": "fetcher",
+      "y": 250,
+      "label": "ok, procedi",
+      "variant": "return",
+      "note": "GET pagina → S3 — Scarica l'HTML e lo salva nell'object store (S3): è grande, non va nel DB."
+    },
+    {
+      "id": "m3",
+      "from": "fetcher",
+      "to": "parser",
+      "y": 290,
+      "label": "html",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "parser",
+      "to": "seen",
+      "y": 330,
+      "label": "link già visto? (bloom)",
+      "variant": "default"
+    },
+    {
+      "id": "m5",
+      "from": "seen",
+      "to": "parser",
+      "y": 370,
+      "label": "solo i nuovi",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "parser",
+      "to": "frontier",
+      "y": 410,
+      "label": "enqueue nuovi URL",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "fetcher",
+      "from": 170,
+      "to": 210,
+      "type": "backend"
+    },
+    {
+      "participant": "redis",
+      "from": 210,
+      "to": 250,
+      "type": "database"
+    },
+    {
+      "participant": "fetcher",
+      "from": 250,
+      "to": 290,
+      "type": "backend"
+    },
+    {
+      "participant": "parser",
+      "from": 290,
+      "to": 330,
+      "type": "backend"
+    },
+    {
+      "participant": "seen",
+      "from": 330,
+      "to": 370,
+      "type": "database"
+    },
+    {
+      "participant": "parser",
+      "from": 370,
+      "to": 410,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Fattura → ERP · con validation gate",
+    "subtitle": "L'LLM estrae dal PDF; controlli deterministici bloccano i dati sbagliati prima dell'ERP",
+    "output": "new-invoice-erp.html",
+    "viewBox": [980, 600],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "principale", "label": "Percorso", "focus": ["extracted", "validating", "gate", "posted"], "note": "Dall'estrazione alla scrittura in ERP." },
+      { "id": "scarti", "label": "Scarti", "focus": ["gate", "rejected"], "note": "Cosa viene fermato prima di toccare l'ERP." }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Elaborazione documento" },
+    { "id": "reject", "label": "Revisione umana" }
+  ],
+  "states": [
+    { "id": "extracted", "type": "start", "label": "Estratto", "sublabel": "LLM legge il PDF", "lane": "main", "col": 0, "step": "01", "tag": "solo estrazione" },
+    { "id": "validating", "type": "active", "label": "Validating", "sublabel": "schema, somma righe = totale", "lane": "main", "col": 1, "step": "02", "tag": "deterministico" },
+    { "id": "gate", "type": "decision", "label": "Gate", "sublabel": "regole superate?", "lane": "main", "col": 2, "step": "03", "tag": "guardrail" },
+    { "id": "posted", "type": "success", "label": "Posted", "sublabel": "scritto in ERP", "lane": "main", "col": 3, "step": "04", "tag": "azione reale" },
+    { "id": "rejected", "type": "failure", "label": "Rifiutato", "sublabel": "a un umano", "lane": "reject", "col": 2, "tag": "bloccato" }
+  ],
+  "transitions": [
+    { "id": "ext-val", "from": "extracted", "to": "validating", "variant": "default" },
+    { "id": "val-gate", "from": "validating", "to": "gate", "variant": "default" },
+    { "id": "gate-post", "from": "gate", "to": "posted", "variant": "default" },
+    { "id": "gate-rej", "from": "gate", "to": "rejected", "variant": "security", "route": "drop" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "L'LLM fa solo una cosa", "items": ["Estrae i dati dal PDF (parte non deterministica)", "Il resto è pipeline deterministica e tracciabile", "Nessun dato tocca l'ERP senza passare il gate"] },
+    { "dot": "rose", "title": "Validation gate", "items": ["Controlli esatti: schema, somma delle righe = totale, campi obbligatori", "Bloccano output sbagliati dell'LLM prima di un'azione reale", "Spina dorsale dell'elaborazione documenti"] }
+  ]
+}

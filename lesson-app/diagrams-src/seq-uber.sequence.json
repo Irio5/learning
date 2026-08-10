@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Aggiorna la posizione, poi fai match",
+    "subtitle": "Chi chiama chi, passo per passo",
+    "output": "seq-uber.html",
+    "viewBox": [
+      825,
+      500
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "driver",
+      "type": "external",
+      "label": "Driver app"
+    },
+    {
+      "id": "location",
+      "type": "backend",
+      "label": "Location Svc"
+    },
+    {
+      "id": "geo",
+      "type": "database",
+      "label": "Geo index"
+    },
+    {
+      "id": "matching",
+      "type": "backend",
+      "label": "Matching Svc"
+    },
+    {
+      "id": "rider",
+      "type": "external",
+      "label": "Rider app"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "driver",
+      "to": "location",
+      "y": 170,
+      "label": "pos ogni ~4s",
+      "variant": "dashed"
+    },
+    {
+      "id": "m1",
+      "from": "location",
+      "to": "geo",
+      "y": 210,
+      "label": "scrivi cella geohash",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "rider",
+      "to": "matching",
+      "y": 250,
+      "label": "richiedi corsa",
+      "variant": "default"
+    },
+    {
+      "id": "m3",
+      "from": "matching",
+      "to": "geo",
+      "y": 290,
+      "label": "vicini(cella)",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "geo",
+      "to": "matching",
+      "y": 330,
+      "label": "autisti vicini",
+      "variant": "return",
+      "note": "lock TTL + scegli — Lock distribuito con TTL su Redis: non assegnare lo stesso autista a due corse."
+    },
+    {
+      "id": "m5",
+      "from": "matching",
+      "to": "driver",
+      "y": 370,
+      "label": "push: nuova corsa",
+      "variant": "dashed"
+    },
+    {
+      "id": "m6",
+      "from": "matching",
+      "to": "rider",
+      "y": 410,
+      "label": "autista assegnato",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "location",
+      "from": 170,
+      "to": 210,
+      "type": "backend"
+    },
+    {
+      "participant": "matching",
+      "from": 250,
+      "to": 290,
+      "type": "backend"
+    },
+    {
+      "participant": "geo",
+      "from": 210,
+      "to": 330,
+      "type": "database"
+    },
+    {
+      "participant": "matching",
+      "from": 330,
+      "to": 370,
+      "type": "backend"
+    },
+    {
+      "participant": "driver",
+      "from": 370,
+      "to": 410,
+      "type": "external"
+    }
+  ]
+}

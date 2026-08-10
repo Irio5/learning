@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Chat · consegna realtime",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-chat.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "clientA",
+          "lb",
+          "ws1",
+          "msgdb",
+          "pubsub",
+          "ws2",
+          "clientB",
+          "blob"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clientA",
+      "type": "external",
+      "label": "Client A",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "L4 load balancer",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ws1",
+      "type": "backend",
+      "label": "Chat server",
+      "sublabel": "WebSocket",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "msgdb",
+      "type": "database",
+      "label": "Message + Inbox",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pubsub",
+      "type": "messagebus",
+      "label": "Redis Pub/Sub",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ws2",
+      "type": "backend",
+      "label": "Chat server",
+      "sublabel": "WebSocket",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "clientB",
+      "type": "external",
+      "label": "Client B",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "blob",
+      "type": "database",
+      "label": "Blob (media)",
+      "pos": [
+        250,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clientA_lb",
+      "from": "clientA",
+      "to": "lb",
+      "variant": "default"
+    },
+    {
+      "id": "lb_ws1",
+      "from": "lb",
+      "to": "ws1",
+      "variant": "default"
+    },
+    {
+      "id": "ws1_msgdb",
+      "from": "ws1",
+      "to": "msgdb",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "ws1_pubsub",
+      "from": "ws1",
+      "to": "pubsub",
+      "variant": "default"
+    },
+    {
+      "id": "pubsub_ws2",
+      "from": "pubsub",
+      "to": "ws2",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "ws2_clientB",
+      "from": "ws2",
+      "to": "clientB",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          530,
+          555
+        ],
+        [
+          110,
+          555
+        ]
+      ]
+    },
+    {
+      "id": "clientB_lb",
+      "from": "clientB",
+      "to": "lb",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          480
+        ],
+        [
+          215,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "ws1_blob",
+      "from": "ws1",
+      "to": "blob",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Chat server: WebSocket (push, latenza minima) vs polling (semplice ma in ritardo e spreca richieste).",
+        "Message + Inbox: TTL sull'inbox (es. 30 giorni): pulizia semplice, ma va gestito il confine.",
+        "Redis Pub/Sub: Pub/Sub (leggero) vs Kafka (persistente ma più pesante). Un registro connessione→server dice dove instrad",
+        "Client B: Ordine stretto (complesso) vs timestamp del server (semplice, raramente fuori ordine)."
+      ]
+    }
+  ]
+}

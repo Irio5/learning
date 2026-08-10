@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Rate limit · 429 e backoff",
+    "subtitle": "Il server dice «rallenta»; il client aspetta e riprova con backoff esponenziale + jitter",
+    "output": "new-rate-limit-429.html",
+    "viewBox": [820, 660],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "Client", "sublabel": "chiamante" },
+    { "id": "gw", "type": "cloud", "label": "API gateway", "sublabel": "rate limiter" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "servizio" }
+  ],
+  "segments": [
+    { "from": 175, "to": 260, "label": "OK" },
+    { "from": 270, "to": 400, "label": "Oltre il limite" },
+    { "from": 410, "to": 520, "label": "Retry con backoff" }
+  ],
+  "messages": [
+    { "id": "m0", "from": "client", "to": "gw", "y": 185, "label": "richiesta", "variant": "default" },
+    { "id": "m1", "from": "gw", "to": "api", "y": 228, "label": "entro quota → inoltra", "variant": "default" },
+    { "id": "m2", "from": "api", "to": "client", "y": 271, "label": "200 OK", "variant": "return" },
+    { "id": "m3", "from": "client", "to": "gw", "y": 320, "label": "troppe richieste", "variant": "emphasis" },
+    { "id": "m4", "from": "gw", "to": "client", "y": 363, "label": "429 + Retry-After", "variant": "return", "note": "Token bucket vuoto: il gateway rifiuta senza nemmeno toccare l'API." },
+    { "id": "m5", "from": "client", "to": "gw", "y": 440, "label": "riprova dopo attesa", "variant": "dashed", "note": "Backoff esponenziale + jitter: evita che tutti i client riprovino nello stesso istante (thundering herd)." },
+    { "id": "m6", "from": "gw", "to": "api", "y": 483, "label": "quota rientrata → inoltra", "variant": "default" },
+    { "id": "m7", "from": "api", "to": "client", "y": 526, "label": "200 OK", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Regole d'oro", "items": ["Rispetta Retry-After: non martellare", "Backoff esponenziale + jitter contro le tempeste di retry", "Il limite protegge il servizio a monte dell'API"] }
+  ]
+}

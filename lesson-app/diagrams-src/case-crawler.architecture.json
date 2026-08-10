@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Web crawler distribuito",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-crawler.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "seed",
+          "frontier",
+          "fetcher",
+          "dns",
+          "s3",
+          "parser",
+          "seen",
+          "redis"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "seed",
+      "type": "external",
+      "label": "Seed URLs",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "frontier",
+      "type": "messagebus",
+      "label": "URL frontier",
+      "sublabel": "coda (SQS)",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "fetcher",
+      "type": "backend",
+      "label": "Fetcher",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "robots + rate",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dns",
+      "type": "cloud",
+      "label": "DNS",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3 (HTML/testo)",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "parser",
+      "type": "backend",
+      "label": "Parser",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "seen",
+      "type": "database",
+      "label": "Seen set",
+      "sublabel": "bloom filter",
+      "pos": [
+        670,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "seed_frontier",
+      "from": "seed",
+      "to": "frontier",
+      "variant": "default"
+    },
+    {
+      "id": "frontier_fetcher",
+      "from": "frontier",
+      "to": "fetcher",
+      "variant": "default"
+    },
+    {
+      "id": "fetcher_redis",
+      "from": "fetcher",
+      "to": "redis",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "fetcher_dns",
+      "from": "fetcher",
+      "to": "dns",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "fetcher_s3",
+      "from": "fetcher",
+      "to": "s3",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "fetcher_parser",
+      "from": "fetcher",
+      "to": "parser",
+      "variant": "default"
+    },
+    {
+      "id": "parser_seen",
+      "from": "parser",
+      "to": "seen",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          330
+        ],
+        [
+          845,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "parser_frontier",
+      "from": "parser",
+      "to": "frontier",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          740,
+          405
+        ],
+        [
+          320,
+          405
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "URL frontier: Spesso a priorità: le pagine più autorevoli prima.",
+        "DNS: Si cachea e si usano più provider a rotazione.",
+        "Seen set: Bloom filter (great in spazio) ha rari falsi positivi; un indice su DB (good) è più semplice ed esatto.",
+        "Redis: Con jitter, per evitare tempeste di retry sincronizzate tra i crawler."
+      ]
+    }
+  ]
+}

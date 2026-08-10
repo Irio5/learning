@@ -1,0 +1,113 @@
+/* ---- fonts (self-hosted via Fontsource, no CDN) ---- */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/jetbrains-mono";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================================
+   "Iris on Ink" — design tokens (OKLCH)
+   Deep inky blue-violet base · luminous iris accent · editorial serif
+   display (Fraunces) + Inter UI + JetBrains Mono for code.
+   ===================================================================== */
+:root {
+  /* neutral ink ramp (cool, faint violet tint) */
+  --ink-950: oklch(0.14 0.018 280);
+  --ink-900: oklch(0.185 0.02 280);
+  --ink-850: oklch(0.22 0.021 280);
+  --ink-800: oklch(0.27 0.022 280);
+  --ink-700: oklch(0.34 0.022 280);
+  --ink-500: oklch(0.55 0.02 280);
+  --ink-300: oklch(0.74 0.02 280);
+  --ink-100: oklch(0.92 0.012 280);
+
+  /* iris accent ramp */
+  --iris-600: oklch(0.56 0.19 285);
+  --iris-500: oklch(0.63 0.2 285);
+  --iris-400: oklch(0.72 0.17 285);
+  --iris-300: oklch(0.8 0.13 285);
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  color: var(--ink-100);
+  /* layered depth: two faint auras over deep ink, no flat fill */
+  background-color: var(--ink-950);
+  background-image:
+    radial-gradient(60rem 40rem at 85% -10%, oklch(0.63 0.2 285 / 0.1), transparent 60%),
+    radial-gradient(50rem 40rem at 0% 8%, oklch(0.6 0.16 250 / 0.07), transparent 55%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* editorial display face carries personality on headings that opt in */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 480;
+  letter-spacing: -0.02em;
+}
+
+/* selection + focus in brand iris */
+::selection { background: oklch(0.63 0.2 285 / 0.32); color: #fff; }
+:focus-visible {
+  outline: 2px solid var(--iris-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* quiet, on-brand scrollbar */
+* { scrollbar-width: thin; scrollbar-color: var(--ink-700) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--ink-700); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--ink-500); }
+
+/* thin horizontal scrollers (nav rows) get an even quieter track */
+.no-scrollbar::-webkit-scrollbar { height: 0; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* text-wrap helpers (version-safe regardless of Tailwind minor) */
+.text-balance { text-wrap: balance; }
+.text-pretty { text-wrap: pretty; }
+
+/* =====================================================================
+   Motion — intentional, state-driven, reduced-motion safe
+   ===================================================================== */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.anim-rise { animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-fade { animation: fade 0.5s ease both; }
+
+/* staggered entrance for nav chips */
+.stagger > * { animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger > *:nth-child(3) { animation-delay: 0.08s; }
+.stagger > *:nth-child(4) { animation-delay: 0.11s; }
+.stagger > *:nth-child(5) { animation-delay: 0.14s; }
+.stagger > *:nth-child(6) { animation-delay: 0.17s; }
+.stagger > *:nth-child(7) { animation-delay: 0.2s; }
+.stagger > *:nth-child(8) { animation-delay: 0.23s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "WebSocket vs SSE · push dal server",
+    "subtitle": "Due modi di far spingere dati al server: bidirezionale (WS) o a senso unico (SSE)",
+    "output": "new-websocket-vs-sse.html",
+    "viewBox": [860, 620],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "Client", "sublabel": "browser" },
+    { "id": "ws", "type": "backend", "label": "WebSocket", "sublabel": "full-duplex" },
+    { "id": "sse", "type": "backend", "label": "SSE", "sublabel": "server→client" }
+  ],
+  "segments": [
+    { "from": 175, "to": 360, "label": "WebSocket (bidirezionale)" },
+    { "from": 370, "to": 560, "label": "SSE (uni-direzionale)" }
+  ],
+  "messages": [
+    { "id": "m0", "from": "client", "to": "ws", "y": 185, "label": "HTTP Upgrade → 101", "variant": "emphasis", "note": "Parte come HTTP, poi passa a full-duplex (wss://)." },
+    { "id": "m1", "from": "client", "to": "ws", "y": 228, "label": "invia messaggio", "variant": "default" },
+    { "id": "m2", "from": "ws", "to": "client", "y": 271, "label": "push messaggio", "variant": "return" },
+    { "id": "m3", "from": "ws", "to": "client", "y": 314, "label": "push (quando vuole)", "variant": "return", "note": "Il client può anche spingere: chat, giochi, editing collaborativo." },
+    { "id": "m4", "from": "client", "to": "sse", "y": 400, "label": "GET /stream (text/event-stream)", "variant": "emphasis" },
+    { "id": "m5", "from": "sse", "to": "client", "y": 443, "label": "event: …", "variant": "return" },
+    { "id": "m6", "from": "sse", "to": "client", "y": 486, "label": "event: … (token LLM)", "variant": "return", "note": "Un solo canale server→client: notifiche, feed, streaming di token. Più semplice del WS." },
+    { "id": "m7", "from": "sse", "to": "client", "y": 529, "label": "event: … (riconnessione auto)", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Quando WebSocket", "items": ["Serve che ANCHE il client spinga in tempo reale", "Chat, multiplayer, cursori condivisi", "Full-duplex su una connessione persistente"] },
+    { "dot": "cyan", "title": "Quando SSE", "items": ["Solo il server deve spingere", "Streaming di token LLM, feed, notifiche live", "Più semplice: è HTTP, riconnessione automatica"] }
+  ]
+}

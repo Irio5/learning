@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ticketmaster · viste + acquisto",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-ticket.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "client",
+          "lb",
+          "event",
+          "cache",
+          "booking",
+          "lock",
+          "db",
+          "pay",
+          "queue"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Virtual queue",
+      "sublabel": "flash sale",
+      "pos": [
+        250,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "LB + gateway",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "event",
+      "type": "messagebus",
+      "label": "Event Svc",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Cache",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "booking",
+      "type": "backend",
+      "label": "Booking Svc",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lock",
+      "type": "database",
+      "label": "Redis lock",
+      "sublabel": "TTL 10min",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Events DB",
+      "sublabel": "UNIQUE seat",
+      "pos": [
+        670,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pay",
+      "type": "cloud",
+      "label": "Payment",
+      "sublabel": "Stripe",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client_lb",
+      "from": "client",
+      "to": "lb",
+      "variant": "default"
+    },
+    {
+      "id": "client_queue",
+      "from": "client",
+      "to": "queue",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          330
+        ],
+        [
+          215,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "queue_lb",
+      "from": "queue",
+      "to": "lb",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          425,
+          180
+        ],
+        [
+          425,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "lb_event",
+      "from": "lb",
+      "to": "event",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "event_cache",
+      "from": "event",
+      "to": "cache",
+      "variant": "default"
+    },
+    {
+      "id": "cache_db",
+      "from": "cache",
+      "to": "db",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          180
+        ],
+        [
+          845,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "lb_booking",
+      "from": "lb",
+      "to": "booking",
+      "variant": "default"
+    },
+    {
+      "id": "booking_lock",
+      "from": "booking",
+      "to": "lock",
+      "variant": "default"
+    },
+    {
+      "id": "booking_db",
+      "from": "booking",
+      "to": "db",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "booking_pay",
+      "from": "booking",
+      "to": "pay",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Cache: Invalida quando un posto cambia stato, o mostri disponibilità sbagliata.",
+        "Redis lock: Bad: lock DB lungo (SELECT FOR UPDATE) → contesa. Great: Redis lock + verifica atomica sul DB.",
+        "Virtual queue: L'utente aspetta in fila, ma equa e trasparente; il backend resta in piedi."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Uber · matching in tempo reale",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-uber.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "driver",
+          "gw",
+          "location",
+          "geo",
+          "rider",
+          "matching",
+          "tripdb",
+          "notif"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "driver",
+      "type": "external",
+      "label": "Driver app",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rider",
+      "type": "external",
+      "label": "Rider app",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "API gateway",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "location",
+      "type": "backend",
+      "label": "Location Svc",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "geo",
+      "type": "database",
+      "label": "Geo index",
+      "sublabel": "Redis geohash",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "matching",
+      "type": "backend",
+      "label": "Matching Svc",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tripdb",
+      "type": "database",
+      "label": "Trip DB",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "notif",
+      "type": "cloud",
+      "label": "Notif (APNs)",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "driver_gw",
+      "from": "driver",
+      "to": "gw",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          180
+        ],
+        [
+          215,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "gw_location",
+      "from": "gw",
+      "to": "location",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "location_geo",
+      "from": "location",
+      "to": "geo",
+      "variant": "default"
+    },
+    {
+      "id": "rider_gw",
+      "from": "rider",
+      "to": "gw",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          480
+        ],
+        [
+          215,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "gw_matching",
+      "from": "gw",
+      "to": "matching",
+      "variant": "default"
+    },
+    {
+      "id": "matching_location",
+      "from": "matching",
+      "to": "location",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "matching_tripdb",
+      "from": "matching",
+      "to": "tripdb",
+      "variant": "default"
+    },
+    {
+      "id": "matching_notif",
+      "from": "matching",
+      "to": "notif",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "notif_driver",
+      "from": "notif",
+      "to": "driver",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          425,
+          480
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Driver app: Intervallo adattivo (ogni ~4s, più spesso se vicino a una richiesta): al secondo sarebbe troppo carico.",
+        "Location Svc: Le posizioni «calde» stanno in memoria, non nel DB su disco.",
+        "Geo index: geohash/Redis (great) vs PostGIS quadtree (good) vs scan su B-tree (bad, impraticabile).",
+        "Matching Svc: Sotto contesa, lock distribuito con TTL su Redis: non assegnare lo stesso autista a due corse."
+      ]
+    }
+  ]
+}

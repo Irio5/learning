@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Consistent hashing · l'anello",
+    "subtitle": "Come i pezzi si compongono",
+    "output": "new-consistent-hashing.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "ring",
+          "nodeB"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "key",
+      "type": "external",
+      "label": "Chiave",
+      "sublabel": "hash(user_id)",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ring",
+      "type": "cloud",
+      "label": "Anello",
+      "sublabel": "posizione = hash",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeA",
+      "type": "messagebus",
+      "label": "Nodo A",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeB",
+      "type": "backend",
+      "label": "Nodo B",
+      "sublabel": "assegnato (orario)",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeC",
+      "type": "messagebus",
+      "label": "Nodo C",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "key_ring",
+      "from": "key",
+      "to": "ring",
+      "variant": "default"
+    },
+    {
+      "id": "ring_nodeB",
+      "from": "ring",
+      "to": "nodeB",
+      "variant": "default"
+    },
+    {
+      "id": "ring_nodeA",
+      "from": "ring",
+      "to": "nodeA",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "ring_nodeC",
+      "from": "ring",
+      "to": "nodeC",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Anello: La chiave va al primo nodo in senso orario sull'anello.",
+        "Nodo B: Aggiungere/togliere un nodo sposta solo ~1/N delle chiavi, non tutte (vs hash % N)."
+      ]
+    }
+  ]
+}

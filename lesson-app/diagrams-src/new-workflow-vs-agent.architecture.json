@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Workflow vs agente",
+    "subtitle": "Come i pezzi si compongono",
+    "output": "new-workflow-vs-agent.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "wf",
+          "agent"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "task",
+      "type": "external",
+      "label": "Compito",
+      "sublabel": "da automatizzare",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "decide",
+      "type": "backend",
+      "label": "Passi noti?",
+      "sublabel": "scelta di design",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "wf",
+      "type": "backend",
+      "label": "Workflow",
+      "sublabel": "percorso prefissato",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "messagebus",
+      "label": "Agente",
+      "sublabel": "l'LLM decide i passi",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "task_decide",
+      "from": "task",
+      "to": "decide",
+      "variant": "default"
+    },
+    {
+      "id": "decide_wf",
+      "from": "decide",
+      "to": "wf",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "decide_agent",
+      "from": "decide",
+      "to": "agent",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Workflow: Passi noti → workflow: prevedibile, testabile, più economico.",
+        "Agente: Passi ignoti → agente: flessibile ma meno prevedibile. Autonomia solo dove serve."
+      ]
+    }
+  ]
+}

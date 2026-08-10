@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "L'ordine come macchina a stati",
+    "subtitle": "Chi chiama chi, passo per passo",
+    "output": "seq-delivery.html",
+    "viewBox": [
+      825,
+      540
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "Cliente"
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Svc"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Orders DB"
+    },
+    {
+      "id": "events",
+      "type": "messagebus",
+      "label": "Event bus"
+    },
+    {
+      "id": "courier",
+      "type": "external",
+      "label": "Corriere"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "customer",
+      "to": "order",
+      "y": 170,
+      "label": "POST /order (paga)",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "order",
+      "to": "db",
+      "y": 210,
+      "label": "stato = placed",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "order",
+      "to": "events",
+      "y": 250,
+      "label": "event: OrderPlaced",
+      "variant": "dashed"
+    },
+    {
+      "id": "m3",
+      "from": "events",
+      "to": "courier",
+      "y": 290,
+      "label": "trova corriere",
+      "variant": "dashed"
+    },
+    {
+      "id": "m4",
+      "from": "courier",
+      "to": "order",
+      "y": 330,
+      "label": "accetto",
+      "variant": "default"
+    },
+    {
+      "id": "m5",
+      "from": "order",
+      "to": "db",
+      "y": 370,
+      "label": "stato = picked_up",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "order",
+      "to": "events",
+      "y": 410,
+      "label": "event: StatusChanged",
+      "variant": "dashed"
+    },
+    {
+      "id": "m7",
+      "from": "events",
+      "to": "customer",
+      "y": 450,
+      "label": "notifica: in arrivo",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "order",
+      "from": 170,
+      "to": 210,
+      "type": "backend"
+    },
+    {
+      "participant": "events",
+      "from": 250,
+      "to": 290,
+      "type": "messagebus"
+    },
+    {
+      "participant": "courier",
+      "from": 290,
+      "to": 330,
+      "type": "external"
+    },
+    {
+      "participant": "order",
+      "from": 330,
+      "to": 370,
+      "type": "backend"
+    },
+    {
+      "participant": "events",
+      "from": 410,
+      "to": 450,
+      "type": "messagebus"
+    },
+    {
+      "participant": "db",
+      "from": 210,
+      "to": 450,
+      "type": "database"
+    }
+  ]
+}

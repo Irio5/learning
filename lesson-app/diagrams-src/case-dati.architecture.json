@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Scalare il livello dati",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-dati.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "app",
+          "router",
+          "shardA",
+          "shardB",
+          "shardC",
+          "replica"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App server",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "Shard router",
+      "sublabel": "consistent hash",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "shardA",
+      "type": "database",
+      "label": "Shard A",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "shardB",
+      "type": "database",
+      "label": "Shard B",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "shardC",
+      "type": "database",
+      "label": "Shard C",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "replica",
+      "type": "database",
+      "label": "Read replica",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app_router",
+      "from": "app",
+      "to": "router",
+      "variant": "default"
+    },
+    {
+      "id": "router_shardA",
+      "from": "router",
+      "to": "shardA",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "router_shardB",
+      "from": "router",
+      "to": "shardB",
+      "variant": "default"
+    },
+    {
+      "id": "router_shardC",
+      "from": "router",
+      "to": "shardC",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "shardA_replica",
+      "from": "shardA",
+      "to": "replica",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Shard router: Con hash % N ingenuo, cambiare N rimescolerebbe quasi tutto.",
+        "Shard A: Scegliere la chiave di shard sbagliata crea «hot shard» sovraccarichi.",
+        "Shard B: Le query che attraversano più shard (scatter-gather) diventano costose.",
+        "Shard C: Alcune query analitiche cross-shard restano difficili: spesso vanno in un sistema a parte."
+      ]
+    }
+  ]
+}

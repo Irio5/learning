@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Crea un link, poi cliccalo",
+    "subtitle": "Chi chiama chi, passo per passo",
+    "output": "seq-tinyurl.html",
+    "viewBox": [
+      825,
+      540
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App server"
+    },
+    {
+      "id": "kgs",
+      "type": "cloud",
+      "label": "Key Gen Svc"
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Cache"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "URL DB"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "client",
+      "to": "app",
+      "y": 170,
+      "label": "POST /shorten {url}",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "app",
+      "to": "kgs",
+      "y": 210,
+      "label": "nextId()",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "kgs",
+      "to": "app",
+      "y": 250,
+      "label": "id → base62",
+      "variant": "return"
+    },
+    {
+      "id": "m3",
+      "from": "app",
+      "to": "db",
+      "y": 290,
+      "label": "INSERT code→url",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "app",
+      "to": "client",
+      "y": 330,
+      "label": "short.ly/abc",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "client",
+      "to": "app",
+      "y": 370,
+      "label": "GET /abc",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "app",
+      "to": "cache",
+      "y": 410,
+      "label": "get(abc) → HIT",
+      "variant": "default"
+    },
+    {
+      "id": "m7",
+      "from": "app",
+      "to": "client",
+      "y": 450,
+      "label": "301 → long_url",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "app",
+      "from": 170,
+      "to": 210,
+      "type": "backend"
+    },
+    {
+      "participant": "kgs",
+      "from": 210,
+      "to": 250,
+      "type": "backend"
+    },
+    {
+      "participant": "app",
+      "from": 250,
+      "to": 290,
+      "type": "backend"
+    },
+    {
+      "participant": "client",
+      "from": 330,
+      "to": 370,
+      "type": "external"
+    },
+    {
+      "participant": "app",
+      "from": 370,
+      "to": 410,
+      "type": "backend"
+    },
+    {
+      "participant": "db",
+      "from": 290,
+      "to": 450,
+      "type": "database"
+    },
+    {
+      "participant": "cache",
+      "from": 410,
+      "to": 450,
+      "type": "database"
+    }
+  ]
+}

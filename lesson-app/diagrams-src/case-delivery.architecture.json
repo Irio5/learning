@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Consegne · workflow a eventi",
+    "subtitle": "Mattoni ricorrenti e i loro compromessi",
+    "output": "case-delivery.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "customer",
+          "gw",
+          "order",
+          "db",
+          "events",
+          "matching",
+          "geo",
+          "courier",
+          "notif"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "courier",
+      "type": "external",
+      "label": "Corriere app",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "Cliente",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "API gateway",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Svc",
+      "sublabel": "state machine",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Orders DB",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "events",
+      "type": "messagebus",
+      "label": "Event bus",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "matching",
+      "type": "backend",
+      "label": "Courier match",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "geo",
+      "type": "database",
+      "label": "Geo index",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "notif",
+      "type": "cloud",
+      "label": "Notifiche",
+      "pos": [
+        670,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "customer_gw",
+      "from": "customer",
+      "to": "gw",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          480
+        ],
+        [
+          215,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "gw_order",
+      "from": "gw",
+      "to": "order",
+      "variant": "default"
+    },
+    {
+      "id": "order_db",
+      "from": "order",
+      "to": "db",
+      "variant": "default"
+    },
+    {
+      "id": "order_events",
+      "from": "order",
+      "to": "events",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "events_matching",
+      "from": "events",
+      "to": "matching",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          480
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "matching_geo",
+      "from": "matching",
+      "to": "geo",
+      "variant": "default"
+    },
+    {
+      "id": "courier_gw",
+      "from": "courier",
+      "to": "gw",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          215,
+          180
+        ],
+        [
+          215,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "matching_order",
+      "from": "matching",
+      "to": "order",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          180
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "events_notif",
+      "from": "events",
+      "to": "notif",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Order Svc: Ogni passo può fallire: le compensazioni (retry, rimborso) sono parte del disegno.",
+        "Event bus: Orchestrazione (un direttore) per il flusso, coreografia (eventi) per gli effetti collaterali.",
+        "Courier match: Non bloccare mai l'ordine in attesa di un corriere."
+      ]
+    }
+  ]
+}

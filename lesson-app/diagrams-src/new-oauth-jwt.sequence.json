@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "OAuth 2.0 + JWT · login e chiamata protetta",
+    "subtitle": "L'utente si autentica una volta; poi il token firmato prova chi è, senza sessione lato server",
+    "output": "new-oauth-jwt.html",
+    "viewBox": [900, 620],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "Utente", "sublabel": "browser" },
+    { "id": "app", "type": "frontend", "label": "App", "sublabel": "client" },
+    { "id": "idp", "type": "security", "label": "Auth server", "sublabel": "OAuth IdP" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "risorsa protetta" }
+  ],
+  "segments": [
+    { "from": 175, "to": 340, "label": "Login (una volta)" },
+    { "from": 350, "to": 560, "label": "Chiamate autenticate" }
+  ],
+  "messages": [
+    { "id": "m0", "from": "user", "to": "app", "y": 185, "label": "click «accedi»", "variant": "default" },
+    { "id": "m1", "from": "app", "to": "idp", "y": 228, "label": "redirect + PKCE", "variant": "security" },
+    { "id": "m2", "from": "user", "to": "idp", "y": 271, "label": "credenziali", "variant": "security", "note": "Le credenziali le vede solo l'IdP, mai la tua app." },
+    { "id": "m3", "from": "idp", "to": "app", "y": 314, "label": "authorization code", "variant": "return" },
+    { "id": "m4", "from": "app", "to": "idp", "y": 357, "label": "code → token", "variant": "security" },
+    { "id": "m5", "from": "idp", "to": "app", "y": 400, "label": "JWT firmato", "variant": "return", "note": "header.payload.signature: la firma lo rende non falsificabile." },
+    { "id": "m6", "from": "app", "to": "api", "y": 460, "label": "GET /dati  Bearer JWT", "variant": "emphasis", "note": "L'API verifica firma e scadenza localmente con la chiave pubblica: nessuna sessione lato server." },
+    { "id": "m7", "from": "api", "to": "app", "y": 503, "label": "200 + dati", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Chi prova cosa", "items": ["L'IdP autentica; l'API si fida della firma", "PKCE lega il code al client che l'ha chiesto", "Il JWT dice chi sei e con che ruolo — stateless"] },
+    { "dot": "amber", "title": "Trade-off", "items": ["Stateless scala, ma un JWT non si revoca prima della scadenza", "Scadenze corte + refresh token per il compromesso", "Mai mettere segreti nel payload: è solo firmato, non cifrato"] }
+  ]
+}

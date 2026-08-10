@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Osservabilità · un request-id attraversa tutto",
+    "subtitle": "Lo stesso id segue la richiesta in ogni hop: log, metriche e trace la ricostruiscono",
+    "output": "new-request-observability.html",
+    "viewBox": [900, 620],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "Client", "sublabel": "richiesta" },
+    { "id": "gw", "type": "cloud", "label": "Gateway", "sublabel": "genera req-id" },
+    { "id": "svc", "type": "backend", "label": "Servizio", "sublabel": "logica" },
+    { "id": "db", "type": "database", "label": "Database", "sublabel": "query" },
+    { "id": "obs", "type": "messagebus", "label": "Osservabilità", "sublabel": "log / trace" }
+  ],
+  "messages": [
+    { "id": "m0", "from": "client", "to": "gw", "y": 185, "label": "GET /ordine/42", "variant": "emphasis" },
+    { "id": "m1", "from": "gw", "to": "obs", "y": 228, "label": "req-id=abc · start span", "variant": "dashed", "note": "Il gateway conia un request-id e lo propaga in ogni header a valle." },
+    { "id": "m2", "from": "gw", "to": "svc", "y": 271, "label": "inoltra (X-Request-Id: abc)", "variant": "default" },
+    { "id": "m3", "from": "svc", "to": "db", "y": 314, "label": "SELECT … (log req-id)", "variant": "default" },
+    { "id": "m4", "from": "db", "to": "svc", "y": 357, "label": "righe", "variant": "return" },
+    { "id": "m5", "from": "svc", "to": "obs", "y": 400, "label": "log + metrica (req-id)", "variant": "dashed", "note": "Se qualcosa esplode, un 500 e una riga ERROR con lo stesso req-id ricostruiscono l'intera storia." },
+    { "id": "m6", "from": "svc", "to": "gw", "y": 443, "label": "200 + dati", "variant": "return" },
+    { "id": "m7", "from": "gw", "to": "client", "y": 486, "label": "200 (X-Request-Id: abc)", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "I tre pilastri", "items": ["Log: righe puntuali con il req-id", "Metriche: numeri aggregati (latenza, error rate)", "Trace: il percorso di UNA richiesta hop per hop"] }
+  ]
+}

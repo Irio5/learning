@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Embedding · cercare per significato",
+    "subtitle": "Un testo diventa una lista di numeri; testi con senso simile finiscono vicini nello spazio",
+    "output": "new-embeddings-search.html",
+    "viewBox": [1160, 460],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "principale", "label": "Percorso", "focus": ["text", "model", "space", "ann", "result"], "note": "Dal testo al risultato per similarità." }
+    ]
+  },
+  "stages": [
+    { "label": "Testo" },
+    { "label": "Embedding" },
+    { "label": "Spazio" },
+    { "label": "Ricerca" },
+    { "label": "Risultato" }
+  ],
+  "nodes": [
+    { "id": "text", "type": "frontend", "label": "Testo", "sublabel": "query o documento", "stage": 0, "row": 1, "tag": "linguaggio" },
+    { "id": "model", "type": "backend", "label": "Modello embed", "sublabel": "testo → vettore", "stage": 1, "row": 1, "tag": "N numeri" },
+    { "id": "space", "type": "database", "label": "Spazio vettoriale", "sublabel": "vicini = simili", "stage": 2, "row": 1, "tag": "geometria" },
+    { "id": "ann", "type": "backend", "label": "k-NN / ANN", "sublabel": "i più vicini", "stage": 3, "row": 1, "tag": "veloce" },
+    { "id": "result", "type": "frontend", "label": "Risultati", "sublabel": "per significato", "stage": 4, "row": 1, "tag": "semantico" }
+  ],
+  "flows": [
+    { "id": "t-m", "from": "text", "to": "model", "label": "testo", "classification": "input", "variant": "emphasis", "route": "straight" },
+    { "id": "m-s", "from": "model", "to": "space", "label": "vettore", "classification": "embedding", "variant": "default", "route": "straight" },
+    { "id": "s-a", "from": "space", "to": "ann", "label": "confronto", "classification": "distanza", "variant": "default", "route": "straight" },
+    { "id": "a-r", "from": "ann", "to": "result", "label": "top-k", "classification": "vicini", "variant": "emphasis", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "L'idea", "items": ["«gatto» e «felino» sono parole diverse ma senso vicino", "Diventano vettori vicini nello spazio", "La ricerca trova i più vicini, non le stringhe uguali"] }
+  ]
+}

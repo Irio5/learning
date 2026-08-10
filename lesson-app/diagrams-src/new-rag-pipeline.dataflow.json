@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "RAG · dalla domanda alla risposta citata",
+    "subtitle": "La domanda diventa un vettore, recupera i chunk più vicini, che diventano contesto per l'LLM",
+    "output": "new-rag-pipeline.html",
+    "viewBox": [1160, 460],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "principale", "label": "Percorso", "focus": ["q", "emb", "vdb", "ctx", "llm"], "note": "Il flusso principale sinistra→destra." }
+    ]
+  },
+  "stages": [
+    { "label": "Domanda" },
+    { "label": "Embedding" },
+    { "label": "Recupero" },
+    { "label": "Contesto" },
+    { "label": "Generazione" }
+  ],
+  "nodes": [
+    { "id": "q", "type": "frontend", "label": "Domanda", "sublabel": "utente", "stage": 0, "row": 1, "tag": "testo" },
+    { "id": "emb", "type": "backend", "label": "Embedding", "sublabel": "testo → vettore", "stage": 1, "row": 1, "tag": "modello" },
+    { "id": "vdb", "type": "database", "label": "Vector DB", "sublabel": "ricerca per vicinanza", "stage": 2, "row": 1, "tag": "ANN" },
+    { "id": "ctx", "type": "backend", "label": "Top-k chunk", "sublabel": "i più simili", "stage": 3, "row": 1, "tag": "contesto" },
+    { "id": "llm", "type": "backend", "label": "LLM", "sublabel": "risposta citata", "stage": 4, "row": 1, "tag": "grounded" }
+  ],
+  "flows": [
+    { "id": "q-emb", "from": "q", "to": "emb", "label": "testo", "classification": "query", "variant": "emphasis", "route": "straight" },
+    { "id": "emb-vdb", "from": "emb", "to": "vdb", "label": "vettore", "classification": "embedding", "variant": "default", "route": "straight" },
+    { "id": "vdb-ctx", "from": "vdb", "to": "ctx", "label": "k vicini", "classification": "chunk", "variant": "emphasis", "route": "straight" },
+    { "id": "ctx-llm", "from": "ctx", "to": "llm", "label": "prompt + contesto", "classification": "augment", "variant": "default", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Perché funziona", "items": ["SQL cerca valori esatti: «felino» non trova «gatto»", "L'embedding cattura il SIGNIFICATO: testi simili finiscono vicini", "Il Vector DB risponde: «quali sono i più vicini?»"] },
+    { "dot": "cyan", "title": "Indicizzazione (offline)", "items": ["I documenti sono spezzati in chunk e trasformati in vettori una volta", "Vivono nel Vector DB pronti per la ricerca", "A query time si confronta solo la domanda con l'indice"] }
+  ]
+}

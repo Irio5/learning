@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Human-in-the-loop via signal",
+    "subtitle": "Il run resta sospeso (anche giorni) finché l'auditor approva — senza consumare risorse",
+    "output": "new-hitl-signal.html",
+    "viewBox": [820, 640],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "Utente", "sublabel": "avvia il run" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "orchestratore" },
+    { "id": "wf", "type": "backend", "label": "Workflow run", "sublabel": "Temporal" },
+    { "id": "auditor", "type": "external", "label": "Auditor", "sublabel": "revisore umano" }
+  ],
+  "segments": [
+    { "from": 175, "to": 300, "label": "Avvio" },
+    { "from": 310, "to": 405, "label": "Attesa durevole" },
+    { "from": 415, "to": 520, "label": "Ripresa" }
+  ],
+  "messages": [
+    { "id": "m0", "from": "user", "to": "api", "y": 185, "label": "avvia run", "variant": "emphasis" },
+    { "id": "m1", "from": "api", "to": "wf", "y": 228, "label": "start workflow", "variant": "default" },
+    { "id": "m2", "from": "wf", "to": "auditor", "y": 271, "label": "richiede approvazione", "variant": "dashed", "note": "await condition(approved) sospende il run in modo durevole: 0 risorse mentre aspetta." },
+    { "id": "m3", "from": "auditor", "to": "api", "y": 350, "label": "approva (UI)", "variant": "default" },
+    { "id": "m4", "from": "api", "to": "wf", "y": 393, "label": "signal: approved", "variant": "emphasis", "note": "Il signal è un messaggio verso un run in corso: lo risveglia esattamente dov'era." },
+    { "id": "m5", "from": "wf", "to": "api", "y": 460, "label": "run completato", "variant": "return" },
+    { "id": "m6", "from": "api", "to": "user", "y": 503, "label": "risultato", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Perché un signal", "items": ["Niente polling su DB né sleep lunghi", "Il run può attendere giorni senza consumare risorse", "Riparte esattamente dal punto in cui si era fermato"] }
+  ]
+}

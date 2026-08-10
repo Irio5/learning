@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Fan-out · scrittura vs lettura",
+    "subtitle": "Come i pezzi si compongono",
+    "output": "new-fan-out.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guidami",
+        "focus": [
+          "wfan",
+          "rfan",
+          "inbox"
+        ],
+        "note": "I pezzi dell'architettura, uno alla volta."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "author",
+      "type": "security",
+      "label": "Autore",
+      "sublabel": "pubblica 1 post",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "wfan",
+      "type": "backend",
+      "label": "Fan-out write",
+      "sublabel": "scrive N inbox",
+      "pos": [
+        250,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "inbox",
+      "type": "database",
+      "label": "Feed follower",
+      "sublabel": "pronto in lettura",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "reader",
+      "type": "external",
+      "label": "Lettore",
+      "sublabel": "apre il feed",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rfan",
+      "type": "backend",
+      "label": "Fan-out read",
+      "sublabel": "espande al bisogno",
+      "pos": [
+        250,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "posts",
+      "type": "backend",
+      "label": "Post seguiti",
+      "sublabel": "unione a runtime",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "author_wfan",
+      "from": "author",
+      "to": "wfan",
+      "variant": "default"
+    },
+    {
+      "id": "wfan_inbox",
+      "from": "wfan",
+      "to": "inbox",
+      "variant": "default"
+    },
+    {
+      "id": "reader_rfan",
+      "from": "reader",
+      "to": "rfan",
+      "variant": "default"
+    },
+    {
+      "id": "rfan_posts",
+      "from": "rfan",
+      "to": "posts",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Compromessi chiave",
+      "items": [
+        "Fan-out write: Scrittura costosa per chi ha milioni di follower (celebrità): tanti inbox da aggiornare.",
+        "Fan-out read: Scrittura economica, ma la lettura espande il feed ogni volta: costo spostato in lettura.",
+        "Feed follower: Ibrido: fan-out in scrittura per i normali, in lettura per le celebrità."
+      ]
+    }
+  ]
+}
