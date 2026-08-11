@@ -2074,57 +2074,62 @@ function LoggingModule() {
    AI
    ===================================================================== */
 
-const CANNED = "Un indice su una colonna velocizza le ricerche su quella colonna, al costo di scritture un po' più lente. Mettilo dove cerchi spesso.";
+const CANNED = () => T("Un indice su una colonna velocizza le ricerche su quella colonna, al costo di scritture un po’ più lente. Mettilo dove cerchi spesso.", "An index on a column speeds up searches on that column, at the cost of slightly slower writes. Put one where you search often.");
 function LlmModule() {
   const [tab, setTab] = useState("single");
   const [out, setOut] = useState("");
   const [busy, setBusy] = useState(false);
-  const [convo, setConvo] = useState([{ role: "user", content: "A cosa serve un indice?" }, { role: "assistant", content: CANNED }]);
-  const [draft, setDraft] = useState("E se la tabella è piccola?");
+  const [convo, setConvo] = useState(() => [{ role: "user", content: T("A cosa serve un indice?", "What is an index for?") }, { role: "assistant", content: CANNED() }]);
+  const [draft, setDraft] = useState(() => T("E se la tabella è piccola?", "And if the table is small?"));
   const timer = useRef(null);
-  function single() { setBusy(true); setOut(""); clearTimeout(timer.current); timer.current = setTimeout(() => { setOut(CANNED); setBusy(false); }, 700); }
-  function stream() { setBusy(true); setOut(""); clearInterval(timer.current); let i = 0; timer.current = setInterval(() => { i++; setOut(CANNED.slice(0, i)); if (i >= CANNED.length) { clearInterval(timer.current); setBusy(false); } }, 16); }
-  function sendTurn() { if (!draft.trim()) return; setConvo((c) => [...c, { role: "user", content: draft }]); setDraft(""); setTimeout(() => setConvo((c) => [...c, { role: "assistant", content: "Se la tabella è piccola lo scan completo è già veloce: l'indice serve davvero quando le righe diventano tante." }]), 500); }
+  function single() { setBusy(true); setOut(""); clearTimeout(timer.current); timer.current = setTimeout(() => { setOut(CANNED()); setBusy(false); }, 700); }
+  function stream() { setBusy(true); setOut(""); clearInterval(timer.current); const full = CANNED(); let i = 0; timer.current = setInterval(() => { i++; setOut(full.slice(0, i)); if (i >= full.length) { clearInterval(timer.current); setBusy(false); } }, 16); }
+  function sendTurn() { if (!draft.trim()) return; setConvo((c) => [...c, { role: "user", content: draft }]); setDraft(""); setTimeout(() => setConvo((c) => [...c, { role: "assistant", content: T("Se la tabella è piccola lo scan completo è già veloce: l’indice serve davvero quando le righe diventano tante.", "If the table is small a full scan is already fast: an index really earns its keep once the rows pile up.") }]), 500); }
   useEffect(() => () => { clearTimeout(timer.current); clearInterval(timer.current); }, []);
   return (
     <div className="space-y-4">
       <Lead>
-        Usare un LLM via API non è esotico: è <span className="text-white font-medium">una normale POST HTTP</span>.
-        Mandi un body JSON con modello e messaggi, ricevi una risposta JSON. Quello che cambia è il
-        <span className="text-white font-medium"> modo</span> in cui ricevi l'output.
+        {T(
+          <>Usare un LLM via API non è esotico: è <span className="text-white font-medium">una normale POST HTTP</span>.
+          Mandi un body JSON con modello e messaggi, ricevi una risposta JSON. Quello che cambia è il
+          <span className="text-white font-medium"> modo</span> in cui ricevi l'output.</>,
+          <>Using an LLM via API isn't exotic: it's <span className="text-white font-medium">an ordinary HTTP POST</span>.
+          You send a JSON body with a model and messages, you get a JSON response back. What varies is
+          <span className="text-white font-medium"> how</span> you receive the output.</>
+        )}
       </Lead>
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-1">la richiesta (sempre questa forma)</div>
+        <div className="text-xs text-zinc-500 font-mono mb-1">{T("la richiesta (sempre questa forma)", "the request (always this shape)")}</div>
         <Code>{`POST /v1/messages
 {
   "model": "claude-...",
   "messages": [
-    { "role": "user", "content": "A cosa serve un indice?" }
+    { "role": "user", "content": "${T("A cosa serve un indice?", "What is an index for?")}" }
   ]
 }`}</Code>
       </Card>
       <div className="flex flex-wrap gap-2">
-        <Btn active={tab === "single"} onClick={() => { setTab("single"); setOut(""); }}>Risposta singola</Btn>
+        <Btn active={tab === "single"} onClick={() => { setTab("single"); setOut(""); }}>{T("Risposta singola", "Single response")}</Btn>
         <Btn active={tab === "stream"} onClick={() => { setTab("stream"); setOut(""); }}>Streaming</Btn>
-        <Btn active={tab === "convo"} onClick={() => setTab("convo")}>Conversazione</Btn>
+        <Btn active={tab === "convo"} onClick={() => setTab("convo")}>{T("Conversazione", "Conversation")}</Btn>
       </div>
       {tab === "single" && (
         <Card>
-          <p className="text-sm text-zinc-400 mb-3">Una chiamata, aspetti, ricevi tutta la risposta in blocco. Semplice, ma l'utente fissa uno schermo vuoto finché non è pronta.</p>
-          <button onClick={single} disabled={busy} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium transition-colors mb-3"><Play size={15} /> {busy ? "in attesa..." : "Invia"}</button>
-          <div className="min-h-16 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm text-zinc-200">{out || <span className="text-zinc-600">la risposta comparirà qui, tutta insieme</span>}</div>
+          <p className="text-sm text-zinc-400 mb-3">{T("Una chiamata, aspetti, ricevi tutta la risposta in blocco. Semplice, ma l’utente fissa uno schermo vuoto finché non è pronta.", "One call, you wait, you get the whole response in one block. Simple, but the user stares at an empty screen until it is ready.")}</p>
+          <button onClick={single} disabled={busy} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium transition-colors mb-3"><Play size={15} /> {busy ? T("in attesa...", "waiting...") : T("Invia", "Send")}</button>
+          <div className="min-h-16 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm text-zinc-200">{out || <span className="text-zinc-600">{T("la risposta comparirà qui, tutta insieme", "the response will appear here, all at once")}</span>}</div>
         </Card>
       )}
       {tab === "stream" && (
         <Card>
-          <p className="text-sm text-zinc-400 mb-3">Il server manda l'output a pezzetti (token) man mano che lo genera: è il testo che "scorre". Stessa API, parametro <span className="font-mono text-zinc-300">stream: true</span>.</p>
-          <button onClick={stream} disabled={busy} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium transition-colors mb-3"><Play size={15} /> {busy ? "streaming..." : "Invia in streaming"}</button>
+          <p className="text-sm text-zinc-400 mb-3">{T(<>Il server manda l’output a pezzetti (token) man mano che lo genera: è il testo che "scorre". Stessa API, parametro <span className="font-mono text-zinc-300">stream: true</span>.</>, <>The server sends the output in small pieces (tokens) as it generates them: that is the text that "flows" in. Same API, one parameter: <span className="font-mono text-zinc-300">stream: true</span>.</>)}</p>
+          <button onClick={stream} disabled={busy} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium transition-colors mb-3"><Play size={15} /> {busy ? T("streaming...", "streaming...") : T("Invia in streaming", "Send with streaming")}</button>
           <div className="min-h-16 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm text-zinc-200">{out}<span className="text-indigo-400 animate-pulse">{busy ? "▍" : ""}</span></div>
         </Card>
       )}
       {tab === "convo" && (
         <Card>
-          <p className="text-sm text-zinc-400 mb-3">L'API non ha memoria: ogni volta rimandi <span className="text-zinc-200">tutta la storia</span> nel campo <span className="font-mono">messages</span>. La "conversazione" è solo questa lista che cresce.</p>
+          <p className="text-sm text-zinc-400 mb-3">{T(<>L’API non ha memoria: ogni volta rimandi <span className="text-zinc-200">tutta la storia</span> nel campo <span className="font-mono">messages</span>. La "conversazione" è solo questa lista che cresce.</>, <>The API has no memory: every time you resend <span className="text-zinc-200">the whole history</span> in the <span className="font-mono">messages</span> field. The "conversation" is just this list, growing.</>)}</p>
           <div className="space-y-2 mb-3">
             {convo.map((m, i) => (
               <div key={i} className={`rounded-lg px-3 py-2 text-sm border ${m.role === "user" ? "bg-zinc-950 border-zinc-800 text-zinc-300" : "bg-indigo-950 border-indigo-900 text-indigo-100"}`}>
@@ -2133,15 +2138,20 @@ function LlmModule() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendTurn()} placeholder="scrivi un messaggio..." className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 outline-none focus:border-indigo-600" />
+            <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendTurn()} placeholder={T("scrivi un messaggio...", "write a message...")} className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 outline-none focus:border-indigo-600" />
             <button onClick={sendTurn} className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm transition-colors"><Send size={15} /></button>
           </div>
         </Card>
       )}
       <Takeaway>
-        Tre modi, stessa API: <span className="text-white">singola</span> (semplice), <span className="text-white">streaming</span>
-        (UX migliore, testo che scorre), <span className="text-white">conversazione</span> (rimandi la storia ogni volta,
-        perché l'API è senza stato). Questo lo fisserai col progetto di ingest PDF: è letteralmente una di queste chiamate.
+        {T(
+          <>Tre modi, stessa API: <span className="text-white">singola</span> (semplice), <span className="text-white">streaming</span>
+          (UX migliore, testo che scorre), <span className="text-white">conversazione</span> (rimandi la storia ogni volta,
+          perché l'API è senza stato). Questo lo fisserai col progetto di ingest PDF: è letteralmente una di queste chiamate.</>,
+          <>Three modes, one API: <span className="text-white">single</span> (simple), <span className="text-white">streaming</span>
+          (better UX, text flowing in), <span className="text-white">conversation</span> (you resend the history every time,
+          because the API is stateless). This will click during the PDF ingest project: it's literally one of these calls.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -2151,40 +2161,46 @@ function LlmModule() {
    SQL & DATABASE — moduli aggiuntivi (modellazione, aggregazioni, NULL)
    ===================================================================== */
 
-const CARDS = {
+const CARDS = memoByLang(() => ({
   "1:1": {
-    title: "Uno a uno (1:1)", a: "users", b: "profiles",
-    ex: "Un utente ha un solo profilo esteso, e quel profilo appartiene a un solo utente.",
+    title: T("Uno a uno (1:1)", "One to one (1:1)"), a: "users", b: "profiles",
+    ex: T("Un utente ha un solo profilo esteso, e quel profilo appartiene a un solo utente.", "A user has exactly one extended profile, and that profile belongs to exactly one user."),
     fk: "profiles.user_id → users.id   (UNIQUE)",
-    why: "Si separa per togliere dalla tabella principale colonne pesanti o usate di rado (bio lunga, impostazioni). È il caso più raro: spesso si tiene tutto in una tabella sola.",
+    why: T("Si separa per togliere dalla tabella principale colonne pesanti o usate di rado (bio lunga, impostazioni). È il caso più raro: spesso si tiene tutto in una tabella sola.", "You split it to get heavy or rarely used columns out of the main table (a long bio, settings). It's the rarest case: often everything stays in a single table."),
   },
   "1:N": {
-    title: "Uno a molti (1:N)", a: "users", b: "orders",
-    ex: "Un utente ha molti ordini, ma ogni ordine appartiene a un solo utente. È la relazione del nostro schema.",
+    title: T("Uno a molti (1:N)", "One to many (1:N)"), a: "users", b: "orders",
+    ex: T("Un utente ha molti ordini, ma ogni ordine appartiene a un solo utente. È la relazione del nostro schema.", "A user has many orders, but each order belongs to exactly one user. This is the relation in our schema."),
     fk: "orders.user_id → users.id",
-    why: "La più comune in assoluto. La chiave esterna sta sempre dalla parte del 'molti': è l'ordine che punta al suo utente, non il contrario.",
+    why: T("La più comune in assoluto. La chiave esterna sta sempre dalla parte del 'molti': è l'ordine che punta al suo utente, non il contrario.", "By far the most common. The foreign key always sits on the 'many' side: the order points at its user, not the other way round."),
   },
   "N:M": {
-    title: "Molti a molti (N:M)", a: "orders", b: "products",
-    ex: "Un ordine contiene più prodotti, e lo stesso prodotto compare in molti ordini.",
+    title: T("Molti a molti (N:M)", "Many to many (N:M)"), a: "orders", b: "products",
+    ex: T("Un ordine contiene più prodotti, e lo stesso prodotto compare in molti ordini.", "An order contains several products, and the same product appears in many orders."),
     fk: "order_items.order_id → orders.id\norder_items.product_id → products.id",
-    why: "Non puoi collegarle direttamente: serve una terza tabella 'ponte' (order_items) con una FK verso ciascuna delle due. Ogni sua riga = un prodotto dentro un ordine.",
+    why: T("Non puoi collegarle direttamente: serve una terza tabella 'ponte' (order_items) con una FK verso ciascuna delle due. Ogni sua riga = un prodotto dentro un ordine.", "You can't link them directly: you need a third 'bridge' table (order_items) with an FK to each side. Each of its rows = one product inside one order."),
   },
-};
+}));
 
 function ModelloModule() {
   const [k, setK] = useState("1:N");
-  const c = CARDS[k];
+  const c = CARDS()[k];
   return (
     <div className="space-y-4">
       <Lead>
-        Prima ancora di scrivere query, conta <span className="text-white font-medium">come spezzare i dati in tabelle</span>.
-        La regola è una: <span className="text-white font-medium">ogni fatto ha una sola casa</span>. Non riscrivi il nome
-        dell'utente su ognuno dei suoi ordini — lo scrivi una volta in <span className="font-mono text-indigo-300">users</span> e
-        nell'ordine metti solo il suo <span className="font-mono text-amber-300">id</span>. Quel collegamento è la chiave esterna.
+        {T(
+          <>Prima ancora di scrivere query, conta <span className="text-white font-medium">come spezzare i dati in tabelle</span>.
+          La regola è una: <span className="text-white font-medium">ogni fatto ha una sola casa</span>. Non riscrivi il nome
+          dell'utente su ognuno dei suoi ordini — lo scrivi una volta in <span className="font-mono text-indigo-300">users</span> e
+          nell'ordine metti solo il suo <span className="font-mono text-amber-300">id</span>. Quel collegamento è la chiave esterna.</>,
+          <>Before you write a single query, what matters is <span className="text-white font-medium">how you split the data into tables</span>.
+          There's one rule: <span className="text-white font-medium">every fact has exactly one home</span>. You don't rewrite the user's
+          name on each of their orders — you write it once in <span className="font-mono text-indigo-300">users</span> and put only their
+          <span className="font-mono text-amber-300"> id</span> on the order. That link is the foreign key.</>
+        )}
       </Lead>
       <div className="flex flex-wrap gap-2">
-        {Object.keys(CARDS).map((key) => (<Btn key={key} active={k === key} onClick={() => setK(key)}>{key}</Btn>))}
+        {Object.keys(CARDS()).map((key) => (<Btn key={key} active={k === key} onClick={() => setK(key)}>{key}</Btn>))}
       </div>
       <Card>
         <div className="text-sm font-semibold text-zinc-100 mb-3">{c.title}</div>
@@ -2202,19 +2218,29 @@ function ModelloModule() {
           </div>
         </div>
         <p className="text-sm text-zinc-300 leading-relaxed mb-3">{c.ex}</p>
-        <div className="text-xs text-zinc-500 font-mono mb-1">chiave esterna</div>
+        <div className="text-xs text-zinc-500 font-mono mb-1">{T("chiave esterna", "foreign key")}</div>
         <pre className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[12.5px] text-emerald-300 whitespace-pre-wrap">{c.fk}</pre>
         <p className="text-sm text-zinc-400 leading-relaxed mt-3">{c.why}</p>
       </Card>
       <Note tone="indigo" icon={Lightbulb}>
-        Il "molti a molti" è quello che confonde all'inizio: non esiste una freccia diretta. Serve sempre una tabella in mezzo
-        (qui <span className="font-mono">order_items</span>), e da lì diventano due normalissime 1:N. È esattamente per ricomporre
-        queste tabelle separate che esistono le JOIN.
+        {T(
+          <>Il "molti a molti" è quello che confonde all'inizio: non esiste una freccia diretta. Serve sempre una tabella in mezzo
+          (qui <span className="font-mono">order_items</span>), e da lì diventano due normalissime 1:N. È esattamente per ricomporre
+          queste tabelle separate che esistono le JOIN.</>,
+          <>"Many to many" is the one that confuses people at first: there is no direct arrow. You always need a table in between
+          (here <span className="font-mono">order_items</span>), and from there it becomes two perfectly ordinary 1:N relations. Putting
+          these separated tables back together is exactly what JOINs are for.</>
+        )}
       </Note>
       <Takeaway>
-        Spezzi i dati per non ripeterli; li ricolleghi con gli <span className="text-white">id</span>. La FK sta dalla parte
-        del "molti". Se ti accorgi di copiare lo stesso dato su tante righe, quasi sempre manca una tabella. Questo è il grosso
-        di ciò che ti serve sapere di "normalizzazione" per lavorare.
+        {T(
+          <>Spezzi i dati per non ripeterli; li ricolleghi con gli <span className="text-white">id</span>. La FK sta dalla parte
+          del "molti". Se ti accorgi di copiare lo stesso dato su tante righe, quasi sempre manca una tabella. Questo è il grosso
+          di ciò che ti serve sapere di "normalizzazione" per lavorare.</>,
+          <>You split data so you don't repeat it; you link it back with <span className="text-white">ids</span>. The FK sits on the
+          "many" side. If you catch yourself copying the same value across many rows, a table is almost always missing. That's most
+          of what you need to know about "normalisation" to do the job.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -2243,25 +2269,30 @@ function AggregazioniModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Finora ogni query restituiva righe. Un'<span className="text-white font-medium">aggregazione</span> fa il contrario:
-        <span className="text-white font-medium"> schiaccia tante righe in un numero solo</span> — quante sono, la somma, la media.
-        <span className="font-mono text-indigo-300"> GROUP BY</span> dice "fallo separatamente per ogni gruppo".
+        {T(
+          <>Finora ogni query restituiva righe. Un'<span className="text-white font-medium">aggregazione</span> fa il contrario:
+          <span className="text-white font-medium"> schiaccia tante righe in un numero solo</span> — quante sono, la somma, la media.
+          <span className="font-mono text-indigo-300"> GROUP BY</span> dice "fallo separatamente per ogni gruppo".</>,
+          <>So far every query returned rows. An <span className="text-white font-medium">aggregate</span> does the opposite:
+          <span className="text-white font-medium"> it collapses many rows into a single number</span> — how many, the sum, the average.
+          <span className="font-mono text-indigo-300"> GROUP BY</span> says "do that separately for each group".</>
+        )}
       </Lead>
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">15 ordini → raggruppati per status</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("15 ordini → raggruppati per status", "15 orders → grouped by status")}</div>
         <div className="grid grid-cols-3 gap-2">
           {buckets.map((b) => (
             <div key={b.status} className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-center">
               <div className="font-mono text-xs text-zinc-400 mb-1">{b.status}</div>
               <div className="text-2xl font-bold text-indigo-300">{b.count}</div>
-              <div className="text-[11px] text-zinc-500 font-mono">righe · €{b.sum}</div>
+              <div className="text-[11px] text-zinc-500 font-mono">{T("righe", "rows")} · €{b.sum}</div>
             </div>
           ))}
         </div>
-        <p className="text-xs text-zinc-500 mt-2 font-mono">COUNT(*) = righe nel gruppo · SUM(amount) = totale del gruppo</p>
+        <p className="text-xs text-zinc-500 mt-2 font-mono">{T("COUNT(*) = righe nel gruppo · SUM(amount) = totale del gruppo", "COUNT(*) = rows in the group · SUM(amount) = group total")}</p>
       </Card>
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">prova (cliccale)</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("prova (cliccale)", "try them (click)")}</div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           {AGG_PRESETS.map((p, i) => (
             <button key={i} onClick={() => setSql(p)} title={p} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-950 text-[11px] font-mono text-zinc-400 hover:border-indigo-600 hover:text-indigo-300 transition-colors">{i + 1}</button>
@@ -2277,15 +2308,26 @@ function AggregazioniModule() {
         )}
       </Card>
       <Note tone="amber" icon={AlertTriangle}>
-        <span className="text-white">WHERE vs HAVING</span>: WHERE filtra le <span className="text-amber-100">righe prima</span> di
-        raggruppare; HAVING filtra i <span className="text-amber-100">gruppi dopo</span>. "Solo ordini sopra i 50€" → WHERE.
-        "Solo utenti con più di un ordine" → <span className="font-mono">HAVING COUNT(*) &gt; 1</span>, perché quel conteggio
-        esiste soltanto dopo aver raggruppato.
+        {T(
+          <><span className="text-white">WHERE vs HAVING</span>: WHERE filtra le <span className="text-amber-100">righe prima</span> di
+          raggruppare; HAVING filtra i <span className="text-amber-100">gruppi dopo</span>. "Solo ordini sopra i 50€" → WHERE.
+          "Solo utenti con più di un ordine" → <span className="font-mono">HAVING COUNT(*) &gt; 1</span>, perché quel conteggio
+          esiste soltanto dopo aver raggruppato.</>,
+          <><span className="text-white">WHERE vs HAVING</span>: WHERE filters the <span className="text-amber-100">rows before</span>
+          grouping; HAVING filters the <span className="text-amber-100">groups after</span>. "Only orders above €50" → WHERE.
+          "Only users with more than one order" → <span className="font-mono">HAVING COUNT(*) &gt; 1</span>, because that count only
+          exists once you've grouped.</>
+        )}
       </Note>
       <Takeaway>
-        Quando in SELECT metti una funzione come COUNT/SUM, ogni altra colonna "normale" deve stare in GROUP BY — altrimenti il
-        DB non sa quale valore mostrare per il gruppo (prova <span className="font-mono text-emerald-200">SELECT name, COUNT(*) FROM users</span>:
-        errore). Ricorda che stai descrivendo un gruppo intero, non una riga.
+        {T(
+          <>Quando in SELECT metti una funzione come COUNT/SUM, ogni altra colonna "normale" deve stare in GROUP BY — altrimenti il
+          DB non sa quale valore mostrare per il gruppo (prova <span className="font-mono text-emerald-200">SELECT name, COUNT(*) FROM users</span>:
+          errore). Ricorda che stai descrivendo un gruppo intero, non una riga.</>,
+          <>When you put a function like COUNT/SUM in a SELECT, every other "plain" column has to be in GROUP BY — otherwise the
+          DB doesn't know which value to show for the group (try <span className="font-mono text-emerald-200">SELECT name, COUNT(*) FROM users</span>:
+          error). Remember you're describing a whole group, not a row.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -2305,17 +2347,27 @@ function NullModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        <span className="font-mono text-zinc-500">NULL</span> non è zero e non è stringa vuota: vuol dire
-        <span className="text-white font-medium"> "non lo so / manca"</span>. E qui c'è la trappola che frega tutti:
-        ogni confronto con NULL non è né vero né falso, è <span className="text-white font-medium">sconosciuto</span> —
-        e una riga "sconosciuta" non passa mai il filtro.
+        {T(
+          <><span className="font-mono text-zinc-500">NULL</span> non è zero e non è stringa vuota: vuol dire
+          <span className="text-white font-medium"> "non lo so / manca"</span>. E qui c'è la trappola che frega tutti:
+          ogni confronto con NULL non è né vero né falso, è <span className="text-white font-medium">sconosciuto</span> —
+          e una riga "sconosciuta" non passa mai il filtro.</>,
+          <><span className="font-mono text-zinc-500">NULL</span> is not zero and not an empty string: it means
+          <span className="text-white font-medium"> "I don't know / it's missing"</span>. And here's the trap that catches everyone:
+          any comparison with NULL is neither true nor false, it's <span className="text-white font-medium">unknown</span> —
+          and an "unknown" row never passes the filter.</>
+        )}
       </Lead>
       <Analogy>
-        NULL è una <span className="text-zinc-100">casella lasciata in bianco su un modulo</span>: non è «zero», è «non compilato». Chiedere «chi ha scritto
-        vuoto uguale vuoto?» non ha senso — devi chiedere «chi ha lasciato la casella in bianco?». Ed è esattamente <span className="font-mono">IS NULL</span>.
+        {T(
+          <>NULL è una <span className="text-zinc-100">casella lasciata in bianco su un modulo</span>: non è «zero», è «non compilato». Chiedere «chi ha scritto
+          vuoto uguale vuoto?» non ha senso — devi chiedere «chi ha lasciato la casella in bianco?». Ed è esattamente <span className="font-mono">IS NULL</span>.</>,
+          <>NULL is a <span className="text-zinc-100">box left blank on a form</span>: it isn't “zero”, it's “not filled in”. Asking “who wrote
+          blank equals blank?” makes no sense — you have to ask “who left the box blank?”. And that is exactly <span className="font-mono">IS NULL</span>.</>
+        )}
       </Analogy>
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">users · alcuni telefoni mancano</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("users · alcuni telefoni mancano", "users · some phone numbers are missing")}</div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-mono">
             <thead><tr className="text-zinc-500 text-xs border-b border-zinc-800">
@@ -2339,10 +2391,10 @@ function NullModule() {
         </div>
       </Card>
       <Predict
-        question="Due utenti (Luca, Marco) hanno phone a NULL. Quante righe restituisce WHERE phone = NULL?"
-        options={["2 righe (Luca e Marco)", "0 righe, sempre", "Tutte e 5 le righe"]}
+        question={T("Due utenti (Luca, Marco) hanno phone a NULL. Quante righe restituisce WHERE phone = NULL?", "Two users (Luca, Marco) have phone set to NULL. How many rows does WHERE phone = NULL return?")}
+        options={T(["2 righe (Luca e Marco)", "0 righe, sempre", "Tutte e 5 le righe"], ["2 rows (Luca and Marco)", "0 rows, always", "All 5 rows"])}
         answer={1}
-        explain="= NULL non è mai «vero»: il confronto vale «sconosciuto» e la riga non passa. È la trappola che frega tutti; serve IS NULL."
+        explain={T("= NULL non è mai «vero»: il confronto vale «sconosciuto» e la riga non passa. È la trappola che frega tutti; serve IS NULL.", "= NULL is never «true»: the comparison evaluates to «unknown» and the row doesn’t pass. It’s the trap that catches everyone; you need IS NULL.")}
       />
       <div className="flex flex-wrap gap-2">
         <Btn active={mode === "eq"} onClick={() => setMode("eq")}>WHERE phone = NULL</Btn>
@@ -2351,26 +2403,41 @@ function NullModule() {
       <Card tone={mode === "eq" ? "red" : "emerald"}>
         <div className="flex gap-2 text-sm">
           {mode === "eq" ? (
-            <><AlertTriangle size={15} className="text-red-400 shrink-0 mt-0.5" /><span className="text-red-200 leading-relaxed"><span className="font-mono">phone = NULL</span> → <span className="text-white">0 righe</span>, sempre. Sembra corretto ma è un filtro morto: NULL non è "uguale" a nulla, nemmeno a un altro NULL.</span></>
+            <><AlertTriangle size={15} className="text-red-400 shrink-0 mt-0.5" /><span className="text-red-200 leading-relaxed">{T(<><span className="font-mono">phone = NULL</span> → <span className="text-white">0 righe</span>, sempre. Sembra corretto ma è un filtro morto: NULL non è "uguale" a nulla, nemmeno a un altro NULL.</>, <><span className="font-mono">phone = NULL</span> → <span className="text-white">0 rows</span>, always. It looks right but it is a dead filter: NULL is not "equal" to anything, not even to another NULL.</>)}</span></>
           ) : (
-            <><CircleOff size={15} className="text-emerald-400 shrink-0 mt-0.5" /><span className="text-emerald-200 leading-relaxed"><span className="font-mono">phone IS NULL</span> → <span className="text-white">{matched.length} righe</span> (Luca, Marco). Questo è il modo giusto di cercare i valori mancanti.</span></>
+            <><CircleOff size={15} className="text-emerald-400 shrink-0 mt-0.5" /><span className="text-emerald-200 leading-relaxed">{T(<><span className="font-mono">phone IS NULL</span> → <span className="text-white">{matched.length} righe</span> (Luca, Marco). Questo è il modo giusto di cercare i valori mancanti.</>, <><span className="font-mono">phone IS NULL</span> → <span className="text-white">{matched.length} rows</span> (Luca, Marco). This is the right way to look for missing values.</>)}</span></>
           )}
         </div>
       </Card>
       <Note tone="indigo" icon={Lightbulb}>
-        Per mostrare un ripiego quando il dato manca: <span className="font-mono text-indigo-100">COALESCE(phone, 'n/d')</span> —
-        restituisce il telefono se c'è, altrimenti la stringa che gli dai. Serve a non far comparire "NULL" nell'interfaccia.
+        {T(
+          <>Per mostrare un ripiego quando il dato manca: <span className="font-mono text-indigo-100">COALESCE(phone, 'n/d')</span> —
+          restituisce il telefono se c'è, altrimenti la stringa che gli dai. Serve a non far comparire "NULL" nell'interfaccia.</>,
+          <>To show a fallback when the value is missing: <span className="font-mono text-indigo-100">COALESCE(phone, 'n/a')</span> —
+          it returns the phone if there is one, otherwise the string you give it. It keeps "NULL" out of the interface.</>
+        )}
       </Note>
       <Note tone="amber" icon={AlertTriangle}>
-        La trappola vera in produzione: fai un <span className="font-mono">LEFT JOIN</span> per tenere anche gli utenti senza
-        ordini, poi aggiungi <span className="font-mono">WHERE o.status = 'paid'</span>. Quelle righe hanno status
-        <span className="font-mono text-red-300"> NULL</span>, non passano il filtro e spariscono: il tuo LEFT JOIN è ridiventato
-        un INNER senza che te ne accorga. (Torna al modulo JOIN e provalo.)
+        {T(
+          <>La trappola vera in produzione: fai un <span className="font-mono">LEFT JOIN</span> per tenere anche gli utenti senza
+          ordini, poi aggiungi <span className="font-mono">WHERE o.status = 'paid'</span>. Quelle righe hanno status
+          <span className="font-mono text-red-300"> NULL</span>, non passano il filtro e spariscono: il tuo LEFT JOIN è ridiventato
+          un INNER senza che te ne accorga. (Torna al modulo JOIN e provalo.)</>,
+          <>The real production trap: you write a <span className="font-mono">LEFT JOIN</span> to keep users with no orders too,
+          then you add <span className="font-mono">WHERE o.status = 'paid'</span>. Those rows have status
+          <span className="font-mono text-red-300"> NULL</span>, they fail the filter and vanish: your LEFT JOIN silently turned back
+          into an INNER. (Go back to the JOIN module and try it.)</>
+        )}
       </Note>
       <Takeaway>
-        Per i mancanti usa sempre <span className="text-white font-mono">IS NULL</span> / <span className="text-white font-mono">IS NOT NULL</span>,
-        mai <span className="font-mono">= NULL</span>. E ricorda che NULL si propaga: un filtro o un calcolo che tocca un NULL
-        spesso fa sparire la riga. Metà dei bug "mancano dei dati nel report" sono esattamente questo.
+        {T(
+          <>Per i mancanti usa sempre <span className="text-white font-mono">IS NULL</span> / <span className="text-white font-mono">IS NOT NULL</span>,
+          mai <span className="font-mono">= NULL</span>. E ricorda che NULL si propaga: un filtro o un calcolo che tocca un NULL
+          spesso fa sparire la riga. Metà dei bug "mancano dei dati nel report" sono esattamente questo.</>,
+          <>For missing values always use <span className="text-white font-mono">IS NULL</span> / <span className="text-white font-mono">IS NOT NULL</span>,
+          never <span className="font-mono">= NULL</span>. And remember NULL propagates: a filter or a calculation that touches a NULL
+          often makes the row disappear. Half of all "data is missing from the report" bugs are exactly this.</>
+        )}
       </Takeaway>
     </div>
   );
