@@ -1105,12 +1105,17 @@ function QueryModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        SQL è il linguaggio per interrogare il database. Una SELECT dice tre cose: <span className="text-white font-medium">quali colonne</span> (SELECT),
-        <span className="text-white font-medium"> da quale tabella</span> (FROM), <span className="text-white font-medium">con quali filtri</span> (WHERE).
-        Questo è un <span className="text-white font-medium">motore SQL vero</span>: scrivi una query e viene eseguita sui dati reali qui sotto.
+        {T(
+          <>SQL è il linguaggio per interrogare il database. Una SELECT dice tre cose: <span className="text-white font-medium">quali colonne</span> (SELECT),
+          <span className="text-white font-medium"> da quale tabella</span> (FROM), <span className="text-white font-medium">con quali filtri</span> (WHERE).
+          Questo è un <span className="text-white font-medium">motore SQL vero</span>: scrivi una query e viene eseguita sui dati reali qui sotto.</>,
+          <>SQL is the language for querying the database. A SELECT says three things: <span className="text-white font-medium">which columns</span> (SELECT),
+          <span className="text-white font-medium"> from which table</span> (FROM), <span className="text-white font-medium">with which filters</span> (WHERE).
+          This is a <span className="text-white font-medium">real SQL engine</span>: write a query and it runs against the actual data below.</>
+        )}
       </Lead>
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">query di esempio (cliccale)</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("query di esempio (cliccale)", "example queries (click them)")}</div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           {PRESETS.map((p, i) => (
             <button key={i} onClick={() => setSql(p)} title={p} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-950 text-[11px] font-mono text-zinc-400 hover:border-indigo-600 hover:text-indigo-300 transition-colors">{i + 1}</button>
@@ -1120,29 +1125,35 @@ function QueryModule() {
           className="w-full h-24 bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[13px] text-emerald-300 outline-none focus:border-indigo-600 resize-none" />
       </Card>
       <Card tone={result.ok ? "zinc" : "red"}>
-        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{result.ok ? `risultato · ${result.data.rows.length} righe` : "errore"}</div>
+        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{result.ok ? T(`risultato · ${result.data.rows.length} righe`, `result · ${result.data.rows.length} rows`) : T("errore", "error")}</div>
         {result.ok ? <ResultTable columns={result.data.columns} rows={result.data.rows} /> : (
           <div className="flex gap-2 text-sm text-red-300"><AlertTriangle size={15} className="mt-0.5 shrink-0" /><span className="font-mono">{result.error}</span></div>
         )}
       </Card>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">Cosa capisce il motore</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("Cosa capisce il motore", "What the engine understands")}</div>
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-zinc-400 font-mono">
           <div><span className="text-zinc-200">WHERE</span> = != &gt; &lt; &gt;= &lt;= LIKE</div>
-          <div><span className="text-zinc-200">AND / OR</span> per più condizioni</div>
+          <div><span className="text-zinc-200">AND / OR</span> {T("per più condizioni", "for multiple conditions")}</div>
           <div><span className="text-zinc-200">IS NULL</span> / IS NOT NULL</div>
           <div><span className="text-zinc-200">GROUP BY</span> + COUNT SUM AVG MIN MAX</div>
-          <div><span className="text-zinc-200">HAVING</span> filtra i gruppi</div>
+          <div><span className="text-zinc-200">HAVING</span> {T("filtra i gruppi", "filters the groups")}</div>
           <div><span className="text-zinc-200">ORDER BY</span> col [ASC|DESC]</div>
-          <div><span className="text-zinc-200">LIKE</span> '%acme%' (% = qualsiasi cosa)</div>
+          <div><span className="text-zinc-200">LIKE</span> '%acme%' {T("(% = qualsiasi cosa)", "(% = anything)")}</div>
           <div><span className="text-zinc-200">LIMIT</span> n</div>
         </div>
       </Card>
       <Takeaway>
-        Prova a rompere qualcosa: una colonna che non esiste (<span className="font-mono text-emerald-200">SELECT foo FROM users</span>),
-        o una tabella sbagliata (<span className="font-mono text-emerald-200">FROM clienti</span>).
-        Il motore ti dà un errore preciso — come farebbe Postgres. Capire l'errore è metà del mestiere:
-        <span className="font-mono text-amber-200"> "column does not exist"</span> ti dice subito dove guardare.
+        {T(
+          <>Prova a rompere qualcosa: una colonna che non esiste (<span className="font-mono text-emerald-200">SELECT foo FROM users</span>),
+          o una tabella sbagliata (<span className="font-mono text-emerald-200">FROM clienti</span>).
+          Il motore ti dà un errore preciso — come farebbe Postgres. Capire l'errore è metà del mestiere:
+          <span className="font-mono text-amber-200"> "column does not exist"</span> ti dice subito dove guardare.</>,
+          <>Try breaking something: a column that doesn't exist (<span className="font-mono text-emerald-200">SELECT foo FROM users</span>),
+          or the wrong table (<span className="font-mono text-emerald-200">FROM customers</span>).
+          The engine gives you a precise error — just like Postgres would. Reading the error is half the job:
+          <span className="font-mono text-amber-200"> "column does not exist"</span> tells you immediately where to look.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -1150,43 +1161,43 @@ function QueryModule() {
 
 /* Playground SQL: una tabella grande (vendite) + editor libero + suggerimenti
    di funzioni da scrivere a mano. Riusa il motore runSQL e ResultTable. */
-const VENDITE_COLS = [
-  ["id", "numero", "identificatore univoco della vendita"],
-  ["prodotto", "testo", "cosa è stato venduto"],
-  ["categoria", "testo", "Audio / Video / Accessori / Storage — pochi valori, ottimo per GROUP BY"],
-  ["citta", "testo", "dove è avvenuta la vendita"],
-  ["canale", "testo", "online oppure negozio"],
-  ["mese", "numero", "1–12"],
-  ["quantita", "numero", "pezzi venduti"],
-  ["importo", "numero", "totale in € — prova SUM / AVG / MIN / MAX"],
-  ["sconto", "numero · a volte NULL", "manca su alcune righe: perfetto per IS NULL"],
-];
-const SANDBOX_HINTS = [
-  { gruppo: "Guardare i dati", tone: "zinc", items: [
-    { fn: "SELECT *", desc: "* = tutte le colonne. Il punto di partenza.", sql: "SELECT * FROM vendite LIMIT 10;" },
-    { fn: "SELECT col, col", desc: "Scegli solo le colonne che ti servono.", sql: "SELECT prodotto, importo, citta FROM vendite;" },
+const VENDITE_COLS = memoByLang(() => [
+  ["id", T("numero", "number"), T("identificatore univoco della vendita", "unique identifier of the sale")],
+  ["prodotto", T("testo", "text"), T("cosa è stato venduto", "what was sold")],
+  ["categoria", T("testo", "text"), T("Audio / Video / Accessori / Storage — pochi valori, ottimo per GROUP BY", "Audio / Video / Accessories / Storage — few distinct values, great for GROUP BY")],
+  ["citta", T("testo", "text"), T("dove è avvenuta la vendita", "where the sale happened")],
+  ["canale", T("testo", "text"), T("online oppure negozio", "online or in-store")],
+  ["mese", T("numero", "number"), "1–12"],
+  ["quantita", T("numero", "number"), T("pezzi venduti", "units sold")],
+  ["importo", T("numero", "number"), T("totale in € — prova SUM / AVG / MIN / MAX", "total in € — try SUM / AVG / MIN / MAX")],
+  ["sconto", T("numero · a volte NULL", "number · sometimes NULL"), T("manca su alcune righe: perfetto per IS NULL", "missing on some rows: perfect for IS NULL")],
+]);
+const SANDBOX_HINTS = memoByLang(() => [
+  { gruppo: T("Guardare i dati", "Looking at the data"), tone: "zinc", items: [
+    { fn: "SELECT *", desc: T("* = tutte le colonne. Il punto di partenza.", "* = every column. The starting point."), sql: "SELECT * FROM vendite LIMIT 10;" },
+    { fn: "SELECT col, col", desc: T("Scegli solo le colonne che ti servono.", "Pick only the columns you need."), sql: "SELECT prodotto, importo, citta FROM vendite;" },
   ]},
-  { gruppo: "Filtrare · WHERE", tone: "indigo", items: [
-    { fn: "WHERE", desc: "Tieni solo le righe che rispettano la condizione.", sql: "SELECT * FROM vendite WHERE citta = 'Berlin';" },
-    { fn: "AND / OR", desc: "Combina più condizioni in un unico filtro.", sql: "SELECT * FROM vendite WHERE canale = 'online' AND importo > 300;" },
-    { fn: "LIKE", desc: "Testo parziale: % sta per «qualsiasi cosa».", sql: "SELECT prodotto, categoria FROM vendite WHERE prodotto LIKE '%Disk%';" },
-    { fn: "IS NULL", desc: "Lo sconto a volte manca (NULL). Occhio: sconto = NULL torna 0 righe!", sql: "SELECT id, prodotto, sconto FROM vendite WHERE sconto IS NULL;" },
+  { gruppo: T("Filtrare · WHERE", "Filtering · WHERE"), tone: "indigo", items: [
+    { fn: "WHERE", desc: T("Tieni solo le righe che rispettano la condizione.", "Keep only the rows that match the condition."), sql: "SELECT * FROM vendite WHERE citta = 'Berlin';" },
+    { fn: "AND / OR", desc: T("Combina più condizioni in un unico filtro.", "Combine several conditions into one filter."), sql: "SELECT * FROM vendite WHERE canale = 'online' AND importo > 300;" },
+    { fn: "LIKE", desc: T("Testo parziale: % sta per «qualsiasi cosa».", "Partial text: % stands for “anything”."), sql: "SELECT prodotto, categoria FROM vendite WHERE prodotto LIKE '%Disk%';" },
+    { fn: "IS NULL", desc: T("Lo sconto a volte manca (NULL). Occhio: sconto = NULL torna 0 righe!", "The discount is sometimes missing (NULL). Careful: sconto = NULL returns 0 rows!"), sql: "SELECT id, prodotto, sconto FROM vendite WHERE sconto IS NULL;" },
   ]},
-  { gruppo: "Contare & sommare", tone: "amber", items: [
-    { fn: "COUNT(*)", desc: "Quante righe? (qui: quante vendite).", sql: "SELECT COUNT(*) FROM vendite;" },
-    { fn: "SUM", desc: "Somma una colonna numerica: l'incasso totale.", sql: "SELECT SUM(importo) FROM vendite;" },
-    { fn: "AVG · MIN · MAX", desc: "Media, minimo e massimo di una colonna.", sql: "SELECT AVG(importo), MIN(importo), MAX(importo) FROM vendite;" },
+  { gruppo: T("Contare & sommare", "Counting & summing"), tone: "amber", items: [
+    { fn: "COUNT(*)", desc: T("Quante righe? (qui: quante vendite).", "How many rows? (here: how many sales)."), sql: "SELECT COUNT(*) FROM vendite;" },
+    { fn: "SUM", desc: T("Somma una colonna numerica: l'incasso totale.", "Sum a numeric column: total revenue."), sql: "SELECT SUM(importo) FROM vendite;" },
+    { fn: "AVG · MIN · MAX", desc: T("Media, minimo e massimo di una colonna.", "Average, minimum and maximum of a column."), sql: "SELECT AVG(importo), MIN(importo), MAX(importo) FROM vendite;" },
   ]},
-  { gruppo: "Raggruppare · GROUP BY", tone: "emerald", items: [
-    { fn: "GROUP BY", desc: "Una riga per gruppo, con l'aggregato di quel gruppo.", sql: "SELECT categoria, COUNT(*), SUM(importo) FROM vendite GROUP BY categoria;" },
-    { fn: "GROUP BY", desc: "Cambia la colonna di raggruppamento: vendite per città.", sql: "SELECT citta, COUNT(*) FROM vendite GROUP BY citta ORDER BY COUNT(*) DESC;" },
-    { fn: "HAVING", desc: "WHERE filtra le righe; HAVING filtra i gruppi già calcolati.", sql: "SELECT categoria, COUNT(*) FROM vendite GROUP BY categoria HAVING COUNT(*) > 15;" },
+  { gruppo: T("Raggruppare · GROUP BY", "Grouping · GROUP BY"), tone: "emerald", items: [
+    { fn: "GROUP BY", desc: T("Una riga per gruppo, con l'aggregato di quel gruppo.", "One row per group, with that group's aggregate."), sql: "SELECT categoria, COUNT(*), SUM(importo) FROM vendite GROUP BY categoria;" },
+    { fn: "GROUP BY", desc: T("Cambia la colonna di raggruppamento: vendite per città.", "Change the grouping column: sales by city."), sql: "SELECT citta, COUNT(*) FROM vendite GROUP BY citta ORDER BY COUNT(*) DESC;" },
+    { fn: "HAVING", desc: T("WHERE filtra le righe; HAVING filtra i gruppi già calcolati.", "WHERE filters rows; HAVING filters the groups once they're computed."), sql: "SELECT categoria, COUNT(*) FROM vendite GROUP BY categoria HAVING COUNT(*) > 15;" },
   ]},
-  { gruppo: "Ordinare & limitare", tone: "blue", items: [
-    { fn: "ORDER BY", desc: "ASC crescente, DESC decrescente.", sql: "SELECT prodotto, importo FROM vendite ORDER BY importo DESC;" },
-    { fn: "LIMIT", desc: "ORDER BY + LIMIT = la classifica (i primi N).", sql: "SELECT prodotto, importo FROM vendite ORDER BY importo DESC LIMIT 5;" },
+  { gruppo: T("Ordinare & limitare", "Sorting & limiting"), tone: "blue", items: [
+    { fn: "ORDER BY", desc: T("ASC crescente, DESC decrescente.", "ASC ascending, DESC descending."), sql: "SELECT prodotto, importo FROM vendite ORDER BY importo DESC;" },
+    { fn: "LIMIT", desc: T("ORDER BY + LIMIT = la classifica (i primi N).", "ORDER BY + LIMIT = the leaderboard (the top N)."), sql: "SELECT prodotto, importo FROM vendite ORDER BY importo DESC LIMIT 5;" },
   ]},
-];
+]);
 
 function PlaygroundModule() {
   const [sql, setSql] = useState("SELECT * FROM vendite LIMIT 8;");
@@ -1198,19 +1209,28 @@ function PlaygroundModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Fin qui hai visto un pezzo di SQL alla volta. Qui c'è tutto insieme, su una tabella <span className="text-white font-medium">grande</span>:
-        <span className="font-mono text-indigo-300"> vendite</span>, {VENDITE.length} righe reali. Nessun percorso obbligato —
-        <span className="text-white font-medium"> scrivi le query a mano</span>, rompile, correggile. SQL si impara così: interrogando dati veri e leggendo cosa torna.
+        {T(
+          <>Fin qui hai visto un pezzo di SQL alla volta. Qui c'è tutto insieme, su una tabella <span className="text-white font-medium">grande</span>:
+          <span className="font-mono text-indigo-300"> vendite</span>, {VENDITE.length} righe reali. Nessun percorso obbligato —
+          <span className="text-white font-medium"> scrivi le query a mano</span>, rompile, correggile. SQL si impara così: interrogando dati veri e leggendo cosa torna.</>,
+          <>So far you've seen one piece of SQL at a time. Here it's all together, on a <span className="text-white font-medium">big</span> table:
+          <span className="font-mono text-indigo-300"> vendite</span> (sales), {VENDITE.length} real rows. No set path —
+          <span className="text-white font-medium"> write the queries by hand</span>, break them, fix them. That's how SQL sticks: by querying real data and reading what comes back.</>
+        )}
       </Lead>
       <Analogy>
-        SQL è come <span className="text-zinc-100">dare istruzioni a un archivista</span>: non gli spieghi <span className="italic">come</span> cercare, gli dici
-        <span className="italic"> cosa</span> vuoi («i prodotti Video, ordinati per incasso, i primi 5») e lui trova la strada. Tu descrivi il risultato, il database sceglie il metodo.
+        {T(
+          <>SQL è come <span className="text-zinc-100">dare istruzioni a un archivista</span>: non gli spieghi <span className="italic">come</span> cercare, gli dici
+          <span className="italic"> cosa</span> vuoi («i prodotti Video, ordinati per incasso, i primi 5») e lui trova la strada. Tu descrivi il risultato, il database sceglie il metodo.</>,
+          <>SQL is like <span className="text-zinc-100">giving instructions to an archivist</span>: you don't explain <span className="italic">how</span> to search, you say
+          <span className="italic"> what</span> you want (“the Video products, sorted by revenue, top 5”) and they find the way. You describe the result, the database picks the method.</>
+        )}
       </Analogy>
 
       <Card>
-        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-3">la tabella · vendite ({VENDITE.length} righe)</div>
+        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-3">{T(`la tabella · vendite (${VENDITE.length} righe)`, `the table · vendite (${VENDITE.length} rows)`)}</div>
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 mb-4">
-          {VENDITE_COLS.map(([c, t, n]) => (
+          {VENDITE_COLS().map(([c, t, n]) => (
             <div key={c} className="flex items-baseline gap-2 text-sm">
               <span className="font-mono text-indigo-300 shrink-0">{c}</span>
               <span className="font-mono text-[11px] text-zinc-600 shrink-0">{t}</span>
@@ -1224,12 +1244,12 @@ function PlaygroundModule() {
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">scrivi la tua query</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("scrivi la tua query", "write your query")}</div>
         <textarea value={sql} onChange={(e) => setSql(e.target.value)} spellCheck={false}
           className="w-full h-24 bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[13px] text-emerald-300 outline-none focus:border-indigo-600 resize-none" />
       </Card>
       <Card tone={result.ok ? "zinc" : "red"}>
-        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{result.ok ? `risultato · ${result.data.rows.length} righe` : "errore"}</div>
+        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{result.ok ? T(`risultato · ${result.data.rows.length} righe`, `result · ${result.data.rows.length} rows`) : T("errore", "error")}</div>
         {result.ok ? (
           <div className="max-h-72 overflow-y-auto"><ResultTable columns={result.data.columns} rows={result.data.rows} /></div>
         ) : (
@@ -1240,14 +1260,18 @@ function PlaygroundModule() {
       <Card>
         <div className="flex items-center gap-2 mb-1">
           <Terminal size={15} className="text-indigo-400" />
-          <span className="text-sm font-semibold text-zinc-200">Suggerimenti — provale a scrivere a mano</span>
+          <span className="text-sm font-semibold text-zinc-200">{T("Suggerimenti — provale a scrivere a mano", "Prompts — try writing them by hand")}</span>
         </div>
         <p className="text-xs text-zinc-500 mb-4">
-          Leggi l'obiettivo, <span className="text-zinc-300">digita tu la query</span> nell'editor qui sopra, poi confronta con l'esempio.
-          «Inserisci» te la mette pronta se sei bloccato — ma il valore vero sta nel <span className="text-zinc-300">modificarla</span>: cambia un valore, aggiungi un AND, ribaltala.
+          {T(
+            <>Leggi l'obiettivo, <span className="text-zinc-300">digita tu la query</span> nell'editor qui sopra, poi confronta con l'esempio.
+            «Inserisci» te la mette pronta se sei bloccato — ma il valore vero sta nel <span className="text-zinc-300">modificarla</span>: cambia un valore, aggiungi un AND, ribaltala.</>,
+            <>Read the goal, <span className="text-zinc-300">type the query yourself</span> in the editor above, then compare with the example.
+            “Insert” drops it in ready-made if you're stuck — but the real value is in <span className="text-zinc-300">changing it</span>: swap a value, add an AND, flip it around.</>
+          )}
         </p>
         <div className="space-y-4">
-          {SANDBOX_HINTS.map((g) => (
+          {SANDBOX_HINTS().map((g) => (
             <div key={g.gruppo}>
               <div className="mb-2"><Pill tone={g.tone}>{g.gruppo}</Pill></div>
               <div className="space-y-1.5">
@@ -1255,7 +1279,7 @@ function PlaygroundModule() {
                   <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-950 p-2.5">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-[11px] text-indigo-300">{it.fn}</span>
-                      <button onClick={() => setSql(it.sql)} className="ml-auto text-[11px] font-mono text-zinc-500 hover:text-indigo-300 border border-zinc-800 hover:border-indigo-700 rounded px-2 py-0.5 transition-colors">Inserisci</button>
+                      <button onClick={() => setSql(it.sql)} className="ml-auto text-[11px] font-mono text-zinc-500 hover:text-indigo-300 border border-zinc-800 hover:border-indigo-700 rounded px-2 py-0.5 transition-colors">{T("Inserisci", "Insert")}</button>
                     </div>
                     <p className="text-[13px] text-zinc-400 leading-snug mb-1.5">{it.desc}</p>
                     <code className="block font-mono text-[12px] text-emerald-300 break-words">{it.sql}</code>
@@ -1268,14 +1292,24 @@ function PlaygroundModule() {
       </Card>
 
       <Note tone="amber" icon={AlertTriangle}>
-        Rompi le cose di proposito: chiedi una colonna che non esiste (<span className="font-mono">SELECT foo FROM vendite</span>),
-        una tabella sbagliata, o <span className="font-mono">WHERE sconto = NULL</span> (torna 0 righe — capisci perché?).
-        L'errore preciso del motore è una lezione gratis: leggerlo è metà del mestiere.
+        {T(
+          <>Rompi le cose di proposito: chiedi una colonna che non esiste (<span className="font-mono">SELECT foo FROM vendite</span>),
+          una tabella sbagliata, o <span className="font-mono">WHERE sconto = NULL</span> (torna 0 righe — capisci perché?).
+          L'errore preciso del motore è una lezione gratis: leggerlo è metà del mestiere.</>,
+          <>Break things on purpose: ask for a column that doesn't exist (<span className="font-mono">SELECT foo FROM vendite</span>),
+          the wrong table, or <span className="font-mono">WHERE sconto = NULL</span> (returns 0 rows — can you see why?).
+          The engine's precise error is a free lesson: reading it is half the job.</>
+        )}
       </Note>
       <Takeaway>
-        Non serve memorizzare la sintassi: serve sapere <span className="text-white">che domanda</span> fare ai dati e riconoscere i mattoni —
-        filtrare (WHERE), aggregare (COUNT/SUM…), raggruppare (GROUP BY), ordinare (ORDER BY). Il resto si cerca al volo.
-        Torna qui ogni volta che un concetto SQL resta nebuloso e provalo sui dati.
+        {T(
+          <>Non serve memorizzare la sintassi: serve sapere <span className="text-white">che domanda</span> fare ai dati e riconoscere i mattoni —
+          filtrare (WHERE), aggregare (COUNT/SUM…), raggruppare (GROUP BY), ordinare (ORDER BY). Il resto si cerca al volo.
+          Torna qui ogni volta che un concetto SQL resta nebuloso e provalo sui dati.</>,
+          <>You don't need to memorise the syntax: you need to know <span className="text-white">what question</span> to ask the data and to recognise the building
+          blocks — filter (WHERE), aggregate (COUNT/SUM…), group (GROUP BY), sort (ORDER BY). The rest you look up as you go.
+          Come back here whenever a SQL concept stays foggy, and try it on the data.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -1298,25 +1332,41 @@ function JoinModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        I dati sono divisi in tabelle per non ripeterli (un utente, tanti ordini). La JOIN li ricombina facendo
-        combaciare una chiave: <span className="font-mono text-indigo-300">users.id</span> =
-        <span className="font-mono text-amber-300"> orders.user_id</span>. Cambia il tipo di JOIN e guarda chi entra e chi esce.
+        {T(
+          <>I dati sono divisi in tabelle per non ripeterli (un utente, tanti ordini). La JOIN li ricombina facendo
+          combaciare una chiave: <span className="font-mono text-indigo-300">users.id</span> =
+          <span className="font-mono text-amber-300"> orders.user_id</span>. Cambia il tipo di JOIN e guarda chi entra e chi esce.</>,
+          <>Data is split across tables so it isn't repeated (one user, many orders). A JOIN recombines them by matching
+          a key: <span className="font-mono text-indigo-300">users.id</span> =
+          <span className="font-mono text-amber-300"> orders.user_id</span>. Switch the JOIN type and watch who's in and who's out.</>
+        )}
       </Lead>
       <Analogy>
-        Hai <span className="text-zinc-100">due liste su fogli separati</span>: una coi clienti, una cogli ordini, legate dal numero cliente. La JOIN è il gesto di
-        affiancarle e, accanto a ogni ordine, incollare i dati del suo cliente guardando quel numero. <span className="text-zinc-100">LEFT</span> = tieni comunque
-        ogni cliente, anche chi non ha ordini (spazi vuoti accanto); <span className="text-zinc-100">INNER</span> = tieni solo le righe che combaciano.
+        {T(
+          <>Hai <span className="text-zinc-100">due liste su fogli separati</span>: una coi clienti, una cogli ordini, legate dal numero cliente. La JOIN è il gesto di
+          affiancarle e, accanto a ogni ordine, incollare i dati del suo cliente guardando quel numero. <span className="text-zinc-100">LEFT</span> = tieni comunque
+          ogni cliente, anche chi non ha ordini (spazi vuoti accanto); <span className="text-zinc-100">INNER</span> = tieni solo le righe che combaciano.</>,
+          <>You have <span className="text-zinc-100">two lists on separate sheets</span>: one of customers, one of orders, tied together by the customer number. A JOIN is
+          the act of laying them side by side and, next to each order, pasting in that customer's details by looking up the number. <span className="text-zinc-100">LEFT</span> =
+          keep every customer regardless, even those with no orders (blanks beside them); <span className="text-zinc-100">INNER</span> = keep only the rows that match.</>
+        )}
       </Analogy>
       <Predict
-        question="Sei in INNER JOIN. L'utente 10 non ha nessun ordine. Compare nel risultato?"
-        options={["Sì, con le colonne ordine a NULL", "No, sparisce dal risultato", "Dà un errore"]}
+        question={T("Sei in INNER JOIN. L'utente 10 non ha nessun ordine. Compare nel risultato?", "You're using an INNER JOIN. User 10 has no orders at all. Do they show up in the result?")}
+        options={T(
+          ["Sì, con le colonne ordine a NULL", "No, sparisce dal risultato", "Dà un errore"],
+          ["Yes, with the order columns set to NULL", "No, they drop out of the result", "It throws an error"]
+        )}
         answer={1}
-        explain="INNER è l'intersezione: se non c'è un ordine che combacia, la riga non esiste. Per tenerlo comunque serve il LEFT JOIN."
+        explain={T(
+          "INNER è l'intersezione: se non c'è un ordine che combacia, la riga non esiste. Per tenerlo comunque serve il LEFT JOIN.",
+          "INNER is the intersection: with no matching order, the row simply doesn't exist. To keep them anyway you need a LEFT JOIN."
+        )}
       />
       <div className="flex flex-wrap gap-2">
         <Btn active={type === "INNER"} onClick={() => setType("INNER")}>INNER JOIN</Btn>
         <Btn active={type === "LEFT"} onClick={() => setType("LEFT")}>LEFT JOIN</Btn>
-        <Btn tone="ghost" active={onlyPaid} onClick={() => setOnlyPaid((v) => !v)}>solo ordini paid</Btn>
+        <Btn tone="ghost" active={onlyPaid} onClick={() => setOnlyPaid((v) => !v)}>{T("solo ordini paid", "paid orders only")}</Btn>
       </div>
       <Code>{`SELECT u.id, u.name, o.id, o.amount, o.status
 FROM users u
@@ -1325,7 +1375,7 @@ ${type} JOIN orders o ON o.user_id = u.id${onlyPaid ? "\nWHERE o.status = 'paid'
         <div className="flex items-center gap-3 mb-2 text-xs font-mono">
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-indigo-800 inline-block" /> users</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-amber-900 inline-block" /> orders</span>
-          <span className="text-zinc-500 ml-auto">{joined.length} righe</span>
+          <span className="text-zinc-500 ml-auto">{joined.length} {T("righe", "rows")}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-mono">
@@ -1348,15 +1398,26 @@ ${type} JOIN orders o ON o.user_id = u.id${onlyPaid ? "\nWHERE o.status = 'paid'
         </div>
       </Card>
       <Note tone="amber" icon={AlertTriangle}>
-        Guarda gli utenti 10, 11, 12 (senza ordini). Con <span className="font-mono">INNER JOIN</span> spariscono:
-        restano solo le righe che combaciano da entrambe le parti. Con <span className="font-mono">LEFT JOIN</span> restano,
-        con le colonne degli ordini a <span className="text-red-300 font-mono">NULL</span>. Attiva anche "solo paid"
-        in INNER: chi ha solo ordini non-paid esce di scena.
+        {T(
+          <>Guarda gli utenti 10, 11, 12 (senza ordini). Con <span className="font-mono">INNER JOIN</span> spariscono:
+          restano solo le righe che combaciano da entrambe le parti. Con <span className="font-mono">LEFT JOIN</span> restano,
+          con le colonne degli ordini a <span className="text-red-300 font-mono">NULL</span>. Attiva anche "solo paid"
+          in INNER: chi ha solo ordini non-paid esce di scena.</>,
+          <>Look at users 10, 11, 12 (no orders). With <span className="font-mono">INNER JOIN</span> they vanish:
+          only rows matching on both sides survive. With <span className="font-mono">LEFT JOIN</span> they stay,
+          with the order columns set to <span className="text-red-300 font-mono">NULL</span>. Now switch on "paid orders only"
+          in INNER: anyone whose orders are all non-paid drops out too.</>
+        )}
       </Note>
       <Takeaway>
-        <span className="text-white">INNER</span> = intersezione (solo le corrispondenze). <span className="text-white">LEFT</span> =
-        tutta la tabella di sinistra, più ciò che combacia a destra (NULL dove non c'è). Il 90% dei bug da JOIN nasce
-        dallo scegliere INNER quando ti servirebbe LEFT, e perdere righe senza accorgertene.
+        {T(
+          <><span className="text-white">INNER</span> = intersezione (solo le corrispondenze). <span className="text-white">LEFT</span> =
+          tutta la tabella di sinistra, più ciò che combacia a destra (NULL dove non c'è). Il 90% dei bug da JOIN nasce
+          dallo scegliere INNER quando ti servirebbe LEFT, e perdere righe senza accorgertene.</>,
+          <><span className="text-white">INNER</span> = intersection (matches only). <span className="text-white">LEFT</span> =
+          the entire left table, plus whatever matches on the right (NULL where nothing does). 90% of JOIN bugs come from
+          picking INNER when you needed LEFT, and losing rows without noticing.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -1401,61 +1462,89 @@ function IndiciModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Il punto critico di un database è <span className="text-white font-medium">come trova una riga</span>.
-        Cerchiamo l'email <span className="font-mono text-emerald-300">{target}</span> tra {rows.length} righe.
-        Senza indice il database parte dalla prima e controlla a una a una. Con un indice (una struttura ordinata) salta direttamente.
+        {T(
+          <>Il punto critico di un database è <span className="text-white font-medium">come trova una riga</span>.
+          Cerchiamo l'email <span className="font-mono text-emerald-300">{target}</span> tra {rows.length} righe.
+          Senza indice il database parte dalla prima e controlla a una a una. Con un indice (una struttura ordinata) salta direttamente.</>,
+          <>The critical thing about a database is <span className="text-white font-medium">how it finds a row</span>.
+          Let's look for the email <span className="font-mono text-emerald-300">{target}</span> among {rows.length} rows.
+          Without an index the database starts at the first and checks one by one. With an index (an ordered structure) it jumps straight there.</>
+        )}
       </Lead>
       <Analogy>
-        Un indice è la <span className="text-zinc-100">rubrica alfabetica in fondo a un manuale</span>: invece di sfogliare tutte le 800 pagine per trovare un termine,
-        vai alla lettera giusta e ci salti in un attimo. Il prezzo? Ogni volta che il libro cambia, va aggiornata anche la rubrica.
+        {T(
+          <>Un indice è la <span className="text-zinc-100">rubrica alfabetica in fondo a un manuale</span>: invece di sfogliare tutte le 800 pagine per trovare un termine,
+          vai alla lettera giusta e ci salti in un attimo. Il prezzo? Ogni volta che il libro cambia, va aggiornata anche la rubrica.</>,
+          <>An index is the <span className="text-zinc-100">alphabetical index at the back of a manual</span>: instead of leafing through all 800 pages to find a term,
+          you go to the right letter and land on it instantly. The price? Every time the book changes, the index has to be updated too.</>
+        )}
       </Analogy>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-1">Ma cos'è, di preciso, un indice?</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-1">{T("Ma cos'è, di preciso, un indice?", "But what exactly is an index?")}</div>
         <p className="text-sm text-zinc-400 leading-relaxed mb-3">
-          Non è una colonna e non è «i dati». È una <span className="text-zinc-200">struttura in più</span>, tenuta a parte, che il
-          database costruisce e aggiorna da solo: in pratica una <span className="text-zinc-200">copia ordinata di una colonna</span> con, accanto a ogni
-          valore, un <span className="text-zinc-200">puntatore</span> alla riga vera. La tabella resta com'è; l'indice serve solo a <span className="text-zinc-200">trovare la riga in fretta</span>.
+          {T(
+            <>Non è una colonna e non è «i dati». È una <span className="text-zinc-200">struttura in più</span>, tenuta a parte, che il
+            database costruisce e aggiorna da solo: in pratica una <span className="text-zinc-200">copia ordinata di una colonna</span> con, accanto a ogni
+            valore, un <span className="text-zinc-200">puntatore</span> alla riga vera. La tabella resta com'è; l'indice serve solo a <span className="text-zinc-200">trovare la riga in fretta</span>.</>,
+            <>It isn't a column and it isn't “the data”. It's an <span className="text-zinc-200">extra structure</span>, kept on the side, that the
+            database builds and maintains by itself: in practice a <span className="text-zinc-200">sorted copy of one column</span> with, next to each
+            value, a <span className="text-zinc-200">pointer</span> to the real row. The table stays as it is; the index exists only to <span className="text-zinc-200">find the row fast</span>.</>
+          )}
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3">
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500 font-mono mb-2">la tabella · in ordine di inserimento</div>
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500 font-mono mb-2">{T("la tabella · in ordine di inserimento", "the table · in insertion order")}</div>
             <div className="font-mono text-[12px] space-y-1">
               {rows.slice(0, 5).map((r) => (
                 <div key={r.id} className="flex gap-3"><span className="text-indigo-300 w-10 shrink-0">#{r.id}</span><span className="text-zinc-400 truncate">{r.email}</span></div>
               ))}
-              <div className="text-zinc-600">…{rows.length} righe, disordinate per email</div>
+              <div className="text-zinc-600">…{rows.length} {T("righe, disordinate per email", "rows, unordered by email")}</div>
             </div>
           </div>
           <div className="rounded-lg border border-emerald-900 bg-emerald-950 p-3">
-            <div className="text-[11px] uppercase tracking-wide text-emerald-400 font-mono mb-2">indice su email · ordinato → puntatore</div>
+            <div className="text-[11px] uppercase tracking-wide text-emerald-400 font-mono mb-2">{T("indice su email · ordinato → puntatore", "index on email · sorted → pointer")}</div>
             <div className="font-mono text-[12px] space-y-1">
               {sorted.slice(0, 5).map((r) => (
                 <div key={r.id} className="flex gap-2 items-center"><span className="text-emerald-200 truncate">{r.email}</span><span className="text-zinc-600">→</span><span className="text-indigo-300 shrink-0">#{r.id}</span></div>
               ))}
-              <div className="text-emerald-800">…qui la ricerca «a salti» è possibile</div>
+              <div className="text-emerald-800">{T("…qui la ricerca «a salti» è possibile", "…here a jump-ahead search becomes possible")}</div>
             </div>
           </div>
         </div>
         <p className="text-sm text-zinc-400 leading-relaxed mt-3">
-          E l'<span className="font-mono text-indigo-300">id</span>? È solo una colonna come le altre. Cercare per id sembra sempre veloce
-          perché la <span className="text-zinc-200">chiave primaria ha già un indice automatico</span>: non è l'id a essere magico, è il suo indice.
-          Su qualsiasi altra colonna su cui cerchi spesso (email, città…) l'indice te lo devi aggiungere tu.
+          {T(
+            <>E l'<span className="font-mono text-indigo-300">id</span>? È solo una colonna come le altre. Cercare per id sembra sempre veloce
+            perché la <span className="text-zinc-200">chiave primaria ha già un indice automatico</span>: non è l'id a essere magico, è il suo indice.
+            Su qualsiasi altra colonna su cui cerchi spesso (email, città…) l'indice te lo devi aggiungere tu.</>,
+            <>And what about <span className="font-mono text-indigo-300">id</span>? It's just a column like any other. Looking up by id always feels fast
+            because the <span className="text-zinc-200">primary key already gets an automatic index</span>: it isn't the id that's magic, it's its index.
+            On any other column you search often (email, city…) you have to add the index yourself.</>
+          )}
         </p>
       </Card>
       <Predict
-        question="Immagina 10 milioni di righe invece di 24. CON un indice, quante righe circa deve toccare il database per trovarne una?"
-        options={["Circa 10 milioni", "Circa la metà (5 milioni)", "Circa 24 (poche decine)"]}
+        question={T(
+          "Immagina 10 milioni di righe invece di 24. CON un indice, quante righe circa deve toccare il database per trovarne una?",
+          "Imagine 10 million rows instead of 24. WITH an index, roughly how many rows does the database have to touch to find one?"
+        )}
+        options={T(
+          ["Circa 10 milioni", "Circa la metà (5 milioni)", "Circa 24 (poche decine)"],
+          ["About 10 million", "About half (5 million)", "About 24 (a couple of dozen)"]
+        )}
         answer={2}
-        explain="La ricerca binaria cresce in modo logaritmico: log₂(10.000.000) ≈ 24. Ecco perché l'indice è la differenza tra 5ms e 500ms."
+        explain={T(
+          "La ricerca binaria cresce in modo logaritmico: log₂(10.000.000) ≈ 24. Ecco perché l'indice è la differenza tra 5ms e 500ms.",
+          "Binary search grows logarithmically: log₂(10,000,000) ≈ 24. That's why an index is the difference between 5ms and 500ms."
+        )}
       />
       <div className="flex flex-wrap gap-2">
-        <Btn active={mode === "noindex"} onClick={() => setMode("noindex")}>Senza indice</Btn>
-        <Btn active={mode === "index"} onClick={() => setMode("index")}>Con indice</Btn>
-        <button onClick={run} disabled={running} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium transition-colors ml-auto"><SearchIcon size={15} /> Esegui ricerca</button>
+        <Btn active={mode === "noindex"} onClick={() => setMode("noindex")}>{T("Senza indice", "Without an index")}</Btn>
+        <Btn active={mode === "index"} onClick={() => setMode("index")}>{T("Con indice", "With an index")}</Btn>
+        <button onClick={run} disabled={running} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium transition-colors ml-auto"><SearchIcon size={15} /> {T("Esegui ricerca", "Run the search")}</button>
       </div>
       {mode === "index" && <Code>{`CREATE INDEX users_email_idx ON users (email);`}</Code>}
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">{mode === "noindex" ? "Seq Scan on users  (legge in ordine fisico finché trova)" : "Index Scan using users_email_idx  (ricerca binaria, pochi salti)"}</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{mode === "noindex" ? T("Seq Scan on users  (legge in ordine fisico finché trova)", "Seq Scan on users  (reads in physical order until it hits)") : T("Index Scan using users_email_idx  (ricerca binaria, pochi salti)", "Index Scan using users_email_idx  (binary search, a handful of hops)")}</div>
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
           {rows.map((r) => {
             const isScanned = scanned.includes(r.id), isActive = activeId === r.id, isMatch = result && r.email === target;
@@ -1471,28 +1560,38 @@ function IndiciModule() {
       {result && (
         <div className="grid sm:grid-cols-2 gap-3">
           <Card tone={result.mode === "noindex" ? "amber" : "emerald"}>
-            <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-1">Righe scansionate</div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-1">{T("Righe scansionate", "Rows scanned")}</div>
             <div className={`text-3xl font-bold ${result.mode === "noindex" ? "text-amber-300" : "text-emerald-300"}`}>{result.count} <span className="text-zinc-600 text-lg font-normal">/ {result.total}</span></div>
             <div className="mt-2 h-2 rounded-full bg-zinc-800 overflow-hidden"><div className={result.mode === "noindex" ? "h-full bg-amber-500" : "h-full bg-emerald-500"} style={{ width: `${(result.count / result.total) * 100}%`, transition: "width .4s" }} /></div>
           </Card>
           <Card>
-            <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-1">Cosa cambia su larga scala</div>
-            <p className="text-sm text-zinc-300 leading-relaxed">{result.mode === "noindex" ? "Su 24 righe è istantaneo lo stesso. Ma su 10 milioni di righe lo scan lineare diventa lentissimo: è qui che nasce «l'app è lenta»." : "Con l'indice i passi crescono in modo logaritmico: anche su 10 milioni di righe restano ~24. Stessa query, esperienza opposta."}</p>
+            <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-1">{T("Cosa cambia su larga scala", "What changes at scale")}</div>
+            <p className="text-sm text-zinc-300 leading-relaxed">{result.mode === "noindex" ? T("Su 24 righe è istantaneo lo stesso. Ma su 10 milioni di righe lo scan lineare diventa lentissimo: è qui che nasce «l'app è lenta».", "On 24 rows it is instant either way. But on 10 million rows a linear scan becomes glacial: this is where “the app is slow” is born.") : T("Con l'indice i passi crescono in modo logaritmico: anche su 10 milioni di righe restano ~24. Stessa query, esperienza opposta.", "With the index the number of steps grows logarithmically: even on 10 million rows it stays around 24. Same query, opposite experience.")}</p>
           </Card>
         </div>
       )}
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">Quando NON serve un indice</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("Quando NON serve un indice", "When you do NOT want an index")}</div>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          L'indice non è gratis: occupa spazio e <span className="text-zinc-200">rallenta le scritture</span> (ogni INSERT/UPDATE
-          deve aggiornarlo). Evitalo su tabelle piccole, su colonne con pochi valori distinti (es. un campo "attivo" sì/no:
-          il database scansiona comunque metà tabella), o su colonne che non usi mai nei filtri. Regola pratica: indicizza
-          le colonne su cui cerchi o fai JOIN spesso.
+          {T(
+            <>L'indice non è gratis: occupa spazio e <span className="text-zinc-200">rallenta le scritture</span> (ogni INSERT/UPDATE
+            deve aggiornarlo). Evitalo su tabelle piccole, su colonne con pochi valori distinti (es. un campo "attivo" sì/no:
+            il database scansiona comunque metà tabella), o su colonne che non usi mai nei filtri. Regola pratica: indicizza
+            le colonne su cui cerchi o fai JOIN spesso.</>,
+            <>An index isn't free: it takes space and <span className="text-zinc-200">slows down writes</span> (every INSERT/UPDATE
+            has to update it too). Skip it on small tables, on columns with few distinct values (say an "active" yes/no field:
+            the database ends up scanning half the table anyway), or on columns you never filter by. Rule of thumb: index
+            the columns you search or JOIN on often.</>
+          )}
         </p>
       </Card>
       <Takeaway>
-        È il punto chiave: l'indice è la differenza tra 5ms e 500ms. Quando crei una tabella, chiediti
-        "su quale colonna cercherò?" e mettici un indice. Lo vedrai pesare sul tempo totale nel modulo Hosting & latenza.
+        {T(
+          <>È il punto chiave: l'indice è la differenza tra 5ms e 500ms. Quando crei una tabella, chiediti
+          "su quale colonna cercherò?" e mettici un indice. Lo vedrai pesare sul tempo totale nel modulo Hosting &amp; latenza.</>,
+          <>This is the key point: an index is the difference between 5ms and 500ms. When you create a table, ask yourself
+          "which column will I search on?" and put an index there. You'll see it weigh on total time in the Hosting &amp; latency module.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -1506,11 +1605,11 @@ function RelazioniModule() {
   function deleteUser1() {
     const linked = ordersC.filter((o) => o.user_id === 1);
     if (fkMode === "RESTRICT") {
-      if (linked.length > 0) return setFkMsg({ ok: false, t: `Errore FK: impossibile eliminare l'utente 1, ha ${linked.length} ordini collegati. Il database blocca l'operazione.` });
-      setUsersC((u) => u.filter((x) => x.id !== 1)); return setFkMsg({ ok: true, t: "Utente eliminato." });
+      if (linked.length > 0) return setFkMsg({ ok: false, t: T(`Errore FK: impossibile eliminare l'utente 1, ha ${linked.length} ordini collegati. Il database blocca l'operazione.`, `FK error: cannot delete user 1, it has ${linked.length} linked orders. The database blocks the operation.`) });
+      setUsersC((u) => u.filter((x) => x.id !== 1)); return setFkMsg({ ok: true, t: T("Utente eliminato.", "User deleted.") });
     }
     setUsersC((u) => u.filter((x) => x.id !== 1)); setOrdersC((o) => o.filter((x) => x.user_id !== 1));
-    setFkMsg({ ok: true, t: `CASCADE: eliminato l'utente 1 e a cascata i suoi ${linked.length} ordini.` });
+    setFkMsg({ ok: true, t: T(`CASCADE: eliminato l'utente 1 e a cascata i suoi ${linked.length} ordini.`, `CASCADE: deleted user 1 and, cascading, their ${linked.length} orders.`) });
   }
   function resetFk() { setUsersC(USERS.slice(0, 4).map((u) => ({ ...u }))); setOrdersC(ORDERS.filter((o) => o.user_id <= 4).map((o) => ({ ...o }))); setFkMsg(null); }
 
@@ -1524,16 +1623,16 @@ function RelazioniModule() {
   function runTransfer() {
     setA(100); setB(50); setDone(null);
     const steps = [];
-    steps.push("BEGIN" + (useTx ? " TRANSACTION" : " (nessuna transazione)"));
+    steps.push("BEGIN" + (useTx ? " TRANSACTION" : T(" (nessuna transazione)", " (no transaction)")));
     const afterA = 100 - 30; setA(afterA); steps.push(`UPDATE conti SET saldo = ${afterA} WHERE id = A   (-30)`);
     if (crash) {
-      steps.push("✗ CRASH del server tra i due passi");
-      if (useTx) { setA(100); setB(50); steps.push("ROLLBACK → tutto annullato, saldi ripristinati"); setDone({ ok: true, t: "Con la transazione: stato coerente. A=100, B=50. Nessun soldo perso." }); }
-      else { setB(50); setDone({ ok: false, t: "Senza transazione: A è stato addebitato ma B mai accreditato. 30€ spariti nel nulla." }); }
+      steps.push(T("✗ CRASH del server tra i due passi", "✗ server CRASH between the two steps"));
+      if (useTx) { setA(100); setB(50); steps.push(T("ROLLBACK → tutto annullato, saldi ripristinati", "ROLLBACK → everything undone, balances restored")); setDone({ ok: true, t: T("Con la transazione: stato coerente. A=100, B=50. Nessun soldo perso.", "With the transaction: consistent state. A=100, B=50. No money lost.") }); }
+      else { setB(50); setDone({ ok: false, t: T("Senza transazione: A è stato addebitato ma B mai accreditato. 30€ spariti nel nulla.", "Without the transaction: A was debited but B never credited. €30 vanished into thin air.") }); }
     } else {
       const afterB = 50 + 30; setB(afterB); steps.push(`UPDATE conti SET saldo = ${afterB} WHERE id = B   (+30)`);
-      if (useTx) steps.push("COMMIT → entrambi i passi confermati");
-      setDone({ ok: true, t: "Trasferimento completato. A=70, B=80." });
+      if (useTx) steps.push(T("COMMIT → entrambi i passi confermati", "COMMIT → both steps confirmed"));
+      setDone({ ok: true, t: T("Trasferimento completato. A=70, B=80.", "Transfer complete. A=70, B=80.") });
     }
     setLog(steps);
   }
@@ -1541,18 +1640,27 @@ function RelazioniModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Le tabelle sono collegate, e il database protegge questi collegamenti. Due meccanismi chiave: cosa succede
-        quando elimini una riga referenziata (<span className="text-white font-medium">foreign key</span>), e come
-        garantire che operazioni a più passi non lascino dati a metà (<span className="text-white font-medium">transazioni</span>).
+        {T(
+          <>Le tabelle sono collegate, e il database protegge questi collegamenti. Due meccanismi chiave: cosa succede
+          quando elimini una riga referenziata (<span className="text-white font-medium">foreign key</span>), e come
+          garantire che operazioni a più passi non lascino dati a metà (<span className="text-white font-medium">transazioni</span>).</>,
+          <>Tables are linked, and the database protects those links. Two key mechanisms: what happens when you delete a
+          referenced row (<span className="text-white font-medium">foreign keys</span>), and how to guarantee that
+          multi-step operations never leave data half-written (<span className="text-white font-medium">transactions</span>).</>
+        )}
       </Lead>
       <Analogy>
-        Una transazione è come <span className="text-zinc-100">prenotare volo + hotel insieme</span>: o parte tutto, o niente. Se a metà scopri che l'hotel è pieno,
-        non vuoi restare col volo pagato e nessuna stanza — si annulla l'intera operazione (ROLLBACK) e torni al punto di partenza, come se non fosse mai iniziata.
+        {T(
+          <>Una transazione è come <span className="text-zinc-100">prenotare volo + hotel insieme</span>: o parte tutto, o niente. Se a metà scopri che l'hotel è pieno,
+          non vuoi restare col volo pagato e nessuna stanza — si annulla l'intera operazione (ROLLBACK) e torni al punto di partenza, come se non fosse mai iniziata.</>,
+          <>A transaction is like <span className="text-zinc-100">booking flight + hotel together</span>: either it all goes through, or none of it does. If halfway you find the hotel is full,
+          you don't want to be left with a paid flight and no room — the whole operation is cancelled (ROLLBACK) and you're back where you started, as if it never began.</>
+        )}
       </Analogy>
 
       {/* FK */}
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">1 · Foreign key: eliminare un utente con ordini</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("1 · Foreign key: eliminare un utente con ordini", "1 · Foreign key: deleting a user who has orders")}</div>
         <div className="flex flex-wrap gap-2 mb-3">
           <Btn active={fkMode === "RESTRICT"} onClick={() => setFkMode("RESTRICT")}>ON DELETE RESTRICT</Btn>
           <Btn active={fkMode === "CASCADE"} onClick={() => setFkMode("CASCADE")}>ON DELETE CASCADE</Btn>
@@ -1571,24 +1679,29 @@ function RelazioniModule() {
         </div>
         <button onClick={resetFk} className="mt-3 text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1"><RotateCcw size={12} /> reset</button>
         <p className="text-sm text-zinc-400 leading-relaxed mt-2">
-          <span className="font-mono text-zinc-200">RESTRICT</span> protegge: non puoi cancellare un utente che ha ordini
-          (eviti ordini "orfani" che puntano al nulla). <span className="font-mono text-zinc-200">CASCADE</span> propaga:
-          cancelli l'utente e i suoi ordini spariscono con lui. Scegli in base a cosa è giusto per il dato.
+          {T(
+            <><span className="font-mono text-zinc-200">RESTRICT</span> protegge: non puoi cancellare un utente che ha ordini
+            (eviti ordini "orfani" che puntano al nulla). <span className="font-mono text-zinc-200">CASCADE</span> propaga:
+            cancelli l'utente e i suoi ordini spariscono con lui. Scegli in base a cosa è giusto per il dato.</>,
+            <><span className="font-mono text-zinc-200">RESTRICT</span> protects: you can't delete a user who has orders
+            (no "orphan" orders pointing at nothing). <span className="font-mono text-zinc-200">CASCADE</span> propagates:
+            you delete the user and their orders go with them. Choose based on what's right for the data.</>
+          )}
         </p>
       </Card>
 
       {/* TX */}
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">2 · Transazione: un bonifico di 30€ da A a B</div>
-        <p className="text-sm text-zinc-400 mb-3">Un bonifico è due passi: togli da A, aggiungi a B. Se il server crasha in mezzo, cosa resta?</p>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("2 · Transazione: un bonifico di 30€ da A a B", "2 · Transaction: a €30 transfer from A to B")}</div>
+        <p className="text-sm text-zinc-400 mb-3">{T("Un bonifico è due passi: togli da A, aggiungi a B. Se il server crasha in mezzo, cosa resta?", "A transfer is two steps: take from A, add to B. If the server crashes in between, what is left?")}</p>
         <div className="flex flex-wrap gap-2 mb-3">
-          <Btn tone="ghost" active={useTx} onClick={() => setUseTx((v) => !v)}>{useTx ? "con transazione" : "senza transazione"}</Btn>
-          <Btn tone="ghost" active={crash} onClick={() => setCrash((v) => !v)}>{crash ? "simula crash a metà" : "nessun crash"}</Btn>
-          <button onClick={runTransfer} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors ml-auto flex items-center gap-2"><Play size={14} /> Esegui bonifico</button>
+          <Btn tone="ghost" active={useTx} onClick={() => setUseTx((v) => !v)}>{useTx ? T("con transazione", "with transaction") : T("senza transazione", "without transaction")}</Btn>
+          <Btn tone="ghost" active={crash} onClick={() => setCrash((v) => !v)}>{crash ? T("simula crash a metà", "simulate a crash halfway") : T("nessun crash", "no crash")}</Btn>
+          <button onClick={runTransfer} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors ml-auto flex items-center gap-2"><Play size={14} /> {T("Esegui bonifico", "Run transfer")}</button>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Card><div className="text-xs text-zinc-500 font-mono mb-1">conto A</div><div className="text-2xl font-bold text-zinc-100">{a}<span className="text-zinc-500 text-base">€</span></div></Card>
-          <Card><div className="text-xs text-zinc-500 font-mono mb-1">conto B</div><div className="text-2xl font-bold text-zinc-100">{b}<span className="text-zinc-500 text-base">€</span></div></Card>
+          <Card><div className="text-xs text-zinc-500 font-mono mb-1">{T("conto A", "account A")}</div><div className="text-2xl font-bold text-zinc-100">{a}<span className="text-zinc-500 text-base">€</span></div></Card>
+          <Card><div className="text-xs text-zinc-500 font-mono mb-1">{T("conto B", "account B")}</div><div className="text-2xl font-bold text-zinc-100">{b}<span className="text-zinc-500 text-base">€</span></div></Card>
         </div>
         {log.length > 0 && (
           <pre className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[12px] text-zinc-400 whitespace-pre-wrap mb-3">{log.join("\n")}</pre>
@@ -1596,9 +1709,14 @@ function RelazioniModule() {
         {done && <div className={`flex gap-2 rounded-lg border px-3 py-2 text-sm ${done.ok ? "border-emerald-800 bg-emerald-950 text-emerald-200" : "border-red-900 bg-red-950 text-red-200"}`}><AlertTriangle size={15} className="mt-0.5 shrink-0" />{done.t}</div>}
       </Card>
       <Takeaway>
-        Una transazione rende un gruppo di operazioni <span className="text-white">"tutto o niente"</span> (la A di ACID,
-        atomicità): o vanno a buon fine tutte, o nessuna, con un ROLLBACK automatico in caso di problema. Ogni volta che
-        un'operazione tocca più righe o più tabelle e devono restare coerenti tra loro, va dentro una transazione.
+        {T(
+          <>Una transazione rende un gruppo di operazioni <span className="text-white">"tutto o niente"</span> (la A di ACID,
+          atomicità): o vanno a buon fine tutte, o nessuna, con un ROLLBACK automatico in caso di problema. Ogni volta che
+          un'operazione tocca più righe o più tabelle e devono restare coerenti tra loro, va dentro una transazione.</>,
+          <>A transaction makes a group of operations <span className="text-white">"all or nothing"</span> (the A in ACID,
+          atomicity): either they all succeed, or none do, with an automatic ROLLBACK if anything goes wrong. Whenever an
+          operation touches multiple rows or tables that have to stay consistent with each other, it belongs in a transaction.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -1608,7 +1726,8 @@ function RelazioniModule() {
    INFRASTRUTTURA
    ===================================================================== */
 
-const REGIONS = ["Europa", "USA", "Asia"];
+const REGIONS = ["Europa", "USA", "Asia"]; // also NET lookup keys — translate on display only
+const region = (r) => T(r, { Europa: "Europe", USA: "USA", Asia: "Asia" }[r] || r);
 const NET = { "Europa|Europa": 10, "Europa|USA": 45, "USA|Europa": 45, "USA|USA": 12, "Asia|Europa": 75, "Europa|Asia": 75, "Asia|USA": 70, "USA|Asia": 70, "Asia|Asia": 14 };
 
 function HostingModule() {
@@ -1619,30 +1738,40 @@ function HostingModule() {
   const server = 15;
   const db = indexed ? 6 : 80;
   const total = network + server + db;
+  // k stays stable across languages: the bottleneck check compares on it, not on the label.
   const parts = [
-    { label: "Rete", ms: network, color: "#3b82f6", hint: `${userR} ↔ ${serverR}` },
-    { label: "Server", ms: server, color: "#8b6cf0", hint: "logica dell'app" },
-    { label: "Database", ms: db, color: "#f59e0b", hint: indexed ? "con indice" : "senza indice" },
+    { k: "net", label: T("Rete", "Network"), ms: network, color: "#3b82f6", hint: `${region(userR)} ↔ ${region(serverR)}` },
+    { k: "server", label: "Server", ms: server, color: "#8b6cf0", hint: T("logica dell'app", "app logic") },
+    { k: "db", label: "Database", ms: db, color: "#f59e0b", hint: indexed ? T("con indice", "with an index") : T("senza indice", "without an index") },
   ];
   const bottleneck = parts.reduce((a, c) => (c.ms > a.ms ? c : a));
   return (
     <div className="space-y-4">
       <Lead>
-        "Hosting" è la macchina, in una <span className="text-white font-medium">regione del mondo</span>, dove l'app
-        è accesa. "Deploy" è metterci sopra il tuo codice. La regione conta perché i dati viaggiano nei cavi a velocità
-        finita: più sei lontano, più aspetti. Componiamo il tempo di risposta totale.
+        {T(
+          <>"Hosting" è la macchina, in una <span className="text-white font-medium">regione del mondo</span>, dove l'app
+          è accesa. "Deploy" è metterci sopra il tuo codice. La regione conta perché i dati viaggiano nei cavi a velocità
+          finita: più sei lontano, più aspetti. Componiamo il tempo di risposta totale.</>,
+          <>"Hosting" is the machine, in some <span className="text-white font-medium">region of the world</span>, where the app
+          is switched on. "Deploy" is putting your code on it. The region matters because data travels through cables at a
+          finite speed: the further away you are, the longer you wait. Let's build up the total response time.</>
+        )}
       </Lead>
       <Analogy>
-        La latenza di rete è la <span className="text-zinc-100">distanza fisica</span>: ordinare da un negozio in città ti arriva prima che dall'altro capo del mondo,
-        per quanto veloce sia il corriere. Per questo, quando la rete è il collo di bottiglia, si avvicina il «negozio» (il server) agli utenti, invece di toccare il prodotto.
+        {T(
+          <>La latenza di rete è la <span className="text-zinc-100">distanza fisica</span>: ordinare da un negozio in città ti arriva prima che dall'altro capo del mondo,
+          per quanto veloce sia il corriere. Per questo, quando la rete è il collo di bottiglia, si avvicina il «negozio» (il server) agli utenti, invece di toccare il prodotto.</>,
+          <>Network latency is <span className="text-zinc-100">physical distance</span>: ordering from a shop in your city arrives sooner than from the other side of the world,
+          however fast the courier is. That's why, when the network is the bottleneck, you move the “shop” (the server) closer to the users instead of touching the product.</>
+        )}
       </Analogy>
       <div className="grid sm:grid-cols-3 gap-3">
-        <Card><div className="text-xs text-zinc-500 font-mono mb-2">Utente in</div><div className="flex flex-col gap-1.5">{REGIONS.map((r) => <Btn key={r} tone="ghost" active={userR === r} onClick={() => setUserR(r)}>{r}</Btn>)}</div></Card>
-        <Card><div className="text-xs text-zinc-500 font-mono mb-2">Server (hosting) in</div><div className="flex flex-col gap-1.5">{REGIONS.slice(0, 2).map((r) => <Btn key={r} tone="ghost" active={serverR === r} onClick={() => setServerR(r)}>{r}</Btn>)}</div></Card>
-        <Card><div className="text-xs text-zinc-500 font-mono mb-2">Database</div><div className="flex flex-col gap-1.5"><Btn tone="ghost" active={indexed} onClick={() => setIndexed(true)}>con indice</Btn><Btn tone="ghost" active={!indexed} onClick={() => setIndexed(false)}>senza indice</Btn></div></Card>
+        <Card><div className="text-xs text-zinc-500 font-mono mb-2">{T("Utente in", "User in")}</div><div className="flex flex-col gap-1.5">{REGIONS.map((r) => <Btn key={r} tone="ghost" active={userR === r} onClick={() => setUserR(r)}>{region(r)}</Btn>)}</div></Card>
+        <Card><div className="text-xs text-zinc-500 font-mono mb-2">{T("Server (hosting) in", "Server (hosting) in")}</div><div className="flex flex-col gap-1.5">{REGIONS.slice(0, 2).map((r) => <Btn key={r} tone="ghost" active={serverR === r} onClick={() => setServerR(r)}>{region(r)}</Btn>)}</div></Card>
+        <Card><div className="text-xs text-zinc-500 font-mono mb-2">Database</div><div className="flex flex-col gap-1.5"><Btn tone="ghost" active={indexed} onClick={() => setIndexed(true)}>{T("con indice", "with an index")}</Btn><Btn tone="ghost" active={!indexed} onClick={() => setIndexed(false)}>{T("senza indice", "without an index")}</Btn></div></Card>
       </div>
       <Card>
-        <div className="flex items-baseline justify-between mb-3"><span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">Tempo di risposta totale</span><span className="text-2xl font-bold text-white">{total}<span className="text-zinc-500 text-base font-normal"> ms</span></span></div>
+        <div className="flex items-baseline justify-between mb-3"><span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">{T("Tempo di risposta totale", "Total response time")}</span><span className="text-2xl font-bold text-white">{total}<span className="text-zinc-500 text-base font-normal"> ms</span></span></div>
         <div className="flex h-8 rounded-lg overflow-hidden border border-zinc-800 mb-3">
           {parts.map((p) => <div key={p.label} style={{ width: `${(p.ms / total) * 100}%`, backgroundColor: p.color, transition: "width .4s" }} className="flex items-center justify-center">{p.ms / total > 0.12 && <span className="text-[11px] font-mono text-black font-semibold">{p.ms}ms</span>}</div>)}
         </div>
@@ -1651,27 +1780,29 @@ function HostingModule() {
         </div>
       </Card>
       <Note icon={SearchIcon}>
-        Collo di bottiglia: <span className="font-mono text-white">{bottleneck.label}</span>.
-        {bottleneck.label === "Rete" && " Soluzione: avvicinare l'hosting agli utenti (o una CDN), non toccare il codice."}
-        {bottleneck.label === "Database" && " Soluzione: aggiungere un indice, non cambiare server."}
-        {bottleneck.label === "Server" && " Qui il problema è nella logica dell'app stessa."}
-        {" "}Questo è il ragionamento diagnostico che ti chiederanno nei ruoli customer-facing.
+        {T("Collo di bottiglia:", "Bottleneck:")} <span className="font-mono text-white">{bottleneck.label}</span>.
+        {bottleneck.k === "net" && T(" Soluzione: avvicinare l'hosting agli utenti (o una CDN), non toccare il codice.", " Fix: move the hosting closer to the users (or add a CDN), don’t touch the code.")}
+        {bottleneck.k === "db" && T(" Soluzione: aggiungere un indice, non cambiare server.", " Fix: add an index, not a bigger server.")}
+        {bottleneck.k === "server" && T(" Qui il problema è nella logica dell'app stessa.", " Here the problem is in the app’s own logic.")}
+        {" "}{T("Questo è il ragionamento diagnostico che ti chiederanno nei ruoli customer-facing.", "This is exactly the diagnostic reasoning customer-facing roles will ask you for.")}
       </Note>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-3">Cos'è un "deploy", in pratica (il tuo stack)</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-3">{T('Cos’è un "deploy", in pratica (il tuo stack)', 'What a "deploy" actually is (your stack)')}</div>
         <div className="space-y-2">
           {[
-            { n: "1", t: "Codice locale", d: "L'app gira sul tuo Mac. Funziona solo lì." },
-            { n: "2", t: "Immagine Docker", d: "Impacchetti app + dipendenze + sistema: un blocco che gira identico ovunque." },
-            { n: "3", t: "Push su un registry", d: "Carichi l'immagine in un magazzino (Artifact Registry / Docker Hub)." },
-            { n: "4", t: "Deploy su Cloud Run", d: "Il cloud accende l'immagine su una macchina in una regione e ti dà un URL." },
-            { n: "5", t: "URL live", d: "Chiunque può mandare richieste HTTP alla tua app. È 'in produzione'." },
+            { n: "1", t: T("Codice locale", "Local code"), d: T("L'app gira sul tuo Mac. Funziona solo lì.", "The app runs on your Mac. It works there and nowhere else.") },
+            { n: "2", t: T("Immagine Docker", "Docker image"), d: T("Impacchetti app + dipendenze + sistema: un blocco che gira identico ovunque.", "You package app + dependencies + system: one block that runs identically anywhere.") },
+            { n: "3", t: T("Push su un registry", "Push to a registry"), d: T("Carichi l'immagine in un magazzino (Artifact Registry / Docker Hub).", "You upload the image to a warehouse (Artifact Registry / Docker Hub).") },
+            { n: "4", t: T("Deploy su Cloud Run", "Deploy to Cloud Run"), d: T("Il cloud accende l'immagine su una macchina in una regione e ti dà un URL.", "The cloud boots the image on a machine in a region and hands you a URL.") },
+            { n: "5", t: T("URL live", "Live URL"), d: T("Chiunque può mandare richieste HTTP alla tua app. È 'in produzione'.", "Anyone can send HTTP requests to your app. It's 'in production'.") },
           ].map((s) => <div key={s.n} className="flex gap-3 items-start"><span className="font-mono text-xs text-indigo-400 mt-0.5 w-4">{s.n}</span><div><span className="text-sm text-zinc-200 font-medium">{s.t}</span><span className="text-sm text-zinc-400"> — {s.d}</span></div></div>)}
         </div>
       </Card>
       <Takeaway>
-        Tieni a mente i tre tempi: rete, server, database. Davanti a una lentezza, prima li misuri, poi sai dove
-        intervenire. La regione di hosting e gli indici sono le due leve che muovi più spesso.
+        {T(
+          "Tieni a mente i tre tempi: rete, server, database. Davanti a una lentezza, prima li misuri, poi sai dove intervenire. La regione di hosting e gli indici sono le due leve che muovi più spesso.",
+          "Keep the three timings in mind: network, server, database. Faced with slowness, measure them first, then you know where to act. Hosting region and indexes are the two levers you'll pull most often."
+        )}
       </Takeaway>
     </div>
   );
@@ -1683,8 +1814,8 @@ function AuthModule() {
   const [pw, setPw] = useState("password123");
   const [tamper, setTamper] = useState(false);
   function call() {
-    if (token === "none") return setResp({ status: 401, body: { error: "Manca il token: chi sei?" } });
-    if (token === "member") return setResp({ status: 403, body: { error: "Servono permessi da admin per /admin/users" } });
+    if (token === "none") return setResp({ status: 401, body: { error: T("Manca il token: chi sei?", "Token missing: who are you?") } });
+    if (token === "member") return setResp({ status: 403, body: { error: T("Servono permessi da admin per /admin/users", "You need admin permissions for /admin/users") } });
     setResp({ status: 200, body: [{ id: 1, name: "Anna", role: "admin" }, { id: 2, name: "Luca", role: "member" }] });
   }
   const tone = resp ? statusTone(resp.status) : "zinc";
@@ -1695,46 +1826,63 @@ function AuthModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Due domande diverse: <span className="text-white font-medium">autenticazione</span> ("chi sei?", risolta dal token)
-        e <span className="text-white font-medium">autorizzazione</span> ("cosa puoi fare?", risolta dai permessi/ruolo).
-        Confonderle è un classico: il primo è 401, il secondo è 403.
+        {T(
+          <>Due domande diverse: <span className="text-white font-medium">autenticazione</span> ("chi sei?", risolta dal token)
+          e <span className="text-white font-medium">autorizzazione</span> ("cosa puoi fare?", risolta dai permessi/ruolo).
+          Confonderle è un classico: il primo è 401, il secondo è 403.</>,
+          <>Two different questions: <span className="text-white font-medium">authentication</span> ("who are you?", answered by the token)
+          and <span className="text-white font-medium">authorisation</span> ("what are you allowed to do?", answered by permissions/role).
+          Mixing them up is a classic: the first is 401, the second is 403.</>
+        )}
       </Lead>
       <Analogy>
-        Un JWT è il <span className="text-zinc-100">braccialetto di un festival</span>: chiunque può leggerci sopra «pass VIP», ma non lo puoi falsificare perché ha un
-        ologramma (la firma) che solo l'organizzazione sa produrre. Cambi la scritta con un pennarello? L'ologramma non torna più e ti fermano all'ingresso.
+        {T(
+          <>Un JWT è il <span className="text-zinc-100">braccialetto di un festival</span>: chiunque può leggerci sopra «pass VIP», ma non lo puoi falsificare perché ha un
+          ologramma (la firma) che solo l'organizzazione sa produrre. Cambi la scritta con un pennarello? L'ologramma non torna più e ti fermano all'ingresso.</>,
+          <>A JWT is a <span className="text-zinc-100">festival wristband</span>: anyone can read “VIP pass” on it, but you can't forge it, because it carries a
+          hologram (the signature) only the organisers can produce. Rewrite the text with a marker? The hologram no longer matches and you're stopped at the gate.</>
+        )}
       </Analogy>
       <Card>
         <div className="font-mono text-sm mb-3"><Pill tone="blue">GET</Pill> <span className="text-indigo-300 ml-1">/admin/users</span></div>
-        <div className="text-xs text-zinc-500 font-mono mb-2">token inviato</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("token inviato", "token sent")}</div>
         <div className="flex flex-wrap gap-2 mb-3">
-          <Btn active={token === "none"} onClick={() => setToken("none")}>nessun token</Btn>
-          <Btn active={token === "member"} onClick={() => setToken("member")}>token member</Btn>
-          <Btn active={token === "admin"} onClick={() => setToken("admin")}>token admin</Btn>
-          <button onClick={call} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors ml-auto flex items-center gap-2"><Send size={14} /> Invia</button>
+          <Btn active={token === "none"} onClick={() => setToken("none")}>{T("nessun token", "no token")}</Btn>
+          <Btn active={token === "member"} onClick={() => setToken("member")}>{T("token member", "member token")}</Btn>
+          <Btn active={token === "admin"} onClick={() => setToken("admin")}>{T("token admin", "admin token")}</Btn>
+          <button onClick={call} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors ml-auto flex items-center gap-2"><Send size={14} /> {T("Invia", "Send")}</button>
         </div>
         {resp && (
           <Card tone={tone}>
-            <div className="flex items-center gap-2 mb-2"><Pill tone={tone}>{resp.status}</Pill><span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">{resp.status === 200 ? "accesso consentito" : "accesso negato"}</span></div>
+            <div className="flex items-center gap-2 mb-2"><Pill tone={tone}>{resp.status}</Pill><span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">{resp.status === 200 ? T("accesso consentito", "access granted") : T("accesso negato", "access denied")}</span></div>
             <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3"><JsonTree data={resp.body} /></div>
           </Card>
         )}
       </Card>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">Com'è fatto un token (JWT)</div>
-        <Code>{`header.payload.signature
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("Com’è fatto un token (JWT)", "What a token (JWT) is made of")}</div>
+        <Code>{T(`header.payload.signature
 
 payload (decodificato):
-{ "sub": "user_42", "role": "admin", "exp": 1730000000 }`}</Code>
+{ "sub": "user_42", "role": "admin", "exp": 1730000000 }`, `header.payload.signature
+
+payload (decoded):
+{ "sub": "user_42", "role": "admin", "exp": 1730000000 }`)}</Code>
         <p className="text-sm text-zinc-400 leading-relaxed mt-2">
-          Il payload dice chi sei e con che ruolo. La <span className="text-zinc-200">firma</span> è calcolata dal server con
-          una chiave segreta: se qualcuno cambia "role" da member ad admin, la firma non torna più e il token viene
-          rifiutato. Per questo non serve nascondere il payload — serve che sia <span className="text-zinc-200">non falsificabile</span>.
+          {T(
+            <>Il payload dice chi sei e con che ruolo. La <span className="text-zinc-200">firma</span> è calcolata dal server con
+            una chiave segreta: se qualcuno cambia "role" da member ad admin, la firma non torna più e il token viene
+            rifiutato. Per questo non serve nascondere il payload — serve che sia <span className="text-zinc-200">non falsificabile</span>.</>,
+            <>The payload says who you are and with what role. The <span className="text-zinc-200">signature</span> is computed by the server with
+            a secret key: if someone changes "role" from member to admin, the signature no longer matches and the token is
+            rejected. That's why the payload doesn't need to be hidden — it needs to be <span className="text-zinc-200">unforgeable</span>.</>
+          )}
         </p>
       </Card>
       <Card tone={tamper ? "red" : "emerald"}>
         <div className="flex items-center justify-between mb-3">
-          <div className="text-xs text-zinc-500 font-mono">provi a barare · modifichi il token nel browser</div>
-          <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={tamper} onChange={(e) => setTamper(e.target.checked)} className="accent-red-500" /> cambia role → admin</label>
+          <div className="text-xs text-zinc-500 font-mono">{T("provi a barare · modifichi il token nel browser", "you try to cheat · edit the token in the browser")}</div>
+          <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={tamper} onChange={(e) => setTamper(e.target.checked)} className="accent-red-500" /> {T("cambia role → admin", "change role → admin")}</label>
         </div>
         <div className="font-mono text-[12px] break-all leading-relaxed mb-3">
           <span className="text-zinc-500">eyJhbG..header</span>.
@@ -1742,28 +1890,42 @@ payload (decodificato):
           <span className="text-zinc-500">Kx9f..signature</span>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-[12.5px] leading-relaxed mb-2">
-          <div className="text-zinc-500 font-mono text-[11px] mb-1">il server ricalcola la firma sul payload che riceve:</div>
-          <div className="font-mono text-zinc-300">HMAC(header.payload, <span className="text-amber-300">segreto</span>) {tamper ? "≠" : "="} firma nel token</div>
+          <div className="text-zinc-500 font-mono text-[11px] mb-1">{T("il server ricalcola la firma sul payload che riceve:", "the server recomputes the signature over the payload it receives:")}</div>
+          <div className="font-mono text-zinc-300">HMAC(header.payload, <span className="text-amber-300">{T("segreto", "secret")}</span>) {tamper ? "≠" : "="} {T("firma nel token", "signature in the token")}</div>
         </div>
         {tamper ? (
-          <div className="rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200"><span className="font-medium">401 — firma non valida.</span> Hai cambiato il payload ma <span className="text-white">non</span> puoi ricalcolare la firma: il segreto ce l'ha solo il server. Il token viene rifiutato. Ecco perché il JWT è a prova di manomissione anche se chiunque lo può leggere.</div>
+          <div className="rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200">{T(
+            <><span className="font-medium">401 — firma non valida.</span> Hai cambiato il payload ma <span className="text-white">non</span> puoi ricalcolare la firma: il segreto ce l'ha solo il server. Il token viene rifiutato. Ecco perché il JWT è a prova di manomissione anche se chiunque lo può leggere.</>,
+            <><span className="font-medium">401 — invalid signature.</span> You changed the payload but you <span className="text-white">can't</span> recompute the signature: only the server holds the secret. The token is rejected. That's why a JWT is tamper-proof even though anyone can read it.</>
+          )}</div>
         ) : (
-          <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200"><span className="font-medium">✓ Token valido.</span> Payload e firma combaciano: il server si fida del ruolo <span className="font-mono">member</span>. Spunta la casella per provare a promuoverti ad admin.</div>
+          <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200">{T(
+            <><span className="font-medium">✓ Token valido.</span> Payload e firma combaciano: il server si fida del ruolo <span className="font-mono">member</span>. Spunta la casella per provare a promuoverti ad admin.</>,
+            <><span className="font-medium">✓ Valid token.</span> Payload and signature match: the server trusts the <span className="font-mono">member</span> role. Tick the box to try promoting yourself to admin.</>
+          )}</div>
         )}
       </Card>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">Le password non si salvano mai in chiaro</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("Le password non si salvano mai in chiaro", "Passwords are never stored in plain text")}</div>
         <input value={pw} onChange={(e) => setPw(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 font-mono text-sm text-zinc-200 outline-none focus:border-indigo-600 mb-2" />
         <div className="grid sm:grid-cols-2 gap-2 text-sm font-mono">
-          <div className="rounded-lg border border-red-900 bg-red-950 p-2"><div className="text-xs text-red-400 mb-1">in chiaro — MAI</div><div className="text-red-200 break-all">{pw}</div></div>
-          <div className="rounded-lg border border-emerald-900 bg-emerald-950 p-2"><div className="text-xs text-emerald-400 mb-1">hash (bcrypt) — così</div><div className="text-emerald-200 break-all">{fakeHash}</div></div>
+          <div className="rounded-lg border border-red-900 bg-red-950 p-2"><div className="text-xs text-red-400 mb-1">{T("in chiaro — MAI", "plain text — NEVER")}</div><div className="text-red-200 break-all">{pw}</div></div>
+          <div className="rounded-lg border border-emerald-900 bg-emerald-950 p-2"><div className="text-xs text-emerald-400 mb-1">{T("hash (bcrypt) — così", "hash (bcrypt) — like this")}</div><div className="text-emerald-200 break-all">{fakeHash}</div></div>
         </div>
-        <p className="text-xs text-zinc-500 mt-2">(hash illustrativo) L'hash è a senso unico: al login ricalcoli l'hash di ciò che l'utente digita e confronti gli hash. Anche se rubano il database, le password vere restano protette.</p>
+        <p className="text-xs text-zinc-500 mt-2">{T(
+          "(hash illustrativo) L'hash è a senso unico: al login ricalcoli l'hash di ciò che l'utente digita e confronti gli hash. Anche se rubano il database, le password vere restano protette.",
+          "(illustrative hash) Hashing is one-way: at login you recompute the hash of what the user typed and compare the hashes. Even if the database is stolen, the real passwords stay protected."
+        )}</p>
       </Card>
       <Takeaway>
-        <span className="font-mono text-amber-200">401</span> = non so chi sei (autenticazione).
-        <span className="font-mono text-amber-200"> 403</span> = so chi sei ma non puoi (autorizzazione). E una regola non
-        negoziabile: password sempre con hash, mai in chiaro.
+        {T(
+          <><span className="font-mono text-amber-200">401</span> = non so chi sei (autenticazione).
+          <span className="font-mono text-amber-200"> 403</span> = so chi sei ma non puoi (autorizzazione). E una regola non
+          negoziabile: password sempre con hash, mai in chiaro.</>,
+          <><span className="font-mono text-amber-200">401</span> = I don't know who you are (authentication).
+          <span className="font-mono text-amber-200"> 403</span> = I know who you are but you can't (authorisation). And one
+          non-negotiable rule: passwords always hashed, never in plain text.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -1777,48 +1939,58 @@ function CachingModule() {
     if (cached) { setLast({ hit: true, ms: 2 }); setSaved((s) => s + 1); }
     else { setLast({ hit: false, ms: 80 }); setCached(true); }
   }
-  function invalidate() { setCached(false); setLast({ hit: false, ms: 80, note: "cache invalidata: il prezzo è cambiato, il vecchio valore non vale più" }); }
+  function invalidate() { setCached(false); setLast({ hit: false, ms: 80, note: T("cache invalidata: il prezzo è cambiato, il vecchio valore non vale più", "cache invalidated: the price changed, the old value is no longer valid") }); }
   return (
     <div className="space-y-4">
       <Lead>
-        La cache tiene una copia pronta di un dato costoso da ricavare, così le richieste successive non ripartono dal
-        database. <span className="text-white font-medium">MISS</span> = non in cache, vai al DB (lento).
-        <span className="text-white font-medium"> HIT</span> = già in cache, risposta quasi istantanea.
+        {T(
+          <>La cache tiene una copia pronta di un dato costoso da ricavare, così le richieste successive non ripartono dal
+          database. <span className="text-white font-medium">MISS</span> = non in cache, vai al DB (lento).
+          <span className="text-white font-medium"> HIT</span> = già in cache, risposta quasi istantanea.</>,
+          <>A cache keeps a ready-made copy of data that's expensive to produce, so later requests don't have to start from
+          the database again. <span className="text-white font-medium">MISS</span> = not cached, go to the DB (slow).
+          <span className="text-white font-medium"> HIT</span> = already cached, near-instant response.</>
+        )}
       </Lead>
       <Analogy>
-        La cache è <span className="text-zinc-100">tenere i piatti più ordinati già pronti sul passe</span> invece di cucinarli da zero a ogni ordine: velocissimo.
-        Il rischio? Se il menù cambia e stai ancora servendo il piatto di ieri, dai al cliente un dato vecchio. Ecco perché la cache va «invalidata» quando la fonte cambia.
+        {T(
+          <>La cache è <span className="text-zinc-100">tenere i piatti più ordinati già pronti sul passe</span> invece di cucinarli da zero a ogni ordine: velocissimo.
+          Il rischio? Se il menù cambia e stai ancora servendo il piatto di ieri, dai al cliente un dato vecchio. Ecco perché la cache va «invalidata» quando la fonte cambia.</>,
+          <>A cache is <span className="text-zinc-100">keeping the most-ordered dishes ready on the pass</span> instead of cooking each one from scratch: blazing fast.
+          The risk? If the menu changes and you're still serving yesterday's dish, you hand the customer stale data. That's why a cache has to be “invalidated” when the source changes.</>
+        )}
       </Analogy>
       <Card>
         <div className="font-mono text-sm mb-3"><Pill tone="blue">GET</Pill> <span className="text-indigo-300 ml-1">/products/42</span></div>
         <div className="flex flex-wrap gap-2 mb-3">
-          <button onClick={request} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors flex items-center gap-2"><Send size={14} /> Richiedi prodotto</button>
-          <button onClick={invalidate} className="px-3 py-2 rounded-md border border-zinc-800 text-zinc-300 hover:border-zinc-600 text-sm transition-colors">Aggiorna prezzo (invalida)</button>
+          <button onClick={request} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors flex items-center gap-2"><Send size={14} /> {T("Richiedi prodotto", "Request product")}</button>
+          <button onClick={invalidate} className="px-3 py-2 rounded-md border border-zinc-800 text-zinc-300 hover:border-zinc-600 text-sm transition-colors">{T("Aggiorna prezzo (invalida)", "Update price (invalidate)")}</button>
         </div>
         {last && (
           <Card tone={last.hit ? "emerald" : "amber"}>
             <div className="flex items-center gap-2 mb-1">
               <Pill tone={last.hit ? "emerald" : "amber"}>{last.hit ? "CACHE HIT" : "CACHE MISS"}</Pill>
               <span className="font-mono text-sm text-zinc-200">{last.ms}ms</span>
-              {last.hit ? <span className="text-xs text-emerald-300">servito dalla cache, DB non toccato</span> : <span className="text-xs text-amber-300">letto dal database, poi messo in cache</span>}
+              {last.hit ? <span className="text-xs text-emerald-300">{T("servito dalla cache, DB non toccato", "served from cache, DB untouched")}</span> : <span className="text-xs text-amber-300">{T("letto dal database, poi messo in cache", "read from the database, then cached")}</span>}
             </div>
             {last.note && <div className="text-xs text-zinc-400 mt-1">{last.note}</div>}
           </Card>
         )}
-        <div className="text-xs text-zinc-500 mt-3">Stato cache: <span className={cached ? "text-emerald-300" : "text-zinc-400"}>{cached ? "popolata" : "vuota"}</span> · query al DB risparmiate: <span className="text-emerald-300 font-mono">{saved}</span></div>
+        <div className="text-xs text-zinc-500 mt-3">{T("Stato cache:", "Cache state:")} <span className={cached ? "text-emerald-300" : "text-zinc-400"}>{cached ? T("popolata", "populated") : T("vuota", "empty")}</span> · {T("query al DB risparmiate:", "DB queries saved:")} <span className="text-emerald-300 font-mono">{saved}</span></div>
       </Card>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">Dove vive la cache (vari livelli)</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("Dove vive la cache (vari livelli)", "Where caches live (several layers)")}</div>
         <div className="space-y-1.5 text-sm text-zinc-400">
-          <div><span className="text-zinc-200 font-mono">Browser</span> — il client riusa file già scaricati (immagini, CSS).</div>
-          <div><span className="text-zinc-200 font-mono">CDN</span> — server vicini all'utente che servono copie statiche.</div>
-          <div><span className="text-zinc-200 font-mono">Redis</span> — cache in memoria lato server per risultati di query/calcoli.</div>
+          <div><span className="text-zinc-200 font-mono">Browser</span> — {T("il client riusa file già scaricati (immagini, CSS).", "the client reuses files it already downloaded (images, CSS).")}</div>
+          <div><span className="text-zinc-200 font-mono">CDN</span> — {T("server vicini all’utente che servono copie statiche.", "servers near the user handing out static copies.")}</div>
+          <div><span className="text-zinc-200 font-mono">Redis</span> — {T("cache in memoria lato server per risultati di query/calcoli.", "an in-memory server-side cache for query/computation results.")}</div>
         </div>
       </Card>
       <Takeaway>
-        La cache è facile da accendere e difficile da invalidare: il rischio è servire un dato vecchio (es. il prezzo
-        cambiato). Per questo si dice che i due problemi più duri dell'informatica sono dare un nome alle cose e
-        invalidare la cache. Usala dove i dati cambiano di rado e si leggono spesso.
+        {T(
+          "La cache è facile da accendere e difficile da invalidare: il rischio è servire un dato vecchio (es. il prezzo cambiato). Per questo si dice che i due problemi più duri dell'informatica sono dare un nome alle cose e invalidare la cache. Usala dove i dati cambiano di rado e si leggono spesso.",
+          "A cache is easy to switch on and hard to invalidate: the risk is serving stale data (a price that changed, say). Hence the old line that the two hardest problems in computing are naming things and cache invalidation. Use it where data changes rarely and is read often."
+        )}
       </Takeaway>
     </div>
   );
@@ -1828,18 +2000,18 @@ const LOG_LEVELS = ["ALL", "INFO", "WARN", "ERROR"];
 function LoggingModule() {
   const [filter, setFilter] = useState("ALL");
   const [logs, setLogs] = useState([
-    { t: "10:02:11", lvl: "INFO", rid: "req-a1", msg: "GET /orders/77 ricevuta" },
-    { t: "10:02:11", lvl: "INFO", rid: "req-a1", msg: "query DB: SELECT * FROM orders WHERE id=77" },
-    { t: "10:02:11", lvl: "WARN", rid: "req-a1", msg: "query lenta: 320ms (manca indice?)" },
+    { t: "10:02:11", lvl: "INFO", rid: "req-a1", msg: T("GET /orders/77 ricevuta", "GET /orders/77 received") },
+    { t: "10:02:11", lvl: "INFO", rid: "req-a1", msg: T("query DB: SELECT * FROM orders WHERE id=77", "DB query: SELECT * FROM orders WHERE id=77") },
+    { t: "10:02:11", lvl: "WARN", rid: "req-a1", msg: T("query lenta: 320ms (manca indice?)", "slow query: 320ms (missing index?)") },
     { t: "10:02:11", lvl: "INFO", rid: "req-a1", msg: "200 OK in 340ms" },
   ]);
   const [trace, setTrace] = useState(null);
   function generate() {
     const rid = "req-" + Math.random().toString(36).slice(2, 5);
     const batch = [
-      { t: "10:05:30", lvl: "INFO", rid, msg: "POST /payments ricevuta" },
-      { t: "10:05:30", lvl: "INFO", rid, msg: "validazione body OK" },
-      { t: "10:05:31", lvl: "ERROR", rid, msg: "gateway pagamenti timeout dopo 5s" },
+      { t: "10:05:30", lvl: "INFO", rid, msg: T("POST /payments ricevuta", "POST /payments received") },
+      { t: "10:05:30", lvl: "INFO", rid, msg: T("validazione body OK", "body validation OK") },
+      { t: "10:05:31", lvl: "ERROR", rid, msg: T("gateway pagamenti timeout dopo 5s", "payment gateway timed out after 5s") },
       { t: "10:05:31", lvl: "ERROR", rid, msg: "500 Internal Server Error" },
     ];
     setLogs((l) => [...l, ...batch]);
@@ -1849,16 +2021,21 @@ function LoggingModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Quando qualcosa va storto in produzione, non puoi "guardare" dentro il server: leggi i
-        <span className="text-white font-medium"> log</span>. Ogni riga ha un orario, un livello di gravità e — fondamentale —
-        un <span className="text-white font-medium">request-id</span> che lega insieme tutto ciò che è successo per una singola richiesta.
+        {T(
+          <>Quando qualcosa va storto in produzione, non puoi "guardare" dentro il server: leggi i
+          <span className="text-white font-medium"> log</span>. Ogni riga ha un orario, un livello di gravità e — fondamentale —
+          un <span className="text-white font-medium">request-id</span> che lega insieme tutto ciò che è successo per una singola richiesta.</>,
+          <>When something goes wrong in production, you can't "look" inside the server: you read the
+          <span className="text-white font-medium"> logs</span>. Each line has a timestamp, a severity level and — crucially —
+          a <span className="text-white font-medium">request-id</span> tying together everything that happened for one single request.</>
+        )}
       </Lead>
       <Card>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {LOG_LEVELS.map((l) => <Btn key={l} tone="ghost" active={filter === l} onClick={() => setFilter(l)}>{l}</Btn>)}
-          <button onClick={generate} className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors ml-auto flex items-center gap-2"><Zap size={14} /> Genera una richiesta</button>
+          <button onClick={generate} className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors ml-auto flex items-center gap-2"><Zap size={14} /> {T("Genera una richiesta", "Generate a request")}</button>
         </div>
-        {trace && <div className="text-xs text-indigo-300 font-mono mb-2 flex items-center gap-2">trace attiva: {trace} <button onClick={() => setTrace(null)} className="text-zinc-500 hover:text-zinc-300 underline">mostra tutto</button></div>}
+        {trace && <div className="text-xs text-indigo-300 font-mono mb-2 flex items-center gap-2">{T("trace attiva:", "active trace:")} {trace} <button onClick={() => setTrace(null)} className="text-zinc-500 hover:text-zinc-300 underline">{T("mostra tutto", "show all")}</button></div>}
         <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[12px] space-y-1 max-h-72 overflow-y-auto">
           {shown.map((l, i) => (
             <div key={i} className="flex gap-2 items-baseline">
@@ -1868,22 +2045,26 @@ function LoggingModule() {
               <span className="text-zinc-300">{l.msg}</span>
             </div>
           ))}
-          {shown.length === 0 && <div className="text-zinc-600">nessun log per questo filtro</div>}
+          {shown.length === 0 && <div className="text-zinc-600">{T("nessun log per questo filtro", "no logs for this filter")}</div>}
         </div>
-        <div className="text-xs text-zinc-500 mt-2">Clicca un <span className="text-indigo-400 font-mono">req-id</span> per isolare la singola richiesta (è la "trace"). Filtra <span className="text-red-300 font-mono">ERROR</span> dopo aver generato una richiesta.</div>
+        <div className="text-xs text-zinc-500 mt-2">{T(
+          <>Clicca un <span className="text-indigo-400 font-mono">req-id</span> per isolare la singola richiesta (è la "trace"). Filtra <span className="text-red-300 font-mono">ERROR</span> dopo aver generato una richiesta.</>,
+          <>Click a <span className="text-indigo-400 font-mono">req-id</span> to isolate that single request (that's the "trace"). Filter by <span className="text-red-300 font-mono">ERROR</span> after generating a request.</>
+        )}</div>
       </Card>
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">I tre pilastri dell'osservabilità</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("I tre pilastri dell’osservabilità", "The three pillars of observability")}</div>
         <div className="space-y-1.5 text-sm text-zinc-400">
-          <div><span className="text-zinc-200 font-mono">Log</span> — cosa è successo, riga per riga (per il debug puntuale).</div>
-          <div><span className="text-zinc-200 font-mono">Metriche</span> — numeri aggregati nel tempo (richieste/sec, % errori, latenza media).</div>
-          <div><span className="text-zinc-200 font-mono">Trace</span> — il percorso di una singola richiesta attraverso i vari servizi.</div>
+          <div><span className="text-zinc-200 font-mono">{T("Log", "Logs")}</span> — {T("cosa è successo, riga per riga (per il debug puntuale).", "what happened, line by line (for pinpoint debugging).")}</div>
+          <div><span className="text-zinc-200 font-mono">{T("Metriche", "Metrics")}</span> — {T("numeri aggregati nel tempo (richieste/sec, % errori, latenza media).", "numbers aggregated over time (requests/sec, error %, average latency).")}</div>
+          <div><span className="text-zinc-200 font-mono">{T("Trace", "Traces")}</span> — {T("il percorso di una singola richiesta attraverso i vari servizi.", "the path of a single request across the various services.")}</div>
         </div>
       </Card>
       <Takeaway>
-        Il request-id è la cosa più utile in assoluto: quando un cliente dice "alle 10:05 ho avuto un errore", lo cerchi
-        e vedi l'intera storia di quella richiesta. Senza, hai migliaia di righe scollegate. È anche il primo dato che
-        chiederai al cliente in un ruolo di supporto tecnico.
+        {T(
+          "Il request-id è la cosa più utile in assoluto: quando un cliente dice \"alle 10:05 ho avuto un errore\", lo cerchi e vedi l'intera storia di quella richiesta. Senza, hai migliaia di righe scollegate. È anche il primo dato che chiederai al cliente in un ruolo di supporto tecnico.",
+          "The request-id is the single most useful thing here: when a customer says \"at 10:05 I got an error\", you look it up and see the entire story of that request. Without it you have thousands of disconnected lines. It's also the first thing you'll ask a customer for in a technical support role."
+        )}
       </Takeaway>
     </div>
   );
@@ -2090,7 +2271,7 @@ function AggregazioniModule() {
           className="w-full h-20 bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[13px] text-emerald-300 outline-none focus:border-indigo-600 resize-none" />
       </Card>
       <Card tone={result.ok ? "zinc" : "red"}>
-        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{result.ok ? `risultato · ${result.data.rows.length} righe` : "errore"}</div>
+        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{result.ok ? T(`risultato · ${result.data.rows.length} righe`, `result · ${result.data.rows.length} rows`) : T("errore", "error")}</div>
         {result.ok ? <ResultTable columns={result.data.columns} rows={result.data.rows} /> : (
           <div className="flex gap-2 text-sm text-red-300"><AlertTriangle size={15} className="mt-0.5 shrink-0" /><span className="font-mono">{result.error}</span></div>
         )}
