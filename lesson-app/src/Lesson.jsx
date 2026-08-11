@@ -69,9 +69,10 @@ function LangToggle({ lang, setLang }) {
     <div className="fixed right-3 top-3 z-50 flex items-center gap-1 p-1 rounded-xl border border-zinc-800 bg-zinc-900/90 backdrop-blur shadow-soft">
       {[["it", "🇮🇹", "Italiano"], ["en", "🇬🇧", "English"]].map(([code, flag, name]) => (
         <button key={code} onClick={() => setLang(code)} title={name} aria-label={name} aria-pressed={lang === code}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${lang === code ? "bg-indigo-600 text-white shadow-glow" : "text-zinc-400 hover:text-zinc-100"}`}>
+          className={`flex items-center px-2.5 py-1.5 rounded-lg transition-all ${lang === code ? "bg-indigo-600 text-white shadow-glow" : "text-zinc-400 hover:text-zinc-100"}`}>
+          {/* Windows has no flag glyphs: the emoji degrades to the letters IT / GB, which
+              still reads correctly — so no redundant text code next to it. */}
           <span className="text-[15px] leading-none">{flag}</span>
-          <span className="font-mono text-[11px] uppercase tracking-wide">{code}</span>
         </button>
       ))}
     </div>
