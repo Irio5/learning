@@ -21,9 +21,58 @@ import {
   Handshake, Megaphone, Presentation, X, Loader2
 } from "lucide-react";
 
+/* =====================================================================
+   LANGUAGE (it / en)
+   LANG is a module-level global read by T() during render. The app shell
+   reassigns it at the top of its own render: React renders the tree
+   synchronously top-down, so every child below reads the fresh value.
+   That keeps 118 modules free of context plumbing and prop drilling.
+   ponytail: render-time global — if two languages ever need to render
+   side by side, promote it to a React context.
+   ===================================================================== */
+
+let LANG = "it";
+/** T("italiano", "english") — returns the string/JSX for the active language. */
+const T = (it, en) => (LANG === "en" && en !== undefined ? en : it);
+
+/* Section names double as lookup keys (m.section, GLOSS_TONE, FLASH_SECTIONS),
+   so the Italian string stays the key and only the display label is translated. */
+const SECTION_EN = {
+  "Python": "Python",
+  "Strutture dati": "Data structures",
+  "LeetCode": "LeetCode",
+  "Fondamenta": "Foundations",
+  "SQL & Database": "SQL & Databases",
+  "Infrastruttura": "Infrastructure",
+  "Integrazioni & dati": "Integrations & data",
+  "Integrazioni cliente": "Customer integrations",
+  "AI": "AI",
+  "Workflow agentici": "Agentic workflows",
+  "System Design": "System Design",
+  "Code review": "Code review",
+  "Product Management": "Product Management",
+  "Ripasso": "Review",
+};
+const sect = (s) => T(s, SECTION_EN[s] || s);
+
+function LangToggle({ lang, setLang }) {
+  return (
+    <div className="fixed right-3 top-3 z-50 flex items-center gap-1 p-1 rounded-xl border border-zinc-800 bg-zinc-900/90 backdrop-blur shadow-soft">
+      {[["it", "🇮🇹", "Italiano"], ["en", "🇬🇧", "English"]].map(([code, flag, name]) => (
+        <button key={code} onClick={() => setLang(code)} title={name} aria-label={name} aria-pressed={lang === code}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${lang === code ? "bg-indigo-600 text-white shadow-glow" : "text-zinc-400 hover:text-zinc-100"}`}>
+          <span className="text-[15px] leading-none">{flag}</span>
+          <span className="font-mono text-[11px] uppercase tracking-wide">{code}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Link a un diagramma archify interattivo (file standalone in /public/diagrams).
 // Href relativo → funziona sia in dev (/diagrams/..) sia col build a cartella (file://).
-function ArchifyLink({ file, label = "Apri diagramma interattivo", hint }) {
+function ArchifyLink({ file, label, hint }) {
+  label = label ?? T("Apri diagramma interattivo", "Open interactive diagram");
   return (
     <a href={`diagrams/${file}`} target="_blank" rel="noreferrer"
       className="inline-flex items-center gap-2 rounded-lg border border-indigo-800/70 bg-indigo-950/40 px-3 py-2 text-sm text-indigo-200 hover:border-indigo-500 hover:bg-indigo-900/50 transition-colors no-underline">
@@ -92,7 +141,7 @@ function Takeaway({ children }) {
     <div className="mt-7 rounded-xl border border-indigo-900 bg-zinc-900 p-4">
       <div className="flex items-center gap-2 mb-1.5">
         <Lightbulb size={15} className="text-indigo-400" />
-        <span className="text-xs uppercase tracking-wide text-indigo-400 font-mono">Da ricordare</span>
+        <span className="text-xs uppercase tracking-wide text-indigo-400 font-mono">{T("Da ricordare", "Worth remembering")}</span>
       </div>
       <div className="text-sm text-zinc-300 leading-relaxed">{children}</div>
     </div>
@@ -109,7 +158,7 @@ function Analogy({ children }) {
     <div className="flex gap-2 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm">
       <Lightbulb size={15} className="text-amber-400 mt-0.5 shrink-0" />
       <div className="leading-relaxed text-zinc-300">
-        <span className="text-[11px] uppercase tracking-wide text-amber-400 font-mono mr-2">Analogia</span>
+        <span className="text-[11px] uppercase tracking-wide text-amber-400 font-mono mr-2">{T("Analogia", "Analogy")}</span>
         {children}
       </div>
     </div>
@@ -125,7 +174,7 @@ function Predict({ question, options, answer, explain }) {
     <div className="rounded-xl border border-indigo-900 bg-zinc-900 p-4">
       <div className="flex items-center gap-2 mb-2">
         <HelpCircle size={15} className="text-indigo-400" />
-        <span className="text-xs uppercase tracking-wide text-indigo-400 font-mono">Prevedi, poi prova</span>
+        <span className="text-xs uppercase tracking-wide text-indigo-400 font-mono">{T("Prevedi, poi prova", "Predict, then check")}</span>
       </div>
       <div className="text-sm text-zinc-200 mb-3 leading-relaxed">{question}</div>
       <div className="grid gap-1.5">
@@ -140,8 +189,10 @@ function Predict({ question, options, answer, explain }) {
       </div>
       {pick !== null && (
         <div className="mt-3 text-xs leading-relaxed text-zinc-300">
-          {pick === answer ? <span className="text-emerald-300 font-medium">Esatto. </span> : <span className="text-amber-300 font-medium">Intuizione comune, ma no. </span>}
-          {explain} <span className="text-indigo-300">Ora verificalo qui sotto.</span>
+          {pick === answer
+            ? <span className="text-emerald-300 font-medium">{T("Esatto. ", "Correct. ")}</span>
+            : <span className="text-amber-300 font-medium">{T("Intuizione comune, ma no. ", "Common intuition, but no. ")}</span>}
+          {explain} <span className="text-indigo-300">{T("Ora verificalo qui sotto.", "Now check it for yourself below.")}</span>
         </div>
       )}
     </div>
@@ -169,10 +220,13 @@ function Quiz({ id, questions = [], onDone }) {
     <div className="mt-7 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex items-center gap-2 mb-3">
         <ListChecks size={15} className="text-emerald-400" />
-        <span className="text-xs uppercase tracking-wide text-emerald-400 font-mono">Verifica al volo</span>
+        <span className="text-xs uppercase tracking-wide text-emerald-400 font-mono">{T("Verifica al volo", "Quick check")}</span>
         <span className="ml-auto text-xs font-mono text-zinc-500">{done}/{questions.length}</span>
       </div>
-      <p className="text-xs text-zinc-500 mb-4">Prova a rispondere <span className="text-zinc-400">prima</span> di rileggere: è ricordando che si impara, non ripassando. Se sbagli, riprova.</p>
+      <p className="text-xs text-zinc-500 mb-4">{T(
+        <>Prova a rispondere <span className="text-zinc-400">prima</span> di rileggere: è ricordando che si impara, non ripassando. Se sbagli, riprova.</>,
+        <>Try to answer <span className="text-zinc-400">before</span> you scroll back up: you learn by recalling, not by re-reading. Get it wrong? Try again.</>
+      )}</p>
       <div className="space-y-5">
         {questions.map((q, i) => {
           const pick = chosen[i];
@@ -202,12 +256,15 @@ function Quiz({ id, questions = [], onDone }) {
                 })}
               </div>
               {isSolved && <div className="mt-2 text-xs leading-relaxed rounded-lg border border-emerald-900 bg-emerald-950 text-emerald-200 px-3 py-2">{q.why}</div>}
-              {wrong && <div className="mt-2 text-xs leading-relaxed rounded-lg border border-amber-900 bg-amber-950 text-amber-200 px-3 py-2">Non è quella giusta — riprova. (Suggerimento: ripensa all'esempio che hai appena toccato qui sopra.)</div>}
+              {wrong && <div className="mt-2 text-xs leading-relaxed rounded-lg border border-amber-900 bg-amber-950 text-amber-200 px-3 py-2">{T(
+                "Non è quella giusta — riprova. (Suggerimento: ripensa all'esempio che hai appena toccato qui sopra.)",
+                "Not the right one — try again. (Hint: think back to the example you just played with above.)"
+              )}</div>}
             </div>
           );
         })}
       </div>
-      {allSolved && <div className="mt-4 flex items-center gap-2 text-sm text-emerald-300"><Trophy size={15} /> Fatto: hai padroneggiato questo modulo.</div>}
+      {allSolved && <div className="mt-4 flex items-center gap-2 text-sm text-emerald-300"><Trophy size={15} /> {T("Fatto: hai padroneggiato questo modulo.", "Done — you've got this module down.")}</div>}
     </div>
   );
 }
@@ -4699,21 +4756,21 @@ function GlossarioModule() {
       </Lead>
       <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
         <SearchIcon size={15} className="text-zinc-500 shrink-0" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="cerca un termine… (es. indice, 403, JOIN)"
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={T("cerca un termine… (es. indice, 403, JOIN)", "search a term… (e.g. index, 403, JOIN)")}
           className="flex-1 bg-transparent text-sm text-zinc-200 outline-none font-mono" />
-        {q && <button onClick={() => setQ("")} className="text-xs text-zinc-500 hover:text-zinc-300">pulisci</button>}
+        {q && <button onClick={() => setQ("")} className="text-xs text-zinc-500 hover:text-zinc-300">{T("pulisci", "clear")}</button>}
       </div>
       <div className="grid gap-2">
         {shown.map((g) => (
           <div key={g.t} className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="font-mono text-sm text-zinc-100">{g.t}</span>
-              <Pill tone={GLOSS_TONE[g.s]}>{g.s}</Pill>
+              <Pill tone={GLOSS_TONE[g.s]}>{sect(g.s)}</Pill>
             </div>
             <p className="text-sm text-zinc-400 leading-relaxed">{g.d}</p>
           </div>
         ))}
-        {shown.length === 0 && <div className="text-sm text-zinc-600 text-center py-6">Nessun termine per «{q}».</div>}
+        {shown.length === 0 && <div className="text-sm text-zinc-600 text-center py-6">{T("Nessun termine per", "No term matches")} «{q}».</div>}
       </div>
       <Takeaway>
         Sapere il nome di una cosa cambia tutto: ti fa cercare la risposta giusta e parlare con gli sviluppatori da pari.
@@ -13598,6 +13655,9 @@ const store = {
 
 const FLASH_SECTIONS = ["AI", "Infrastruttura", "SQL & Database", "Integrazioni & dati", "Integrazioni cliente", "Workflow agentici"];
 const FLASH_TONE = { "Definizione": "indigo", "Come funziona": "blue", "Trade-off": "amber", "Errori comuni": "red", "Da ricordare": "emerald" };
+/* Block labels are lookup keys into FLASH_TONE, so translate display only. */
+const FLASH_LABEL_EN = { "Definizione": "Definition", "Come funziona": "How it works", "Trade-off": "Trade-off", "Errori comuni": "Common mistakes", "Da ricordare": "Worth remembering" };
+const flashLabel = (l) => T(l, FLASH_LABEL_EN[l] || l);
 
 // Ogni carta: { id, s:sezione, t:titolo(fronte), b:[{l:etichetta, i:[voci]}] (retro).
 // Moduli semplici = 1 carta; densi = più carte per scope; carte comparative/errori dove serve.
@@ -13980,45 +14040,49 @@ function Flashcards({ progress, setProgress }) {
         {FLASH_SECTIONS.map((s) => (
           <button key={s} onClick={() => setSec(s)}
             className={`px-3 py-1.5 rounded-lg border text-[13px] font-medium whitespace-nowrap transition-all ${sec === s ? "border-indigo-500 bg-indigo-950 text-white" : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"}`}>
-            {s} <span className="font-mono text-[11px] text-zinc-500">{FLASHCARDS.filter((c) => c.s === s).length}</span>
+            {sect(s)} <span className="font-mono text-[11px] text-zinc-500">{FLASHCARDS.filter((c) => c.s === s).length}</span>
           </button>
         ))}
       </div>
 
       {/* barra strumenti + progresso */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <button onClick={shuffle} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 text-[13px] text-zinc-300 hover:border-zinc-600 transition-colors"><Shuffle size={14} /> Mescola</button>
-        <label className="flex items-center gap-2 text-[13px] text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={onlyReview} onChange={(e) => setOnlyReview(e.target.checked)} className="accent-indigo-500" /> solo da ripassare</label>
+        <button onClick={shuffle} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 text-[13px] text-zinc-300 hover:border-zinc-600 transition-colors"><Shuffle size={14} /> {T("Mescola", "Shuffle")}</button>
+        <label className="flex items-center gap-2 text-[13px] text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={onlyReview} onChange={(e) => setOnlyReview(e.target.checked)} className="accent-indigo-500" /> {T("solo da ripassare", "review only")}</label>
         <div className="ml-auto flex items-center gap-2 min-w-[9rem]">
           <div className="h-1.5 flex-1 rounded-full bg-zinc-800 overflow-hidden"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${total ? (known / total) * 100 : 0}%`, transition: "width .4s" }} /></div>
-          <span className="font-mono text-[11px] text-zinc-500 shrink-0">{known}/{total} so</span>
+          <span className="font-mono text-[11px] text-zinc-500 shrink-0">{known}/{total} {T("so", "known")}</span>
         </div>
       </div>
 
       {!card ? (
-        <Card><div className="text-center text-sm text-zinc-400 py-8">{onlyReview ? "Niente da ripassare in questa sezione: hai segnato «so» tutte le carte. 🎉" : "Nessuna carta."}</div></Card>
+        <Card><div className="text-center text-sm text-zinc-400 py-8">{onlyReview
+          ? T("Niente da ripassare in questa sezione: hai segnato «so» tutte le carte. 🎉", "Nothing to review in this section — you've marked every card as known. 🎉")
+          : T("Nessuna carta.", "No cards.")}</div></Card>
       ) : (
         <>
           {/* la carta */}
           <button onClick={() => setFlipped((f) => !f)} className="w-full text-left">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 shadow-soft p-6 min-h-[22rem] flex flex-col transition-colors hover:border-zinc-700">
               <div className="flex items-center gap-2 mb-4">
-                <Pill tone="indigo">{card.s}</Pill>
-                {progress[card.id] === "know" && <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400"><CheckCircle2 size={13} /> so</span>}
-                {progress[card.id] === "review" && <span className="flex items-center gap-1 text-[11px] font-mono text-amber-400"><RotateCcw size={12} /> da ripassare</span>}
-                <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-zinc-600">{flipped ? "retro · clicca per il fronte" : "fronte · clicca per girare"}</span>
+                <Pill tone="indigo">{sect(card.s)}</Pill>
+                {progress[card.id] === "know" && <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400"><CheckCircle2 size={13} /> {T("so", "known")}</span>}
+                {progress[card.id] === "review" && <span className="flex items-center gap-1 text-[11px] font-mono text-amber-400"><RotateCcw size={12} /> {T("da ripassare", "to review")}</span>}
+                <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-zinc-600">{flipped
+                  ? T("retro · clicca per il fronte", "back · click for the front")
+                  : T("fronte · clicca per girare", "front · click to flip")}</span>
               </div>
               {!flipped ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 px-4">
                   <h3 className="font-display text-2xl sm:text-3xl text-white leading-tight text-balance">{card.t}</h3>
-                  <p className="text-[13px] text-zinc-500">Prova a spiegartelo ad alta voce, poi gira la carta.</p>
+                  <p className="text-[13px] text-zinc-500">{T("Prova a spiegartelo ad alta voce, poi gira la carta.", "Try explaining it out loud, then flip the card.")}</p>
                 </div>
               ) : (
                 <div className="flex-1 space-y-3">
                   <h3 className="text-[15px] font-semibold text-zinc-200">{card.t}</h3>
                   {card.b.map((blk, bi) => (
                     <div key={bi} className={`rounded-lg border ${TONE[FLASH_TONE[blk.l]].border} bg-zinc-950 px-3 py-2.5`}>
-                      <div className={`text-[10px] uppercase tracking-wide font-mono mb-1.5 ${TONE[FLASH_TONE[blk.l]].text}`}>{blk.l}</div>
+                      <div className={`text-[10px] uppercase tracking-wide font-mono mb-1.5 ${TONE[FLASH_TONE[blk.l]].text}`}>{flashLabel(blk.l)}</div>
                       <ul className="space-y-1.5">
                         {blk.i.map((it, ii) => (
                           <li key={ii} className="flex gap-2 text-[13px] text-zinc-300 leading-relaxed"><span className="mt-1.5 h-1 w-1 rounded-full shrink-0 bg-zinc-600" />{it}</li>
@@ -14033,15 +14097,15 @@ function Flashcards({ progress, setProgress }) {
 
           {/* autovalutazione */}
           <div className="flex gap-2 mt-3">
-            <button onClick={() => rate("review")} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-amber-800 bg-amber-950/40 text-amber-200 text-sm font-medium hover:bg-amber-950 transition-colors"><RotateCcw size={14} /> Da ripassare</button>
-            <button onClick={() => rate("know")} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-800 bg-emerald-950/40 text-emerald-200 text-sm font-medium hover:bg-emerald-950 transition-colors"><CheckCircle2 size={14} /> So</button>
+            <button onClick={() => rate("review")} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-amber-800 bg-amber-950/40 text-amber-200 text-sm font-medium hover:bg-amber-950 transition-colors"><RotateCcw size={14} /> {T("Da ripassare", "To review")}</button>
+            <button onClick={() => rate("know")} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-800 bg-emerald-950/40 text-emerald-200 text-sm font-medium hover:bg-emerald-950 transition-colors"><CheckCircle2 size={14} /> {T("So", "I know it")}</button>
           </div>
 
           {/* navigazione */}
           <nav className="flex justify-between items-center mt-4 pt-4 border-t border-zinc-800/70">
-            <button disabled={pos === 0} onClick={() => go(-1)} className="text-sm text-zinc-400 hover:text-zinc-100 disabled:opacity-30 transition-colors">← precedente</button>
+            <button disabled={pos === 0} onClick={() => go(-1)} className="text-sm text-zinc-400 hover:text-zinc-100 disabled:opacity-30 transition-colors">← {T("precedente", "previous")}</button>
             <span className="font-mono text-[11px] text-zinc-600">{pos + 1} / {deck.length}</span>
-            <button disabled={pos === deck.length - 1} onClick={() => go(1)} className="text-sm text-indigo-400 hover:text-indigo-200 disabled:opacity-30 transition-colors">successiva →</button>
+            <button disabled={pos === deck.length - 1} onClick={() => go(1)} className="text-sm text-indigo-400 hover:text-indigo-200 disabled:opacity-30 transition-colors">{T("successiva", "next")} →</button>
           </nav>
         </>
       )}
@@ -14834,10 +14898,10 @@ function AiAssistant({ moduleId, moduleLabel }) {
         }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || `Errore ${res.status}`);
+      if (!res.ok) throw new Error(data?.error || `${T("Errore", "Error")} ${res.status}`);
       setMessages((m) => [...m, { role: "assistant", content: data.answer }]);
     } catch (e) {
-      setError(e.message || "Errore di rete");
+      setError(e.message || T("Errore di rete", "Network error"));
     } finally {
       setLoading(false);
     }
@@ -14858,8 +14922,8 @@ function AiAssistant({ moduleId, moduleLabel }) {
         <div className="flex items-center gap-2 min-w-0">
           <Bot size={16} className="text-indigo-400 shrink-0" />
           <div className="min-w-0">
-            <div className="text-[13px] font-medium text-zinc-100 truncate">Chiedi all'AI</div>
-            <div className="text-[11px] text-zinc-500 truncate">su «{moduleLabel}»</div>
+            <div className="text-[13px] font-medium text-zinc-100 truncate">{T("Chiedi all'AI", "Ask the AI")}</div>
+            <div className="text-[11px] text-zinc-500 truncate">{T("su", "about")} «{moduleLabel}»</div>
           </div>
         </div>
         <button onClick={() => setOpen(false)} className="text-zinc-500 hover:text-zinc-200 shrink-0">
@@ -14870,7 +14934,10 @@ function AiAssistant({ moduleId, moduleLabel }) {
       <div ref={listRef} className="flex-1 overflow-y-auto px-3.5 py-3 space-y-2.5 no-scrollbar">
         {messages.length === 0 && (
           <p className="text-[12.5px] text-zinc-500 leading-relaxed">
-            Fai una domanda sul modulo che stai studiando: spiegazioni, esempi, o «perché funziona così».
+            {T(
+              "Fai una domanda sul modulo che stai studiando: spiegazioni, esempi, o «perché funziona così».",
+              "Ask anything about the module you're studying: explanations, examples, or “why does it work this way”."
+            )}
           </p>
         )}
         {messages.map((m, i) => (
@@ -14880,7 +14947,7 @@ function AiAssistant({ moduleId, moduleLabel }) {
         ))}
         {loading && (
           <div className="flex items-center gap-1.5 text-zinc-500 text-[12px] px-1">
-            <Loader2 size={13} className="animate-spin" /> sta scrivendo…
+            <Loader2 size={13} className="animate-spin" /> {T("sta scrivendo…", "typing…")}
           </div>
         )}
         {error && (
@@ -14892,7 +14959,7 @@ function AiAssistant({ moduleId, moduleLabel }) {
         <textarea rows={1} value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="Chiedi qualcosa…"
+          placeholder={T("Chiedi qualcosa…", "Ask something…")}
           className="flex-1 resize-none bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-[13px] text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-indigo-600" />
         <button onClick={send} disabled={loading || !input.trim()}
           className="shrink-0 rounded-lg bg-indigo-600 disabled:opacity-40 text-white p-2 hover:bg-indigo-500 transition-colors">
@@ -14911,125 +14978,127 @@ function AiAssistant({ moduleId, moduleLabel }) {
    ===================================================================== */
 
 const MODULES = [
-  { id: "pystrutture", label: "Strutture dati", section: "Python", icon: ListTree, el: PyStruttureModule },
-  { id: "pyfunzioni", label: "Funzioni", section: "Python", icon: FunctionSquare, el: PyFunzioniModule },
-  { id: "pyerrori", label: "Gestione errori", section: "Python", icon: Bug, el: PyErroriModule },
-  { id: "pyfile", label: "Leggere/scrivere file", section: "Python", icon: FileText, el: PyFileModule },
-  { id: "pyoop", label: "Classi & OOP", section: "Python", icon: Boxes, el: PyOopModule },
-  { id: "pyavanzato", label: "Iteratori, generatori, decoratori", section: "Python", icon: Sparkles, el: PyAvanzatoModule },
-  { id: "pyasync", label: "Concorrenza & async", section: "Python", icon: Repeat, el: PyAsyncModule },
-  { id: "pytyping", label: "Type hints & Pydantic", section: "Python", icon: FileCheck2, el: PyTypingModule },
-  { id: "pypackaging", label: "Ambienti, pacchetti, test", section: "Python", icon: Package, el: PyPackagingModule },
-  { id: "dsarray", label: "Array & hash map", section: "Strutture dati", icon: Grid3x3, el: DsArrayModule },
-  { id: "dslist", label: "Linked list", section: "Strutture dati", icon: Spline, el: DsListModule },
-  { id: "dsstackqueue", label: "Stack & queue", section: "Strutture dati", icon: Layers3, el: DsStackQueueModule },
-  { id: "dstree", label: "Alberi & BST", section: "Strutture dati", icon: GitFork, el: DsTreeModule },
-  { id: "dsheap", label: "Heap & priorità", section: "Strutture dati", icon: Triangle, el: DsHeapModule },
-  { id: "dsgraph", label: "Grafi & BFS/DFS", section: "Strutture dati", icon: Waypoints, el: DsGraphModule },
-  { id: "dstrie", label: "Trie (prefissi)", section: "Strutture dati", icon: Type, el: DsTrieModule },
-  { id: "dsunion", label: "Union-Find", section: "Strutture dati", icon: Combine, el: DsUnionModule },
-  { id: "lcpattern", label: "Riconoscere il pattern", section: "LeetCode", icon: Puzzle, el: LcPatternModule },
-  { id: "lctwoptr", label: "Two pointers", section: "LeetCode", icon: MoveHorizontal, el: LcTwoPtrModule },
-  { id: "lcsliding", label: "Sliding window", section: "LeetCode", icon: Frame, el: LcSlidingModule },
-  { id: "lcbinary", label: "Binary search", section: "LeetCode", icon: Crosshair, el: LcBinaryModule },
-  { id: "lctraversal", label: "BFS/DFS su griglia", section: "LeetCode", icon: Network, el: LcTraversalModule },
-  { id: "lcbacktrack", label: "Backtracking", section: "LeetCode", icon: Undo2, el: LcBacktrackModule },
-  { id: "lcdp", label: "Programmazione dinamica", section: "LeetCode", icon: Grid2x2, el: LcDpModule },
-  { id: "lcheap", label: "Heap & top-K", section: "LeetCode", icon: ArrowUpNarrowWide, el: LcHeapModule },
-  { id: "lcintervals", label: "Intervalli", section: "LeetCode", icon: Rows3, el: LcIntervalsModule },
-  { id: "lcstack", label: "Monotonic stack", section: "LeetCode", icon: BarChart3, el: LcStackModule },
-  { id: "panoramica", label: "Panoramica", section: "Fondamenta", icon: Layers, el: Panoramica },
-  { id: "http", label: "HTTP", section: "Fondamenta", icon: Globe, el: HttpModule },
-  { id: "json", label: "JSON", section: "Fondamenta", icon: Braces, el: JsonModule },
-  { id: "rest", label: "REST · playground", section: "Fondamenta", icon: Server, el: RestModule },
-  { id: "apidesign", label: "API design", section: "Fondamenta", icon: Component, el: ApiDesignModule },
-  { id: "websocket", label: "WebSocket & realtime", section: "Fondamenta", icon: Cable, el: WebSocketModule },
-  { id: "testing", label: "Testing", section: "Fondamenta", icon: FlaskConical, el: TestingModule },
-  { id: "schema", label: "Tabelle & schema", section: "SQL & Database", icon: Table2, el: SchemaModule },
-  { id: "modello", label: "Modellare i dati", section: "SQL & Database", icon: Network, el: ModelloModule },
-  { id: "query", label: "Interrogare (SQL)", section: "SQL & Database", icon: SearchIcon, el: QueryModule },
-  { id: "aggregazioni", label: "Aggregazioni & GROUP BY", section: "SQL & Database", icon: Sigma, el: AggregazioniModule },
-  { id: "join", label: "JOIN", section: "SQL & Database", icon: GitMerge, el: JoinModule },
-  { id: "null", label: "NULL & valori mancanti", section: "SQL & Database", icon: CircleOff, el: NullModule },
-  { id: "indici", label: "Indici & performance", section: "SQL & Database", icon: Zap, el: IndiciModule },
-  { id: "relazioni", label: "Relazioni & transazioni", section: "SQL & Database", icon: Link2, el: RelazioniModule },
-  { id: "postgres", label: "Postgres in pratica", section: "SQL & Database", icon: Database, el: PostgresModule },
-  { id: "vectordb", label: "Database vettoriale", section: "SQL & Database", icon: Binary, el: VectorDbModule },
-  { id: "supabase", label: "Supabase", section: "SQL & Database", icon: Layers, el: SupabaseModule },
-  { id: "multitenancy", label: "Multi-tenancy", section: "SQL & Database", icon: Building2, el: MultiTenancyModule },
-  { id: "pgmigra", label: "Migrazioni senza downtime", section: "SQL & Database", icon: DatabaseZap, el: PgMigraModule },
-  { id: "ormn1", label: "ORM & il problema N+1", section: "SQL & Database", icon: ArrowLeftRight, el: OrmN1Module },
-  { id: "playground", label: "Playground SQL", section: "SQL & Database", icon: Terminal, el: PlaygroundModule },
-  { id: "hosting", label: "Hosting & latenza", section: "Infrastruttura", icon: Cloud, el: HostingModule },
-  { id: "deploy", label: "Deploy & CI/CD", section: "Infrastruttura", icon: Rocket, el: DeployModule },
-  { id: "docker", label: "Docker & container", section: "Infrastruttura", icon: Ship, el: DockerModule },
-  { id: "cloud", label: "Cloud & servizi gestiti", section: "Infrastruttura", icon: Container, el: CloudModule },
-  { id: "cloudflare", label: "Cloudflare & l'edge", section: "Infrastruttura", icon: Orbit, el: CloudflareModule },
-  { id: "auth", label: "Auth & sicurezza", section: "Infrastruttura", icon: ShieldCheck, el: AuthModule },
-  { id: "oauth", label: "OAuth · PKCE & token", section: "Infrastruttura", icon: KeyRound, el: OauthModule },
-  { id: "security", label: "Sicurezza web (OWASP)", section: "Infrastruttura", icon: Lock, el: SecurityModule },
-  { id: "caching", label: "Caching", section: "Infrastruttura", icon: Gauge, el: CachingModule },
-  { id: "logging", label: "Logging & osservabilità", section: "Infrastruttura", icon: ScrollText, el: LoggingModule },
-  { id: "apidocs", label: "Leggere una doc API", section: "Integrazioni & dati", icon: FileJson, el: ApiDocsModule },
-  { id: "integrazioni", label: "Integrazioni & webhook", section: "Integrazioni & dati", icon: Webhook, el: IntegrazioniModule },
-  { id: "scraping", label: "Scraping", section: "Integrazioni & dati", icon: MousePointerClick, el: ScrapingModule },
-  { id: "migrazioni", label: "Migrazioni dei dati", section: "Integrazioni & dati", icon: Repeat, el: MigrazioniModule },
-  { id: "authent", label: "Auth enterprise · SSO", section: "Integrazioni & dati", icon: Fingerprint, el: AuthentModule },
-  { id: "ciplaybook", label: "Playbook integrazioni", section: "Integrazioni cliente", icon: Milestone, el: CiPlaybookModule },
-  { id: "cimigrate", label: "Migrazione dati", section: "Integrazioni cliente", icon: DatabaseZap, el: CiMigrateModule },
-  { id: "cicrm", label: "Integrare un CRM", section: "Integrazioni cliente", icon: Contact, el: CiCrmModule },
-  { id: "cimail", label: "Integrare l'email", section: "Integrazioni cliente", icon: Mail, el: CiMailModule },
-  { id: "cidocs", label: "Ingest documenti", section: "Integrazioni cliente", icon: FileScan, el: CiDocsModule },
-  { id: "regression", label: "Fix per A rompe B", section: "Integrazioni cliente", icon: GitBranch, el: RegressionModule },
-  { id: "llm", label: "LLM via API", section: "AI", icon: Cpu, el: LlmModule },
-  { id: "llmparams", label: "Come ragiona un LLM", section: "AI", icon: SlidersHorizontal, el: LlmParamsModule },
-  { id: "prompting", label: "Prompt & context engineering", section: "AI", icon: ClipboardList, el: PromptingModule },
-  { id: "agents", label: "Agenti & tool use", section: "AI", icon: Bot, el: AgentsModule },
-  { id: "agentmemory", label: "Memoria degli agenti", section: "AI", icon: Brain, el: AgentMemoryModule },
-  { id: "agentflow", label: "Workflow & orchestrazione", section: "AI", icon: Waypoints, el: AgentFlowModule },
-  { id: "rag", label: "RAG", section: "AI", icon: Blocks, el: RagModule },
-  { id: "mcp", label: "MCP", section: "AI", icon: Plug, el: McpModule },
-  { id: "cli", label: "CLI vs MCP", section: "AI", icon: Terminal, el: CliModule },
-  { id: "agenteval", label: "Valutazione & osservabilità", section: "AI", icon: Radar, el: AgentEvalModule },
-  { id: "halluc", label: "Allucinazioni & evals", section: "AI", icon: Target, el: HallucModule },
-  { id: "langfuse", label: "Osservabilità · Langfuse", section: "AI", icon: Activity, el: LangfuseModule },
-  { id: "agentsec", label: "Sicurezza degli agenti", section: "AI", icon: ShieldAlert, el: AgentSecModule },
-  { id: "awtriage", label: "Supporto clienti", section: "Workflow agentici", icon: Headset, el: AwTriageModule },
-  { id: "awdoc", label: "Elaborazione documenti", section: "Workflow agentici", icon: ScanText, el: AwDocModule },
-  { id: "awresearch", label: "Ricerca & report", section: "Workflow agentici", icon: Telescope, el: AwResearchModule },
-  { id: "awcoding", label: "Agente di coding", section: "Workflow agentici", icon: GitPullRequest, el: AwCodingModule },
-  { id: "awsales", label: "Outbound su scala", section: "Workflow agentici", icon: Mails, el: AwSalesModule },
-  { id: "aiprod", label: "Produzione · harness & Temporal", section: "Workflow agentici", icon: Timer, el: AiProdModule },
-  { id: "sdmetodo", label: "Metodo & mattoni", section: "System Design", icon: Boxes, el: SdMetodoModule },
-  { id: "diagrammi", label: "Diagrammi interattivi", section: "System Design", icon: Waypoints, el: DiagramsGalleryModule },
-  { id: "sdstime", label: "Stime a spanne", section: "System Design", icon: TrendingUp, el: SdStimeModule },
-  { id: "sddati", label: "Scalare i dati", section: "System Design", icon: Share2, el: SdDatiModule },
-  { id: "sdasync", label: "Code & asincronia", section: "System Design", icon: Workflow, el: SdAsyncModule },
-  { id: "sdtinyurl", label: "URL shortener", section: "System Design", icon: Link2, el: SdTinyUrlModule },
-  { id: "sduber", label: "Uber · matching geo", section: "System Design", icon: MapPin, el: SdUberModule },
-  { id: "sdnetflix", label: "Netflix · streaming/CDN", section: "System Design", icon: Video, el: SdNetflixModule },
-  { id: "sdticket", label: "Ticketmaster · contesa", section: "System Design", icon: Ticket, el: SdTicketModule },
-  { id: "sdcrawler", label: "Web crawler", section: "System Design", icon: GitBranch, el: SdCrawlerModule },
-  { id: "sddelivery", label: "Consegne · workflow", section: "System Design", icon: Truck, el: SdDeliveryModule },
-  { id: "sdchat", label: "Chat · realtime", section: "System Design", icon: MessageSquare, el: SdChatModule },
-  { id: "crche", label: "Cosa cercare", section: "Code review", icon: ScanEye, el: CrBasiModule },
-  { id: "crfeedback", label: "Dare feedback", section: "Code review", icon: MessagesSquare, el: CrFeedbackModule },
-  { id: "crpractice", label: "Trova i problemi", section: "Code review", icon: SearchCode, el: CrPracticeModule },
-  { id: "crflow", label: "Il flusso del PR", section: "Code review", icon: GitPullRequestArrow, el: CrFlowModule },
-  { id: "pmrole", label: "Cosa fa un PM", section: "Product Management", icon: Users2, el: PmRoleModule },
-  { id: "pmdiscovery", label: "Customer discovery", section: "Product Management", icon: Ear, el: PmDiscoveryModule },
-  { id: "pmprioritize", label: "Prioritizzazione (RICE)", section: "Product Management", icon: ListTodo, el: PmPrioritizeModule },
-  { id: "pmroadmap", label: "Roadmap", section: "Product Management", icon: CalendarClock, el: PmRoadmapModule },
-  { id: "pmprd", label: "Scrivere una PRD", section: "Product Management", icon: ClipboardCheck, el: PmPrdModule },
-  { id: "pmmetrics", label: "Metriche B2B SaaS", section: "Product Management", icon: LineChart, el: PmMetricsModule },
-  { id: "pmokr", label: "OKR", section: "Product Management", icon: Flag, el: PmOkrModule },
-  { id: "pmexperiment", label: "Sperimentazione in B2B", section: "Product Management", icon: Beaker, el: PmExperimentModule },
-  { id: "pmstakeholder", label: "Stakeholder & influenza", section: "Product Management", icon: Handshake, el: PmStakeholderModule },
-  { id: "pmgtm", label: "GTM & pricing", section: "Product Management", icon: Megaphone, el: PmGtmModule },
-  { id: "pmcase", label: "Caso da colloquio", section: "Product Management", icon: Presentation, el: PmCaseModule },
-  { id: "quadro", label: "Il quadro completo", section: "Ripasso", icon: Route, el: RecapModule },
-  { id: "glossario", label: "Glossario", section: "Ripasso", icon: BookOpen, el: GlossarioModule },
+  { id: "pystrutture", label: "Strutture dati", en: "Data structures", section: "Python", icon: ListTree, el: PyStruttureModule },
+  { id: "pyfunzioni", label: "Funzioni", en: "Functions", section: "Python", icon: FunctionSquare, el: PyFunzioniModule },
+  { id: "pyerrori", label: "Gestione errori", en: "Error handling", section: "Python", icon: Bug, el: PyErroriModule },
+  { id: "pyfile", label: "Leggere/scrivere file", en: "Reading/writing files", section: "Python", icon: FileText, el: PyFileModule },
+  { id: "pyoop", label: "Classi & OOP", en: "Classes & OOP", section: "Python", icon: Boxes, el: PyOopModule },
+  { id: "pyavanzato", label: "Iteratori, generatori, decoratori", en: "Iterators, generators, decorators", section: "Python", icon: Sparkles, el: PyAvanzatoModule },
+  { id: "pyasync", label: "Concorrenza & async", en: "Concurrency & async", section: "Python", icon: Repeat, el: PyAsyncModule },
+  { id: "pytyping", label: "Type hints & Pydantic", en: "Type hints & Pydantic", section: "Python", icon: FileCheck2, el: PyTypingModule },
+  { id: "pypackaging", label: "Ambienti, pacchetti, test", en: "Environments, packages, tests", section: "Python", icon: Package, el: PyPackagingModule },
+  { id: "dsarray", label: "Array & hash map", en: "Arrays & hash maps", section: "Strutture dati", icon: Grid3x3, el: DsArrayModule },
+  { id: "dslist", label: "Linked list", en: "Linked lists", section: "Strutture dati", icon: Spline, el: DsListModule },
+  { id: "dsstackqueue", label: "Stack & queue", en: "Stacks & queues", section: "Strutture dati", icon: Layers3, el: DsStackQueueModule },
+  { id: "dstree", label: "Alberi & BST", en: "Trees & BSTs", section: "Strutture dati", icon: GitFork, el: DsTreeModule },
+  { id: "dsheap", label: "Heap & priorità", en: "Heaps & priority", section: "Strutture dati", icon: Triangle, el: DsHeapModule },
+  { id: "dsgraph", label: "Grafi & BFS/DFS", en: "Graphs & BFS/DFS", section: "Strutture dati", icon: Waypoints, el: DsGraphModule },
+  { id: "dstrie", label: "Trie (prefissi)", en: "Tries (prefixes)", section: "Strutture dati", icon: Type, el: DsTrieModule },
+  { id: "dsunion", label: "Union-Find", en: "Union-Find", section: "Strutture dati", icon: Combine, el: DsUnionModule },
+  { id: "lcpattern", label: "Riconoscere il pattern", en: "Spotting the pattern", section: "LeetCode", icon: Puzzle, el: LcPatternModule },
+  { id: "lctwoptr", label: "Two pointers", en: "Two pointers", section: "LeetCode", icon: MoveHorizontal, el: LcTwoPtrModule },
+  { id: "lcsliding", label: "Sliding window", en: "Sliding window", section: "LeetCode", icon: Frame, el: LcSlidingModule },
+  { id: "lcbinary", label: "Binary search", en: "Binary search", section: "LeetCode", icon: Crosshair, el: LcBinaryModule },
+  { id: "lctraversal", label: "BFS/DFS su griglia", en: "BFS/DFS on a grid", section: "LeetCode", icon: Network, el: LcTraversalModule },
+  { id: "lcbacktrack", label: "Backtracking", en: "Backtracking", section: "LeetCode", icon: Undo2, el: LcBacktrackModule },
+  { id: "lcdp", label: "Programmazione dinamica", en: "Dynamic programming", section: "LeetCode", icon: Grid2x2, el: LcDpModule },
+  { id: "lcheap", label: "Heap & top-K", en: "Heaps & top-K", section: "LeetCode", icon: ArrowUpNarrowWide, el: LcHeapModule },
+  { id: "lcintervals", label: "Intervalli", en: "Intervals", section: "LeetCode", icon: Rows3, el: LcIntervalsModule },
+  { id: "lcstack", label: "Monotonic stack", en: "Monotonic stack", section: "LeetCode", icon: BarChart3, el: LcStackModule },
+  { id: "panoramica", label: "Panoramica", en: "Overview", section: "Fondamenta", icon: Layers, el: Panoramica },
+  { id: "http", label: "HTTP", en: "HTTP", section: "Fondamenta", icon: Globe, el: HttpModule },
+  { id: "json", label: "JSON", en: "JSON", section: "Fondamenta", icon: Braces, el: JsonModule },
+  { id: "rest", label: "REST · playground", en: "REST · playground", section: "Fondamenta", icon: Server, el: RestModule },
+  { id: "apidesign", label: "API design", en: "API design", section: "Fondamenta", icon: Component, el: ApiDesignModule },
+  { id: "websocket", label: "WebSocket & realtime", en: "WebSockets & realtime", section: "Fondamenta", icon: Cable, el: WebSocketModule },
+  { id: "testing", label: "Testing", en: "Testing", section: "Fondamenta", icon: FlaskConical, el: TestingModule },
+  { id: "schema", label: "Tabelle & schema", en: "Tables & schema", section: "SQL & Database", icon: Table2, el: SchemaModule },
+  { id: "modello", label: "Modellare i dati", en: "Modelling the data", section: "SQL & Database", icon: Network, el: ModelloModule },
+  { id: "query", label: "Interrogare (SQL)", en: "Querying (SQL)", section: "SQL & Database", icon: SearchIcon, el: QueryModule },
+  { id: "aggregazioni", label: "Aggregazioni & GROUP BY", en: "Aggregates & GROUP BY", section: "SQL & Database", icon: Sigma, el: AggregazioniModule },
+  { id: "join", label: "JOIN", en: "JOIN", section: "SQL & Database", icon: GitMerge, el: JoinModule },
+  { id: "null", label: "NULL & valori mancanti", en: "NULL & missing values", section: "SQL & Database", icon: CircleOff, el: NullModule },
+  { id: "indici", label: "Indici & performance", en: "Indexes & performance", section: "SQL & Database", icon: Zap, el: IndiciModule },
+  { id: "relazioni", label: "Relazioni & transazioni", en: "Relations & transactions", section: "SQL & Database", icon: Link2, el: RelazioniModule },
+  { id: "postgres", label: "Postgres in pratica", en: "Postgres in practice", section: "SQL & Database", icon: Database, el: PostgresModule },
+  { id: "vectordb", label: "Database vettoriale", en: "Vector database", section: "SQL & Database", icon: Binary, el: VectorDbModule },
+  { id: "supabase", label: "Supabase", en: "Supabase", section: "SQL & Database", icon: Layers, el: SupabaseModule },
+  { id: "multitenancy", label: "Multi-tenancy", en: "Multi-tenancy", section: "SQL & Database", icon: Building2, el: MultiTenancyModule },
+  { id: "pgmigra", label: "Migrazioni senza downtime", en: "Zero-downtime migrations", section: "SQL & Database", icon: DatabaseZap, el: PgMigraModule },
+  { id: "ormn1", label: "ORM & il problema N+1", en: "ORMs & the N+1 problem", section: "SQL & Database", icon: ArrowLeftRight, el: OrmN1Module },
+  { id: "playground", label: "Playground SQL", en: "SQL playground", section: "SQL & Database", icon: Terminal, el: PlaygroundModule },
+  { id: "hosting", label: "Hosting & latenza", en: "Hosting & latency", section: "Infrastruttura", icon: Cloud, el: HostingModule },
+  { id: "deploy", label: "Deploy & CI/CD", en: "Deploys & CI/CD", section: "Infrastruttura", icon: Rocket, el: DeployModule },
+  { id: "docker", label: "Docker & container", en: "Docker & containers", section: "Infrastruttura", icon: Ship, el: DockerModule },
+  { id: "cloud", label: "Cloud & servizi gestiti", en: "Cloud & managed services", section: "Infrastruttura", icon: Container, el: CloudModule },
+  { id: "cloudflare", label: "Cloudflare & l'edge", en: "Cloudflare & the edge", section: "Infrastruttura", icon: Orbit, el: CloudflareModule },
+  { id: "auth", label: "Auth & sicurezza", en: "Auth & security", section: "Infrastruttura", icon: ShieldCheck, el: AuthModule },
+  { id: "oauth", label: "OAuth · PKCE & token", en: "OAuth · PKCE & tokens", section: "Infrastruttura", icon: KeyRound, el: OauthModule },
+  { id: "security", label: "Sicurezza web (OWASP)", en: "Web security (OWASP)", section: "Infrastruttura", icon: Lock, el: SecurityModule },
+  { id: "caching", label: "Caching", en: "Caching", section: "Infrastruttura", icon: Gauge, el: CachingModule },
+  { id: "logging", label: "Logging & osservabilità", en: "Logging & observability", section: "Infrastruttura", icon: ScrollText, el: LoggingModule },
+  { id: "apidocs", label: "Leggere una doc API", en: "Reading API docs", section: "Integrazioni & dati", icon: FileJson, el: ApiDocsModule },
+  { id: "integrazioni", label: "Integrazioni & webhook", en: "Integrations & webhooks", section: "Integrazioni & dati", icon: Webhook, el: IntegrazioniModule },
+  { id: "scraping", label: "Scraping", en: "Scraping", section: "Integrazioni & dati", icon: MousePointerClick, el: ScrapingModule },
+  { id: "migrazioni", label: "Migrazioni dei dati", en: "Data migrations", section: "Integrazioni & dati", icon: Repeat, el: MigrazioniModule },
+  { id: "authent", label: "Auth enterprise · SSO", en: "Enterprise auth · SSO", section: "Integrazioni & dati", icon: Fingerprint, el: AuthentModule },
+  { id: "ciplaybook", label: "Playbook integrazioni", en: "Integration playbook", section: "Integrazioni cliente", icon: Milestone, el: CiPlaybookModule },
+  { id: "cimigrate", label: "Migrazione dati", en: "Data migration", section: "Integrazioni cliente", icon: DatabaseZap, el: CiMigrateModule },
+  { id: "cicrm", label: "Integrare un CRM", en: "Integrating a CRM", section: "Integrazioni cliente", icon: Contact, el: CiCrmModule },
+  { id: "cimail", label: "Integrare l'email", en: "Integrating email", section: "Integrazioni cliente", icon: Mail, el: CiMailModule },
+  { id: "cidocs", label: "Ingest documenti", en: "Document ingest", section: "Integrazioni cliente", icon: FileScan, el: CiDocsModule },
+  { id: "regression", label: "Fix per A rompe B", en: "Fixing A breaks B", section: "Integrazioni cliente", icon: GitBranch, el: RegressionModule },
+  { id: "llm", label: "LLM via API", en: "LLMs via API", section: "AI", icon: Cpu, el: LlmModule },
+  { id: "llmparams", label: "Come ragiona un LLM", en: "How an LLM reasons", section: "AI", icon: SlidersHorizontal, el: LlmParamsModule },
+  { id: "prompting", label: "Prompt & context engineering", en: "Prompt & context engineering", section: "AI", icon: ClipboardList, el: PromptingModule },
+  { id: "agents", label: "Agenti & tool use", en: "Agents & tool use", section: "AI", icon: Bot, el: AgentsModule },
+  { id: "agentmemory", label: "Memoria degli agenti", en: "Agent memory", section: "AI", icon: Brain, el: AgentMemoryModule },
+  { id: "agentflow", label: "Workflow & orchestrazione", en: "Workflows & orchestration", section: "AI", icon: Waypoints, el: AgentFlowModule },
+  { id: "rag", label: "RAG", en: "RAG", section: "AI", icon: Blocks, el: RagModule },
+  { id: "mcp", label: "MCP", en: "MCP", section: "AI", icon: Plug, el: McpModule },
+  { id: "cli", label: "CLI vs MCP", en: "CLI vs MCP", section: "AI", icon: Terminal, el: CliModule },
+  { id: "agenteval", label: "Valutazione & osservabilità", en: "Evaluation & observability", section: "AI", icon: Radar, el: AgentEvalModule },
+  { id: "halluc", label: "Allucinazioni & evals", en: "Hallucinations & evals", section: "AI", icon: Target, el: HallucModule },
+  { id: "langfuse", label: "Osservabilità · Langfuse", en: "Observability · Langfuse", section: "AI", icon: Activity, el: LangfuseModule },
+  { id: "agentsec", label: "Sicurezza degli agenti", en: "Agent security", section: "AI", icon: ShieldAlert, el: AgentSecModule },
+  { id: "awtriage", label: "Supporto clienti", en: "Customer support", section: "Workflow agentici", icon: Headset, el: AwTriageModule },
+  { id: "awdoc", label: "Elaborazione documenti", en: "Document processing", section: "Workflow agentici", icon: ScanText, el: AwDocModule },
+  { id: "awresearch", label: "Ricerca & report", en: "Research & reporting", section: "Workflow agentici", icon: Telescope, el: AwResearchModule },
+  { id: "awcoding", label: "Agente di coding", en: "Coding agent", section: "Workflow agentici", icon: GitPullRequest, el: AwCodingModule },
+  { id: "awsales", label: "Outbound su scala", en: "Outbound at scale", section: "Workflow agentici", icon: Mails, el: AwSalesModule },
+  { id: "aiprod", label: "Produzione · harness & Temporal", en: "Production · harness & Temporal", section: "Workflow agentici", icon: Timer, el: AiProdModule },
+  { id: "sdmetodo", label: "Metodo & mattoni", en: "Method & building blocks", section: "System Design", icon: Boxes, el: SdMetodoModule },
+  { id: "diagrammi", label: "Diagrammi interattivi", en: "Interactive diagrams", section: "System Design", icon: Waypoints, el: DiagramsGalleryModule },
+  { id: "sdstime", label: "Stime a spanne", en: "Back-of-envelope estimates", section: "System Design", icon: TrendingUp, el: SdStimeModule },
+  { id: "sddati", label: "Scalare i dati", en: "Scaling the data", section: "System Design", icon: Share2, el: SdDatiModule },
+  { id: "sdasync", label: "Code & asincronia", en: "Queues & async", section: "System Design", icon: Workflow, el: SdAsyncModule },
+  { id: "sdtinyurl", label: "URL shortener", en: "URL shortener", section: "System Design", icon: Link2, el: SdTinyUrlModule },
+  { id: "sduber", label: "Uber · matching geo", en: "Uber · geo matching", section: "System Design", icon: MapPin, el: SdUberModule },
+  { id: "sdnetflix", label: "Netflix · streaming/CDN", en: "Netflix · streaming/CDN", section: "System Design", icon: Video, el: SdNetflixModule },
+  { id: "sdticket", label: "Ticketmaster · contesa", en: "Ticketmaster · contention", section: "System Design", icon: Ticket, el: SdTicketModule },
+  { id: "sdcrawler", label: "Web crawler", en: "Web crawler", section: "System Design", icon: GitBranch, el: SdCrawlerModule },
+  { id: "sddelivery", label: "Consegne · workflow", en: "Deliveries · workflow", section: "System Design", icon: Truck, el: SdDeliveryModule },
+  { id: "sdchat", label: "Chat · realtime", en: "Chat · realtime", section: "System Design", icon: MessageSquare, el: SdChatModule },
+  { id: "crche", label: "Cosa cercare", en: "What to look for", section: "Code review", icon: ScanEye, el: CrBasiModule },
+  { id: "crfeedback", label: "Dare feedback", en: "Giving feedback", section: "Code review", icon: MessagesSquare, el: CrFeedbackModule },
+  { id: "crpractice", label: "Trova i problemi", en: "Spot the problems", section: "Code review", icon: SearchCode, el: CrPracticeModule },
+  { id: "crflow", label: "Il flusso del PR", en: "The PR flow", section: "Code review", icon: GitPullRequestArrow, el: CrFlowModule },
+  { id: "pmrole", label: "Cosa fa un PM", en: "What a PM does", section: "Product Management", icon: Users2, el: PmRoleModule },
+  { id: "pmdiscovery", label: "Customer discovery", en: "Customer discovery", section: "Product Management", icon: Ear, el: PmDiscoveryModule },
+  { id: "pmprioritize", label: "Prioritizzazione (RICE)", en: "Prioritisation (RICE)", section: "Product Management", icon: ListTodo, el: PmPrioritizeModule },
+  { id: "pmroadmap", label: "Roadmap", en: "Roadmap", section: "Product Management", icon: CalendarClock, el: PmRoadmapModule },
+  { id: "pmprd", label: "Scrivere una PRD", en: "Writing a PRD", section: "Product Management", icon: ClipboardCheck, el: PmPrdModule },
+  { id: "pmmetrics", label: "Metriche B2B SaaS", en: "B2B SaaS metrics", section: "Product Management", icon: LineChart, el: PmMetricsModule },
+  { id: "pmokr", label: "OKR", en: "OKRs", section: "Product Management", icon: Flag, el: PmOkrModule },
+  { id: "pmexperiment", label: "Sperimentazione in B2B", en: "Experimentation in B2B", section: "Product Management", icon: Beaker, el: PmExperimentModule },
+  { id: "pmstakeholder", label: "Stakeholder & influenza", en: "Stakeholders & influence", section: "Product Management", icon: Handshake, el: PmStakeholderModule },
+  { id: "pmgtm", label: "GTM & pricing", en: "GTM & pricing", section: "Product Management", icon: Megaphone, el: PmGtmModule },
+  { id: "pmcase", label: "Caso da colloquio", en: "Interview case study", section: "Product Management", icon: Presentation, el: PmCaseModule },
+  { id: "quadro", label: "Il quadro completo", en: "The whole picture", section: "Ripasso", icon: Route, el: RecapModule },
+  { id: "glossario", label: "Glossario", en: "Glossary", section: "Ripasso", icon: BookOpen, el: GlossarioModule },
 ];
+/** Display label for a module in the active language. */
+const mlabel = (m) => T(m.label, m.en);
 const SECTIONS = ["Python", "Strutture dati", "LeetCode", "Fondamenta", "SQL & Database", "Infrastruttura", "Integrazioni & dati", "Integrazioni cliente", "AI", "Workflow agentici", "System Design", "Code review", "Product Management", "Ripasso"];
 
 export default function LezioneBasiBackend() {
@@ -15037,6 +15106,8 @@ export default function LezioneBasiBackend() {
   const [mastered, setMastered] = useState(() => new Set(store.get("mastered", [])));
   const [mode, setMode] = useState(() => store.get("mode", "lezione"));
   const [flash, setFlash] = useState(() => store.get("flash", {}));
+  const [lang, setLang] = useState(() => store.get("lang", "it"));
+  LANG = lang; // set before children render — see the LANGUAGE block at the top
   const idx = MODULES.findIndex((m) => m.id === active);
   const cur = MODULES[idx];
   const Cur = cur.el;
@@ -15048,6 +15119,7 @@ export default function LezioneBasiBackend() {
   useEffect(() => { store.set("mastered", [...mastered]); }, [mastered]);
   useEffect(() => { store.set("mode", mode); }, [mode]);
   useEffect(() => { store.set("flash", flash); }, [flash]);
+  useEffect(() => { store.set("lang", lang); document.documentElement.lang = lang; }, [lang]);
 
   const master = (mid) => setMastered((s) => (s.has(mid) ? s : new Set(s).add(mid)));
   const modsInSection = MODULES.filter((m) => m.section === sectionTab);
@@ -15055,42 +15127,52 @@ export default function LezioneBasiBackend() {
 
   return (
     <NavCtx.Provider value={setActive}>
-    <AiAssistant moduleId={active} moduleLabel={cur.label} />
+    <LangToggle lang={lang} setLang={setLang} />
+    <AiAssistant moduleId={active} moduleLabel={mlabel(cur)} />
     <div ref={topRef} className="min-h-screen text-zinc-100 font-sans">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
         {/* hero */}
         <header className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-flex h-2 w-2 rounded-full bg-indigo-400 shadow-glow" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-indigo-300">backend, dal vivo</span>
-            <span className="font-mono text-[11px] text-zinc-600">/ {cur.section}</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-indigo-300">{T("backend, dal vivo", "backend, hands-on")}</span>
+            <span className="font-mono text-[11px] text-zinc-600">/ {sect(cur.section)}</span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl leading-[1.05] text-white text-balance">
-            Capire lo stack <span className="text-indigo-300">prima</span> di costruirci sopra
+            {T(
+              <>Capire lo stack <span className="text-indigo-300">prima</span> di costruirci sopra</>,
+              <>Understand the stack <span className="text-indigo-300">before</span> you build on it</>
+            )}
           </h1>
           <p className="text-zinc-400 text-[15px] mt-3 max-w-2xl text-pretty leading-relaxed">
-            {MODULES.length} moduli in {SECTIONS.length} sezioni, ognuno con qualcosa con cui giocare. L'obiettivo non è memorizzare: è farti il modello mentale, così durante i progetti i pezzi avranno un posto dove incastrarsi.
+            {T(
+              <>{MODULES.length} moduli in {SECTIONS.length} sezioni, ognuno con qualcosa con cui giocare. L'obiettivo non è memorizzare: è farti il modello mentale, così durante i progetti i pezzi avranno un posto dove incastrarsi.</>,
+              <>{MODULES.length} modules across {SECTIONS.length} sections, each with something to play with. The goal isn't to memorise: it's to build the mental model, so that when you're on a project the pieces have somewhere to click into place.</>
+            )}
           </p>
           {/* come studiare + progresso */}
           <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/60 shadow-soft px-4 py-3.5">
             <div className="flex items-start gap-2.5 text-[13px] text-zinc-400 leading-relaxed">
               <Compass size={15} className="text-indigo-400 mt-0.5 shrink-0" />
               <div>
-                <span className="text-zinc-100 font-medium">Come sfruttarla:</span> in ogni modulo <span className="text-zinc-200">gioca</span> con l'esempio interattivo e prova a <span className="text-zinc-200">prevedere</span> cosa succede prima di cliccare; poi rispondi alla <span className="text-emerald-300">verifica al volo</span> in fondo. Nella sezione <span className="text-red-300">System Design</span> trovi anche architettura e <span className="text-indigo-300">diagrammi di sequenza</span> passo-passo, più le sfide <span className="text-indigo-300">«progettalo tu»</span>: pensa il sistema da zero, poi fatti dire cosa manca. Chiudi con <span className="text-indigo-300">Il quadro completo</span> e tieni a portata il <span className="text-indigo-300">Glossario</span>.
+                {T(
+                  <><span className="text-zinc-100 font-medium">Come sfruttarla:</span> in ogni modulo <span className="text-zinc-200">gioca</span> con l'esempio interattivo e prova a <span className="text-zinc-200">prevedere</span> cosa succede prima di cliccare; poi rispondi alla <span className="text-emerald-300">verifica al volo</span> in fondo. Nella sezione <span className="text-red-300">System Design</span> trovi anche architettura e <span className="text-indigo-300">diagrammi di sequenza</span> passo-passo, più le sfide <span className="text-indigo-300">«progettalo tu»</span>: pensa il sistema da zero, poi fatti dire cosa manca. Chiudi con <span className="text-indigo-300">Il quadro completo</span> e tieni a portata il <span className="text-indigo-300">Glossario</span>.</>,
+                  <><span className="text-zinc-100 font-medium">How to get the most out of it:</span> in every module, <span className="text-zinc-200">play</span> with the interactive example and try to <span className="text-zinc-200">predict</span> what happens before you click; then answer the <span className="text-emerald-300">quick check</span> at the bottom. The <span className="text-red-300">System Design</span> section also has architecture and step-by-step <span className="text-indigo-300">sequence diagrams</span>, plus <span className="text-indigo-300">“design it yourself”</span> challenges: build the system from scratch, then find out what you missed. Finish with <span className="text-indigo-300">The whole picture</span>, and keep the <span className="text-indigo-300">Glossary</span> within reach.</>
+                )}
               </div>
             </div>
             <div className="mt-3 flex items-center gap-3">
               <div className="h-1.5 flex-1 rounded-full bg-zinc-800 overflow-hidden">
                 <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%`, transition: "width .5s cubic-bezier(0.22,1,0.36,1)" }} />
               </div>
-              <span className="font-mono text-[11px] text-zinc-500 shrink-0">{mastered.size}/{QUIZ_TOTAL} padroneggiati</span>
+              <span className="font-mono text-[11px] text-zinc-500 shrink-0">{mastered.size}/{QUIZ_TOTAL} {T("padroneggiati", "mastered")}</span>
             </div>
           </div>
         </header>
 
         {/* toggle Lezione ↔ Flashcard */}
         <div className="flex items-center gap-1.5 mb-2 p-1 rounded-xl border border-zinc-800 bg-zinc-900/60 w-fit">
-          {[["lezione", "Lezione", BookOpen], ["flashcard", "Flashcard", Layers3]].map(([m, label, Ic]) => (
+          {[["lezione", T("Lezione", "Lesson"), BookOpen], ["flashcard", T("Flashcard", "Flashcards"), Layers3]].map(([m, label, Ic]) => (
             <button key={m} onClick={() => setMode(m)}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all ${mode === m ? "bg-indigo-600 text-white shadow-glow" : "text-zinc-400 hover:text-zinc-100"}`}>
               <Ic size={14} /> {label}
@@ -15108,7 +15190,7 @@ export default function LezioneBasiBackend() {
             {SECTIONS.map((s) => (
               <button key={s} onClick={() => setSectionTab(s)}
                 className={`px-3 py-1.5 rounded-lg border text-[13px] font-medium whitespace-nowrap transition-all ${sectionTab === s ? "border-indigo-500 bg-indigo-950 text-white" : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"}`}>
-                {s}
+                {sect(s)}
               </button>
             ))}
           </div>
@@ -15119,7 +15201,7 @@ export default function LezioneBasiBackend() {
               return (
                 <button key={m.id} onClick={() => setActive(m.id)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[13px] whitespace-nowrap transition-all ${on ? "border-indigo-500 bg-indigo-900 text-white shadow-glow" : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"}`}>
-                  {ok ? <CheckCircle2 size={15} className="text-emerald-400" /> : <m.icon size={15} className={on ? "text-indigo-200" : "text-zinc-500"} />}{m.label}
+                  {ok ? <CheckCircle2 size={15} className="text-emerald-400" /> : <m.icon size={15} className={on ? "text-indigo-200" : "text-zinc-500"} />}{mlabel(m)}
                 </button>
               );
             })}
@@ -15135,11 +15217,11 @@ export default function LezioneBasiBackend() {
         {/* footer prev/next */}
         <nav className="flex justify-between items-stretch mt-10 pt-5 border-t border-zinc-800/70 gap-3">
           <button disabled={idx === 0} onClick={() => setActive(MODULES[Math.max(0, idx - 1)].id)} className="group flex-1 text-left text-sm text-zinc-400 hover:text-zinc-100 disabled:opacity-30 transition-colors">
-            {idx > 0 && <><span className="block font-mono text-[10px] uppercase tracking-wider text-zinc-600 group-hover:text-zinc-500 mb-0.5">precedente</span><span>← {MODULES[idx - 1].label}</span></>}
+            {idx > 0 && <><span className="block font-mono text-[10px] uppercase tracking-wider text-zinc-600 group-hover:text-zinc-500 mb-0.5">{T("precedente", "previous")}</span><span>← {mlabel(MODULES[idx - 1])}</span></>}
           </button>
           <span className="font-mono text-[11px] text-zinc-600 shrink-0 self-center px-2">{idx + 1} / {MODULES.length}</span>
           <button disabled={idx === MODULES.length - 1} onClick={() => setActive(MODULES[Math.min(MODULES.length - 1, idx + 1)].id)} className="group flex-1 text-right text-sm text-indigo-400 hover:text-indigo-200 disabled:opacity-30 transition-colors">
-            {idx < MODULES.length - 1 && <><span className="block font-mono text-[10px] uppercase tracking-wider text-zinc-600 group-hover:text-indigo-400 mb-0.5">successivo</span><span>{MODULES[idx + 1].label} →</span></>}
+            {idx < MODULES.length - 1 && <><span className="block font-mono text-[10px] uppercase tracking-wider text-zinc-600 group-hover:text-indigo-400 mb-0.5">{T("successivo", "next")}</span><span>{mlabel(MODULES[idx + 1])} →</span></>}
           </button>
         </nav>
         </>)}
