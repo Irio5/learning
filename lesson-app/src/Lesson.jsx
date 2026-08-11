@@ -35,6 +35,15 @@ let LANG = "it";
 /** T("italiano", "english") — returns the string/JSX for the active language. */
 const T = (it, en) => (LANG === "en" && en !== undefined ? en : it);
 
+/* Module-level data arrays are built at import time, when LANG is still the
+   default — so any T() inside them would freeze on Italian. Wrap them in
+   memoByLang and call the result at render time: FOO() instead of FOO.
+   Built once per language, then cached. */
+const memoByLang = (build) => {
+  const cache = {};
+  return () => (cache[LANG] ??= build());
+};
+
 /* Section names double as lookup keys (m.section, GLOSS_TONE, FLASH_SECTIONS),
    so the Italian string stays the key and only the display label is translated. */
 const SECTION_EN = {
@@ -585,20 +594,25 @@ function ResultTable({ columns, rows }) {
 
 function Panoramica() {
   const layers = [
-    { id: "client", icon: Globe, name: "Client", sub: "browser / app", desc: "Dove l'utente clicca. Manda una richiesta HTTP e aspetta una risposta. Vede solo il 'contratto', non cosa c'è dietro." },
-    { id: "api", icon: Layers, name: "API / HTTP", sub: "il contratto", desc: "Le regole con cui client e server si parlano: metodo (GET/POST…), indirizzo (/users/42), formato (JSON) e un codice di stato che dice com'è andata." },
-    { id: "server", icon: Server, name: "Server", sub: "la tua app", desc: "Riceve la richiesta, esegue la logica (validazioni, permessi, calcoli), parla col database e costruisce la risposta." },
-    { id: "db", icon: Database, name: "Database", sub: "lo storage", desc: "Dove i dati vivono in modo permanente. Tabelle, righe, colonne, relazioni. Qui gli indici decidono se una ricerca è istantanea o lenta." },
-    { id: "host", icon: Cloud, name: "Hosting / Deploy", sub: "dove gira", desc: "La macchina, in una certa regione del mondo, su cui server e database sono accesi. 'Deploy' = metterci sopra il tuo codice." },
+    { id: "client", icon: Globe, name: "Client", sub: T("browser / app", "browser / app"), desc: T("Dove l'utente clicca. Manda una richiesta HTTP e aspetta una risposta. Vede solo il 'contratto', non cosa c'è dietro.", "Where the user clicks. It sends an HTTP request and waits for a response. It only ever sees the 'contract', never what's behind it.") },
+    { id: "api", icon: Layers, name: "API / HTTP", sub: T("il contratto", "the contract"), desc: T("Le regole con cui client e server si parlano: metodo (GET/POST…), indirizzo (/users/42), formato (JSON) e un codice di stato che dice com'è andata.", "The rules client and server talk by: method (GET/POST…), address (/users/42), format (JSON), and a status code saying how it went.") },
+    { id: "server", icon: Server, name: "Server", sub: T("la tua app", "your app"), desc: T("Riceve la richiesta, esegue la logica (validazioni, permessi, calcoli), parla col database e costruisce la risposta.", "Receives the request, runs the logic (validation, permissions, computation), talks to the database, and builds the response.") },
+    { id: "db", icon: Database, name: "Database", sub: T("lo storage", "the storage"), desc: T("Dove i dati vivono in modo permanente. Tabelle, righe, colonne, relazioni. Qui gli indici decidono se una ricerca è istantanea o lenta.", "Where data lives permanently. Tables, rows, columns, relations. This is where indexes decide whether a lookup is instant or slow.") },
+    { id: "host", icon: Cloud, name: "Hosting / Deploy", sub: T("dove gira", "where it runs"), desc: T("La macchina, in una certa regione del mondo, su cui server e database sono accesi. 'Deploy' = metterci sopra il tuo codice.", "The machine, in some region of the world, where the server and database are switched on. 'Deploy' = putting your code on it.") },
   ];
   const [active, setActive] = useState("api");
   const cur = layers.find((l) => l.id === active);
   return (
     <div className="space-y-4">
       <Lead>
-        Tutto il backend è una catena di livelli. Una richiesta entra dall'alto, scende fino ai dati, poi la
-        risposta risale. Sapere <span className="text-white font-medium">chi fa cosa</span> ti serve per due cose:
-        costruire, e — nel tuo ruolo — diagnosticare quando qualcosa va storto. Tocca un livello.
+        {T(
+          <>Tutto il backend è una catena di livelli. Una richiesta entra dall'alto, scende fino ai dati, poi la
+          risposta risale. Sapere <span className="text-white font-medium">chi fa cosa</span> ti serve per due cose:
+          costruire, e — nel tuo ruolo — diagnosticare quando qualcosa va storto. Tocca un livello.</>,
+          <>The whole backend is a chain of layers. A request comes in at the top, travels down to the data, then the
+          response climbs back up. Knowing <span className="text-white font-medium">who does what</span> buys you two
+          things: you can build, and — in your role — you can diagnose when something goes wrong. Tap a layer.</>
+        )}
       </Lead>
       <div className="grid gap-2">
         {layers.map((l, i) => {
@@ -620,85 +634,102 @@ function Panoramica() {
         <p className="text-zinc-300 text-sm leading-relaxed">{cur.desc}</p>
       </Card>
       <Takeaway>
-        Quando senti <span className="font-mono text-indigo-100">"l'app è lenta"</span>, la domanda giusta non è
-        "com'è scritto il codice" ma <span className="text-white">in quale livello</span> sta il ritardo: rete, server
-        o database. Lo misurerai dal vivo nel modulo Hosting & latenza.
+        {T(
+          <>Quando senti <span className="font-mono text-indigo-100">"l'app è lenta"</span>, la domanda giusta non è
+          "com'è scritto il codice" ma <span className="text-white">in quale livello</span> sta il ritardo: rete, server
+          o database. Lo misurerai dal vivo nel modulo Hosting &amp; latenza.</>,
+          <>When you hear <span className="font-mono text-indigo-100">"the app is slow"</span>, the right question isn't
+          "how is the code written" but <span className="text-white">which layer</span> the delay is in: network, server,
+          or database. You'll measure it for yourself in the Hosting &amp; latency module.</>
+        )}
       </Takeaway>
     </div>
   );
 }
 
-const HTTP_METHODS = [
-  { m: "GET", desc: "Leggere una risorsa. Non cambia niente sul server.", ex: "GET /users  →  dammi la lista utenti", tone: "blue", idem: "Sì: ripeterla mille volte non cambia nulla." },
-  { m: "POST", desc: "Creare una nuova risorsa. I dati vanno nel body.", ex: "POST /users  →  crea un nuovo utente", tone: "emerald", idem: "No: due POST = due utenti creati." },
-  { m: "PUT", desc: "Aggiornare (sostituire) una risorsa esistente.", ex: "PUT /users/42  →  modifica l'utente 42", tone: "amber", idem: "Sì: rimettere gli stessi dati lascia lo stesso risultato." },
-  { m: "DELETE", desc: "Eliminare una risorsa.", ex: "DELETE /users/42  →  cancella l'utente 42", tone: "red", idem: "Sì: una volta cancellato, ricancellarlo non cambia lo stato." },
-];
-const STATUS_REF = [
-  { code: "200", t: "OK", d: "Tutto bene, ecco i dati.", tone: "emerald" },
-  { code: "201", t: "Created", d: "Risorsa creata (tipico dopo POST).", tone: "emerald" },
-  { code: "400", t: "Bad Request", d: "Richiesta malformata: JSON rotto, campo mancante.", tone: "amber" },
-  { code: "401", t: "Unauthorized", d: "Non sei autenticato: chi sei?", tone: "amber" },
-  { code: "403", t: "Forbidden", d: "So chi sei, ma non hai i permessi.", tone: "amber" },
-  { code: "404", t: "Not Found", d: "La risorsa non esiste.", tone: "amber" },
-  { code: "429", t: "Too Many Requests", d: "Stai mandando troppe richieste: rallenta (rate limit).", tone: "amber" },
-  { code: "500", t: "Internal Server Error", d: "È esploso qualcosa dentro il server (colpa sua).", tone: "red" },
-];
+const HTTP_METHODS = memoByLang(() => [
+  { m: "GET", desc: T("Leggere una risorsa. Non cambia niente sul server.", "Read a resource. Changes nothing on the server."), ex: T("GET /users  →  dammi la lista utenti", "GET /users  →  give me the list of users"), tone: "blue", idem: T("Sì: ripeterla mille volte non cambia nulla.", "Yes: repeating it a thousand times changes nothing.") },
+  { m: "POST", desc: T("Creare una nuova risorsa. I dati vanno nel body.", "Create a new resource. The data goes in the body."), ex: T("POST /users  →  crea un nuovo utente", "POST /users  →  create a new user"), tone: "emerald", idem: T("No: due POST = due utenti creati.", "No: two POSTs = two users created.") },
+  { m: "PUT", desc: T("Aggiornare (sostituire) una risorsa esistente.", "Update (replace) an existing resource."), ex: T("PUT /users/42  →  modifica l'utente 42", "PUT /users/42  →  update user 42"), tone: "amber", idem: T("Sì: rimettere gli stessi dati lascia lo stesso risultato.", "Yes: sending the same data again leaves the same result.") },
+  { m: "DELETE", desc: T("Eliminare una risorsa.", "Delete a resource."), ex: T("DELETE /users/42  →  cancella l'utente 42", "DELETE /users/42  →  delete user 42"), tone: "red", idem: T("Sì: una volta cancellato, ricancellarlo non cambia lo stato.", "Yes: once it's deleted, deleting it again doesn't change the state.") },
+]);
+const STATUS_REF = memoByLang(() => [
+  { code: "200", t: "OK", d: T("Tutto bene, ecco i dati.", "All good, here's the data."), tone: "emerald" },
+  { code: "201", t: "Created", d: T("Risorsa creata (tipico dopo POST).", "Resource created (typical after a POST)."), tone: "emerald" },
+  { code: "400", t: "Bad Request", d: T("Richiesta malformata: JSON rotto, campo mancante.", "Malformed request: broken JSON, missing field."), tone: "amber" },
+  { code: "401", t: "Unauthorized", d: T("Non sei autenticato: chi sei?", "You're not authenticated: who are you?"), tone: "amber" },
+  { code: "403", t: "Forbidden", d: T("So chi sei, ma non hai i permessi.", "I know who you are, but you don't have permission."), tone: "amber" },
+  { code: "404", t: "Not Found", d: T("La risorsa non esiste.", "The resource doesn't exist."), tone: "amber" },
+  { code: "429", t: "Too Many Requests", d: T("Stai mandando troppe richieste: rallenta (rate limit).", "You're sending too many requests: slow down (rate limit)."), tone: "amber" },
+  { code: "500", t: "Internal Server Error", d: T("È esploso qualcosa dentro il server (colpa sua).", "Something blew up inside the server (its fault, not yours)."), tone: "red" },
+]);
 
 function HttpModule() {
   const [sel, setSel] = useState("GET");
-  const cur = HTTP_METHODS.find((x) => x.m === sel);
+  const methods = HTTP_METHODS();
+  const cur = methods.find((x) => x.m === sel);
   return (
     <div className="space-y-5">
       <Lead>
-        HTTP è il protocollo con cui client e server si parlano, a turni: il client manda
-        <span className="text-white font-medium"> una richiesta</span>, il server torna
-        <span className="text-white font-medium"> una risposta</span>. Ogni richiesta ha sempre le stesse parti.
+        {T(
+          <>HTTP è il protocollo con cui client e server si parlano, a turni: il client manda
+          <span className="text-white font-medium"> una richiesta</span>, il server torna
+          <span className="text-white font-medium"> una risposta</span>. Ogni richiesta ha sempre le stesse parti.</>,
+          <>HTTP is the protocol client and server talk over, taking turns: the client sends
+          <span className="text-white font-medium"> a request</span>, the server returns
+          <span className="text-white font-medium"> a response</span>. Every request is made of the same parts.</>
+        )}
       </Lead>
       <div className="grid md:grid-cols-2 gap-3">
         <Card>
-          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2 font-mono">Richiesta</div>
+          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2 font-mono">{T("Richiesta", "Request")}</div>
           <div className="font-mono text-[13px] space-y-1.5">
-            <div><Pill tone="blue">METODO</Pill> <span className="text-zinc-500">+</span> <Pill>URL</Pill></div>
+            <div><Pill tone="blue">{T("METODO", "METHOD")}</Pill> <span className="text-zinc-500">+</span> <Pill>URL</Pill></div>
             <div className="text-zinc-300">GET <span className="text-indigo-300">/users/42</span></div>
-            <div className="text-zinc-500 text-xs pt-1">Headers (metadati):</div>
+            <div className="text-zinc-500 text-xs pt-1">{T("Headers (metadati):", "Headers (metadata):")}</div>
             <div className="text-zinc-400 text-xs">Authorization: Bearer •••</div>
             <div className="text-zinc-400 text-xs">Content-Type: application/json</div>
-            <div className="text-zinc-500 text-xs pt-1">Body (solo POST/PUT): i dati che mandi</div>
+            <div className="text-zinc-500 text-xs pt-1">{T("Body (solo POST/PUT): i dati che mandi", "Body (POST/PUT only): the data you send")}</div>
           </div>
         </Card>
         <Card>
-          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2 font-mono">Risposta</div>
+          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2 font-mono">{T("Risposta", "Response")}</div>
           <div className="font-mono text-[13px] space-y-1.5">
-            <div><Pill tone="emerald">STATUS</Pill> <span className="text-zinc-400">com'è andata</span></div>
+            <div><Pill tone="emerald">STATUS</Pill> <span className="text-zinc-400">{T("com'è andata", "how it went")}</span></div>
             <div className="text-emerald-300">200 OK</div>
-            <div className="text-zinc-500 text-xs pt-1">Headers di risposta</div>
-            <div className="text-zinc-500 text-xs">Body: i dati che ricevi (JSON)</div>
+            <div className="text-zinc-500 text-xs pt-1">{T("Headers di risposta", "Response headers")}</div>
+            <div className="text-zinc-500 text-xs">{T("Body: i dati che ricevi (JSON)", "Body: the data you get back (JSON)")}</div>
             <div className="text-zinc-400 text-xs">{`{ "id": 42, "name": "Anna" }`}</div>
           </div>
         </Card>
       </div>
       <div>
-        <div className="text-sm font-semibold text-zinc-200 mb-2">I 4 metodi che userai sempre (CRUD)</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-2">{T("I 4 metodi che userai sempre (CRUD)", "The 4 methods you'll use constantly (CRUD)")}</div>
         <div className="flex flex-wrap gap-2 mb-3">
-          {HTTP_METHODS.map((x) => <Btn key={x.m} active={sel === x.m} onClick={() => setSel(x.m)}>{x.m}</Btn>)}
+          {methods.map((x) => <Btn key={x.m} active={sel === x.m} onClick={() => setSel(x.m)}>{x.m}</Btn>)}
         </div>
         <Card tone="indigo">
           <div className="flex items-center gap-2 mb-1"><Pill tone={cur.tone}>{cur.m}</Pill><span className="text-zinc-200 text-sm">{cur.desc}</span></div>
           <div className="font-mono text-[13px] text-zinc-400 mt-2">{cur.ex}</div>
-          <div className="text-xs text-zinc-500 mt-2"><span className="text-zinc-400">Idempotente?</span> {cur.idem}</div>
+          <div className="text-xs text-zinc-500 mt-2"><span className="text-zinc-400">{T("Idempotente?", "Idempotent?")}</span> {cur.idem}</div>
         </Card>
       </div>
       <div>
-        <div className="text-sm font-semibold text-zinc-200 mb-1">I codici di stato (l'error handling parte da qui)</div>
+        <div className="text-sm font-semibold text-zinc-200 mb-1">{T("I codici di stato (l'error handling parte da qui)", "Status codes (error handling starts here)")}</div>
         <p className="text-zinc-400 text-sm mb-3">
-          La prima cifra è la famiglia: <span className="text-emerald-300 font-mono">2xx</span> ok,
-          <span className="text-blue-300 font-mono"> 3xx</span> redirect,
-          <span className="text-amber-300 font-mono"> 4xx</span> errore del client (tuo),
-          <span className="text-red-300 font-mono"> 5xx</span> errore del server.
+          {T(
+            <>La prima cifra è la famiglia: <span className="text-emerald-300 font-mono">2xx</span> ok,
+            <span className="text-blue-300 font-mono"> 3xx</span> redirect,
+            <span className="text-amber-300 font-mono"> 4xx</span> errore del client (tuo),
+            <span className="text-red-300 font-mono"> 5xx</span> errore del server.</>,
+            <>The first digit is the family: <span className="text-emerald-300 font-mono">2xx</span> ok,
+            <span className="text-blue-300 font-mono"> 3xx</span> redirect,
+            <span className="text-amber-300 font-mono"> 4xx</span> client error (yours),
+            <span className="text-red-300 font-mono"> 5xx</span> server error.</>
+          )}
         </p>
         <div className="grid sm:grid-cols-2 gap-2">
-          {STATUS_REF.map((s) => (
+          {STATUS_REF().map((s) => (
             <div key={s.code} className="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2">
               <Pill tone={s.tone}>{s.code}</Pill>
               <div><div className="text-sm text-zinc-200 font-medium">{s.t}</div><div className="text-xs text-zinc-400 leading-snug">{s.d}</div></div>
@@ -707,9 +738,14 @@ function HttpModule() {
         </div>
       </div>
       <Takeaway>
-        Idempotente significa: <span className="text-white">ripetere la stessa richiesta dà lo stesso stato finale</span>.
-        GET/PUT/DELETE lo sono, POST no. È il motivo per cui un client può riprovare in sicurezza un GET dopo un timeout,
-        ma deve stare attento a ri-mandare un POST (rischi di creare due volte la stessa cosa).
+        {T(
+          <>Idempotente significa: <span className="text-white">ripetere la stessa richiesta dà lo stesso stato finale</span>.
+          GET/PUT/DELETE lo sono, POST no. È il motivo per cui un client può riprovare in sicurezza un GET dopo un timeout,
+          ma deve stare attento a ri-mandare un POST (rischi di creare due volte la stessa cosa).</>,
+          <>Idempotent means: <span className="text-white">repeating the same request leaves the same final state</span>.
+          GET/PUT/DELETE are, POST isn't. That's why a client can safely retry a GET after a timeout, but has to be careful
+          about re-sending a POST (you risk creating the same thing twice).</>
+        )}
       </Takeaway>
     </div>
   );
@@ -733,26 +769,34 @@ function JsonModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        JSON è la lingua in cui viaggiano i dati nelle API. È fatto solo di coppie
-        <span className="font-mono text-indigo-300"> "chiave": valore</span>. I valori sono: stringhe, numeri,
-        booleani, <span className="font-mono text-blue-300">null</span>, oppure altri oggetti e liste (annidati).
+        {T(
+          <>JSON è la lingua in cui viaggiano i dati nelle API. È fatto solo di coppie
+          <span className="font-mono text-indigo-300"> "chiave": valore</span>. I valori sono: stringhe, numeri,
+          booleani, <span className="font-mono text-blue-300">null</span>, oppure altri oggetti e liste (annidati).</>,
+          <>JSON is the language data travels in across APIs. It's nothing but
+          <span className="font-mono text-indigo-300"> "key": value</span> pairs. Values are: strings, numbers,
+          booleans, <span className="font-mono text-blue-300">null</span>, or other objects and lists (nested).</>
+        )}
       </Lead>
       <div className="grid md:grid-cols-2 gap-3">
         <Card>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">Scrivi JSON</span>
+            <span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">{T("Scrivi JSON", "Write JSON")}</span>
             <button onClick={() => setText(JSON_SAMPLE)} className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1"><RotateCcw size={12} /> reset</button>
           </div>
           <textarea value={text} onChange={(e) => setText(e.target.value)} spellCheck={false}
             className="w-full h-60 bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[13px] text-zinc-200 outline-none focus:border-indigo-600 resize-none" />
         </Card>
         <Card>
-          <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">Come lo legge il programma</div>
+          <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{T("Come lo legge il programma", "How the program reads it")}</div>
           {parsed.ok ? <JsonTree data={parsed.data} /> : (
             <div className="flex gap-2 text-sm text-red-300 bg-red-950 border border-red-900 rounded-lg p-3">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <div>
-                <div className="font-medium">JSON non valido → il server risponderebbe <span className="font-mono">400</span></div>
+                <div className="font-medium">{T(
+                  <>JSON non valido → il server risponderebbe <span className="font-mono">400</span></>,
+                  <>Invalid JSON → the server would answer <span className="font-mono">400</span></>
+                )}</div>
                 <div className="text-red-400 text-xs font-mono mt-1">{parsed.error}</div>
               </div>
             </div>
@@ -760,10 +804,16 @@ function JsonModule() {
         </Card>
       </div>
       <Takeaway>
-        Togli una virgola o una virgoletta a sinistra e il contratto si rompe: ecco perché un client che manda JSON
-        sbagliato riceve <span className="font-mono text-amber-200">400 Bad Request</span>. Colori dei tipi:
-        <span className="text-emerald-300"> stringa</span>, <span className="text-amber-300">numero</span>,
-        <span className="text-blue-300"> booleano/null</span>, <span className="text-indigo-300">chiave</span>.
+        {T(
+          <>Togli una virgola o una virgoletta a sinistra e il contratto si rompe: ecco perché un client che manda JSON
+          sbagliato riceve <span className="font-mono text-amber-200">400 Bad Request</span>. Colori dei tipi:
+          <span className="text-emerald-300"> stringa</span>, <span className="text-amber-300">numero</span>,
+          <span className="text-blue-300"> booleano/null</span>, <span className="text-indigo-300">chiave</span>.</>,
+          <>Drop one comma or one quote mark and the contract breaks: that's why a client sending bad JSON gets back
+          <span className="font-mono text-amber-200"> 400 Bad Request</span>. Type colours:
+          <span className="text-emerald-300"> string</span>, <span className="text-amber-300">number</span>,
+          <span className="text-blue-300"> boolean/null</span>, <span className="text-indigo-300">key</span>.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -794,27 +844,27 @@ function RestModule() {
   function send() {
     const id = parseInt(idField, 10);
     let pb = null;
-    if (needsBody) { try { pb = JSON.parse(body); } catch { setResp({ status: 400, body: { error: "JSON non valido nel body" }, sql: "— (la richiesta non parte nemmeno)" }); return; } }
+    if (needsBody) { try { pb = JSON.parse(body); } catch { setResp({ status: 400, body: { error: T("JSON non valido nel body", "Invalid JSON in the body") }, sql: T("— (la richiesta non parte nemmeno)", "— (the request never even leaves)") }); return; } }
     if (method === "GET" && allUsers) return setResp({ status: 200, body: rows, sql: "SELECT * FROM users;" });
     if (method === "GET") {
       const u = rows.find((x) => x.id === id);
       return setResp(u ? { status: 200, body: u, sql: `SELECT * FROM users WHERE id = ${id};` }
-        : { status: 404, body: { error: `Nessun utente con id ${id}` }, sql: `SELECT * FROM users WHERE id = ${id};  -- 0 righe` });
+        : { status: 404, body: { error: T(`Nessun utente con id ${id}`, `No user with id ${id}`) }, sql: `SELECT * FROM users WHERE id = ${id};  -- ${T("0 righe", "0 rows")}` });
     }
     if (method === "POST") {
-      if (!pb.name || !pb.email) return setResp({ status: 400, body: { error: "name ed email sono obbligatori" }, sql: "— (validazione fallita)" });
+      if (!pb.name || !pb.email) return setResp({ status: 400, body: { error: T("name ed email sono obbligatori", "name and email are required") }, sql: T("— (validazione fallita)", "— (validation failed)") });
       const created = { id: nextId, name: pb.name, email: pb.email, role: pb.role || "member" };
       setRows((r) => [...r, created]); setNextId((n) => n + 1); setFlashId(created.id);
       return setResp({ status: 201, body: created, sql: `INSERT INTO users (name, email, role)\nVALUES ('${created.name}', '${created.email}', '${created.role}');` });
     }
     if (method === "PUT") {
       const u = rows.find((x) => x.id === id);
-      if (!u) return setResp({ status: 404, body: { error: `Nessun utente con id ${id}` }, sql: `UPDATE users ... WHERE id = ${id};  -- 0 righe` });
+      if (!u) return setResp({ status: 404, body: { error: T(`Nessun utente con id ${id}`, `No user with id ${id}`) }, sql: `UPDATE users ... WHERE id = ${id};  -- ${T("0 righe", "0 rows")}` });
       const up = { ...u, ...pb, id: u.id }; setRows((arr) => arr.map((x) => (x.id === id ? up : x))); setFlashId(id);
       return setResp({ status: 200, body: up, sql: `UPDATE users SET name='${up.name}', email='${up.email}', role='${up.role}'\nWHERE id = ${id};` });
     }
     const u = rows.find((x) => x.id === id);
-    if (!u) return setResp({ status: 404, body: { error: `Nessun utente con id ${id}` }, sql: `DELETE FROM users WHERE id = ${id};  -- 0 righe` });
+    if (!u) return setResp({ status: 404, body: { error: T(`Nessun utente con id ${id}`, `No user with id ${id}`) }, sql: `DELETE FROM users WHERE id = ${id};  -- ${T("0 righe", "0 rows")}` });
     setRows((arr) => arr.filter((x) => x.id !== id));
     return setResp({ status: 200, body: { deleted: true, id }, sql: `DELETE FROM users WHERE id = ${id};` });
   }
@@ -825,17 +875,23 @@ function RestModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        Un'API REST mette insieme tutto: metodi HTTP + JSON + status code, applicati a delle
-        <span className="text-white font-medium"> risorse</span> (qui: gli utenti). Questo è un vero mini-server
-        con database in memoria: manda richieste e guarda <span className="text-white font-medium">la tabella cambiare</span>
-        e la query SQL che gira dietro.
+        {T(
+          <>Un'API REST mette insieme tutto: metodi HTTP + JSON + status code, applicati a delle
+          <span className="text-white font-medium"> risorse</span> (qui: gli utenti). Questo è un vero mini-server
+          con database in memoria: manda richieste e guarda <span className="text-white font-medium">la tabella cambiare</span>
+          e la query SQL che gira dietro.</>,
+          <>A REST API puts it all together: HTTP methods + JSON + status codes, applied to
+          <span className="text-white font-medium"> resources</span> (here: users). This is a real mini-server with an
+          in-memory database: send requests and watch <span className="text-white font-medium">the table change</span>,
+          along with the SQL query running behind it.</>
+        )}
       </Lead>
       <Card>
         <div className="flex flex-wrap gap-2 mb-3">{["GET", "POST", "PUT", "DELETE"].map((m) => <Btn key={m} active={method === m} onClick={() => setMethod(m)}>{m}</Btn>)}</div>
         {method === "GET" && (
           <div className="flex flex-wrap gap-2 mb-3">
-            <Btn tone="ghost" active={allUsers} onClick={() => setAllUsers(true)}>tutti gli utenti</Btn>
-            <Btn tone="ghost" active={!allUsers} onClick={() => setAllUsers(false)}>un utente specifico</Btn>
+            <Btn tone="ghost" active={allUsers} onClick={() => setAllUsers(true)}>{T("tutti gli utenti", "all users")}</Btn>
+            <Btn tone="ghost" active={!allUsers} onClick={() => setAllUsers(false)}>{T("un utente specifico", "one specific user")}</Btn>
           </div>
         )}
         <div className="flex items-center gap-2 font-mono text-sm mb-3"><Pill tone="blue">{method}</Pill><span className="text-indigo-300">{path}</span></div>
@@ -854,20 +910,23 @@ function RestModule() {
           </div>
         )}
         <div className="flex gap-2">
-          <button onClick={send} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"><Send size={15} /> Invia richiesta</button>
-          <button onClick={reset} className="flex items-center gap-2 px-3 py-2 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-sm transition-colors"><RotateCcw size={14} /> reset DB</button>
+          <button onClick={send} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"><Send size={15} /> {T("Invia richiesta", "Send request")}</button>
+          <button onClick={reset} className="flex items-center gap-2 px-3 py-2 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-sm transition-colors"><RotateCcw size={14} /> {T("reset DB", "reset DB")}</button>
         </div>
       </Card>
       {resp && (
         <Card tone={tone}>
-          <div className="flex items-center gap-2 mb-2"><Pill tone={tone}>{resp.status}</Pill><span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">risposta del server</span></div>
+          <div className="flex items-center gap-2 mb-2"><Pill tone={tone}>{resp.status}</Pill><span className="text-xs uppercase tracking-wide text-zinc-500 font-mono">{T("risposta del server", "server response")}</span></div>
           <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 mb-2"><JsonTree data={resp.body} /></div>
-          <div className="text-xs text-zinc-500 font-mono mb-1">SQL eseguito dietro le quinte</div>
+          <div className="text-xs text-zinc-500 font-mono mb-1">{T("SQL eseguito dietro le quinte", "SQL executed behind the scenes")}</div>
           <pre className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 font-mono text-[12px] text-emerald-300 whitespace-pre-wrap">{resp.sql}</pre>
         </Card>
       )}
       <Card>
-        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">Tabella <span className="text-zinc-300">users</span> (stato attuale)</div>
+        <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{T(
+          <>Tabella <span className="text-zinc-300">users</span> (stato attuale)</>,
+          <><span className="text-zinc-300">users</span> table (current state)</>
+        )}</div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-mono">
             <thead><tr className="text-zinc-500 text-xs border-b border-zinc-800"><th className="text-left py-1.5 pr-4">id</th><th className="text-left py-1.5 pr-4">name</th><th className="text-left py-1.5 pr-4">email</th><th className="text-left py-1.5">role</th></tr></thead>
@@ -877,17 +936,24 @@ function RestModule() {
                   <td className="py-1.5 pr-4 text-amber-300">{u.id}</td><td className="py-1.5 pr-4 text-zinc-200">{u.name}</td><td className="py-1.5 pr-4 text-zinc-400">{u.email}</td><td className="py-1.5 text-zinc-400">{u.role}</td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={4} className="py-3 text-center text-zinc-600">tabella vuota</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={4} className="py-3 text-center text-zinc-600">{T("tabella vuota", "empty table")}</td></tr>}
             </tbody>
           </table>
         </div>
       </Card>
       <Takeaway>
-        Il giro completo: <span className="font-mono text-indigo-100">POST</span> (→ 201, nuova riga),
-        <span className="font-mono text-indigo-100"> GET</span> con quell'id (→ 200),
-        <span className="font-mono text-indigo-100"> PUT</span> per modificarlo,
-        <span className="font-mono text-indigo-100"> DELETE</span>, poi di nuovo GET sullo stesso id →
-        <span className="font-mono text-amber-200"> 404</span>. CRUD, status code e SQL in un colpo solo.
+        {T(
+          <>Il giro completo: <span className="font-mono text-indigo-100">POST</span> (→ 201, nuova riga),
+          <span className="font-mono text-indigo-100"> GET</span> con quell'id (→ 200),
+          <span className="font-mono text-indigo-100"> PUT</span> per modificarlo,
+          <span className="font-mono text-indigo-100"> DELETE</span>, poi di nuovo GET sullo stesso id →
+          <span className="font-mono text-amber-200"> 404</span>. CRUD, status code e SQL in un colpo solo.</>,
+          <>The full round trip: <span className="font-mono text-indigo-100">POST</span> (→ 201, new row),
+          <span className="font-mono text-indigo-100"> GET</span> with that id (→ 200),
+          <span className="font-mono text-indigo-100"> PUT</span> to change it,
+          <span className="font-mono text-indigo-100"> DELETE</span>, then GET the same id again →
+          <span className="font-mono text-amber-200"> 404</span>. CRUD, status codes and SQL in one go.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -912,13 +978,13 @@ const SCHEMA = {
     { col: "status", type: "TEXT", cons: ["NOT NULL"] },
   ],
 };
-const CONSTRAINTS = {
-  PK: { name: "PRIMARY KEY", d: "Identifica in modo unico ogni riga. Non può essere NULL né ripetersi. È la 'targa' della riga." },
-  "FK → users.id": { name: "FOREIGN KEY", d: "Collega questa colonna alla PK di un'altra tabella. user_id deve puntare a un utente che esiste davvero: garantisce l'integrità referenziale." },
-  UNIQUE: { name: "UNIQUE", d: "Vieta valori duplicati nella colonna. Due utenti non possono avere la stessa email." },
-  "NOT NULL": { name: "NOT NULL", d: "La colonna deve sempre avere un valore: non puoi inserire una riga lasciandola vuota." },
-  "DEFAULT 'member'": { name: "DEFAULT", d: "Se non specifichi il valore all'inserimento, il database ci mette questo di default." },
-};
+const CONSTRAINTS = memoByLang(() => ({
+  PK: { name: "PRIMARY KEY", d: T("Identifica in modo unico ogni riga. Non può essere NULL né ripetersi. È la 'targa' della riga.", "Uniquely identifies each row. It can't be NULL and can't repeat. It's the row's number plate.") },
+  "FK → users.id": { name: "FOREIGN KEY", d: T("Collega questa colonna alla PK di un'altra tabella. user_id deve puntare a un utente che esiste davvero: garantisce l'integrità referenziale.", "Links this column to another table's PK. user_id must point at a user that actually exists: that's referential integrity.") },
+  UNIQUE: { name: "UNIQUE", d: T("Vieta valori duplicati nella colonna. Due utenti non possono avere la stessa email.", "Forbids duplicate values in the column. Two users can't share the same email.") },
+  "NOT NULL": { name: "NOT NULL", d: T("La colonna deve sempre avere un valore: non puoi inserire una riga lasciandola vuota.", "The column must always have a value: you can't insert a row leaving it empty.") },
+  "DEFAULT 'member'": { name: "DEFAULT", d: T("Se non specifichi il valore all'inserimento, il database ci mette questo di default.", "If you don't specify the value on insert, the database fills in this one.") },
+}));
 
 function SchemaModule() {
   const [sel, setSel] = useState("PK");
@@ -929,35 +995,41 @@ function SchemaModule() {
   const [msg, setMsg] = useState(null);
 
   function tryInsert() {
-    if (!name.trim()) return setMsg({ ok: false, t: "NOT NULL violata: 'name' è obbligatorio." });
-    if (!email.trim()) return setMsg({ ok: false, t: "NOT NULL violata: 'email' è obbligatoria." });
+    if (!name.trim()) return setMsg({ ok: false, t: T("NOT NULL violata: 'name' è obbligatorio.", "NOT NULL violated: 'name' is required.") });
+    if (!email.trim()) return setMsg({ ok: false, t: T("NOT NULL violata: 'email' è obbligatoria.", "NOT NULL violated: 'email' is required.") });
     const exists = [...USERS, ...inserted].some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-    if (exists) return setMsg({ ok: false, t: `UNIQUE violata: l'email '${email.trim()}' esiste già.` });
+    if (exists) return setMsg({ ok: false, t: T(`UNIQUE violata: l'email '${email.trim()}' esiste già.`, `UNIQUE violated: the email '${email.trim()}' already exists.`) });
     const row = { id: 100 + inserted.length + 1, name: name.trim(), email: email.trim(), city: city.trim() || "—", role: "member" };
-    setInserted((a) => [...a, row]); setMsg({ ok: true, t: `Inserito. 'role' ha preso il DEFAULT 'member'.` });
+    setInserted((a) => [...a, row]); setMsg({ ok: true, t: T("Inserito. 'role' ha preso il DEFAULT 'member'.", "Inserted. 'role' picked up the DEFAULT 'member'.") });
     setName(""); setEmail("");
   }
-  const cur = CONSTRAINTS[sel];
+  const cur = CONSTRAINTS()[sel];
 
   return (
     <div className="space-y-4">
       <Lead>
-        Una tabella ha uno <span className="text-white font-medium">schema</span>: per ogni colonna, un tipo
-        (INTEGER, TEXT…) e dei <span className="text-white font-medium">vincoli</span> che il database fa
-        rispettare al posto tuo. Sono la prima linea di difesa contro i dati sporchi. Tocca un vincolo per capirlo,
-        poi prova a inserire una riga.
+        {T(
+          <>Una tabella ha uno <span className="text-white font-medium">schema</span>: per ogni colonna, un tipo
+          (INTEGER, TEXT…) e dei <span className="text-white font-medium">vincoli</span> che il database fa
+          rispettare al posto tuo. Sono la prima linea di difesa contro i dati sporchi. Tocca un vincolo per capirlo,
+          poi prova a inserire una riga.</>,
+          <>A table has a <span className="text-white font-medium">schema</span>: for each column, a type
+          (INTEGER, TEXT…) and <span className="text-white font-medium">constraints</span> the database enforces on
+          your behalf. They're the first line of defence against dirty data. Tap a constraint to see what it does,
+          then try inserting a row.</>
+        )}
       </Lead>
       <div className="grid sm:grid-cols-2 gap-3">
         {["users", "orders"].map((t) => (
           <Card key={t}>
-            <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">tabella {t}</div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{T("tabella", "table")} {t}</div>
             <div className="space-y-1.5">
               {SCHEMA[t].map((c) => (
                 <div key={c.col} className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-sm text-zinc-200 w-20">{c.col}</span>
                   <span className="font-mono text-xs text-zinc-500 w-16">{c.type}</span>
                   {c.cons.map((k) => (
-                    <button key={k} onClick={() => CONSTRAINTS[k] && setSel(k)}
+                    <button key={k} onClick={() => CONSTRAINTS()[k] && setSel(k)}
                       className={`px-1.5 py-0.5 rounded text-[11px] font-mono border transition-colors ${sel === k ? "border-indigo-500 bg-indigo-950 text-indigo-200" : "border-zinc-700 text-zinc-400 hover:border-zinc-500"}`}>
                       {k}
                     </button>
@@ -974,7 +1046,10 @@ function SchemaModule() {
       </Card>
 
       <Card>
-        <div className="text-sm font-semibold text-zinc-200 mb-3">Prova un INSERT in <span className="font-mono">users</span></div>
+        <div className="text-sm font-semibold text-zinc-200 mb-3">{T(
+          <>Prova un INSERT in <span className="font-mono">users</span></>,
+          <>Try an INSERT into <span className="font-mono">users</span></>
+        )}</div>
         <div className="grid sm:grid-cols-3 gap-2 mb-3">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="name"
             className="bg-zinc-950 border border-zinc-800 rounded-md px-2 py-2 text-sm text-zinc-200 outline-none focus:border-indigo-600" />
@@ -983,21 +1058,25 @@ function SchemaModule() {
           <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="city"
             className="bg-zinc-950 border border-zinc-800 rounded-md px-2 py-2 text-sm text-zinc-200 outline-none focus:border-indigo-600" />
         </div>
-        <button onClick={tryInsert} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors mb-3">Esegui INSERT</button>
+        <button onClick={tryInsert} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors mb-3">{T("Esegui INSERT", "Run INSERT")}</button>
         {msg && (
           <div className={`flex gap-2 rounded-lg border px-3 py-2 text-sm mb-3 ${msg.ok ? "border-emerald-800 bg-emerald-950 text-emerald-200" : "border-red-900 bg-red-950 text-red-200"}`}>
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />{msg.t}
           </div>
         )}
-        <div className="text-xs text-zinc-500 font-mono mb-1">prova queste: lascia 'name' vuoto → NOT NULL · scrivi <span className="text-zinc-300">anna@acme.io</span> → UNIQUE</div>
+        <div className="text-xs text-zinc-500 font-mono mb-1">{T(
+          <>prova queste: lascia 'name' vuoto → NOT NULL · scrivi <span className="text-zinc-300">anna@acme.io</span> → UNIQUE</>,
+          <>try these: leave 'name' empty → NOT NULL · type <span className="text-zinc-300">anna@acme.io</span> → UNIQUE</>
+        )}</div>
         {inserted.length > 0 && (
           <div className="mt-2"><ResultTable columns={["id", "name", "email", "city", "role"]} rows={inserted} /></div>
         )}
       </Card>
       <Takeaway>
-        I vincoli vivono nel database, non nel codice dell'app: anche se un domani una seconda app scrive sulla
-        stessa tabella, l'email resta unica e ogni ordine resta collegato a un utente vero. È il database che
-        protegge l'integrità, non la fiducia che tu non sbagli.
+        {T(
+          "I vincoli vivono nel database, non nel codice dell'app: anche se un domani una seconda app scrive sulla stessa tabella, l'email resta unica e ogni ordine resta collegato a un utente vero. È il database che protegge l'integrità, non la fiducia che tu non sbagli.",
+          "Constraints live in the database, not in the app code: even if a second app starts writing to the same table tomorrow, emails stay unique and every order stays tied to a real user. Integrity is protected by the database, not by trusting that nobody makes a mistake."
+        )}
       </Takeaway>
     </div>
   );
