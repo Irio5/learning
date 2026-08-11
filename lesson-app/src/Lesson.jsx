@@ -64,15 +64,41 @@ const SECTION_EN = {
 };
 const sect = (s) => T(s, SECTION_EN[s] || s);
 
+/* Flags as inline SVG, not emoji: Windows ships no flag glyphs, so 🇮🇹/🇬🇧
+   degrade to the bare letters "IT"/"GB" there. Drawn here they look the same
+   on every platform. */
+function FlagIT({ className = "" }) {
+  return (
+    <svg viewBox="0 0 3 2" className={className} aria-hidden="true">
+      <rect width="1" height="2" x="0" fill="#009246" />
+      <rect width="1" height="2" x="1" fill="#f1f1f1" />
+      <rect width="1" height="2" x="2" fill="#ce2b37" />
+    </svg>
+  );
+}
+function FlagGB({ className = "" }) {
+  return (
+    <svg viewBox="0 0 60 30" className={className} aria-hidden="true">
+      <clipPath id="lang-gb-clip">
+        <path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" />
+      </clipPath>
+      <rect width="60" height="30" fill="#012169" />
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+      <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#lang-gb-clip)" stroke="#c8102e" strokeWidth="4" />
+      <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+      <path d="M30,0 v30 M0,15 h60" stroke="#c8102e" strokeWidth="6" />
+    </svg>
+  );
+}
+
 function LangToggle({ lang, setLang }) {
   return (
-    <div className="fixed right-3 top-3 z-50 flex items-center gap-1 p-1 rounded-xl border border-zinc-800 bg-zinc-900/90 backdrop-blur shadow-soft">
-      {[["it", "🇮🇹", "Italiano"], ["en", "🇬🇧", "English"]].map(([code, flag, name]) => (
+    <div className="fixed right-3 top-3 z-50 flex items-center gap-1.5 p-1.5 rounded-xl border border-zinc-800 bg-zinc-900/90 backdrop-blur shadow-soft">
+      {[["it", FlagIT, "Italiano"], ["en", FlagGB, "English"]].map(([code, Flag, name]) => (
         <button key={code} onClick={() => setLang(code)} title={name} aria-label={name} aria-pressed={lang === code}
-          className={`flex items-center px-2.5 py-1.5 rounded-lg transition-all ${lang === code ? "bg-indigo-600 text-white shadow-glow" : "text-zinc-400 hover:text-zinc-100"}`}>
-          {/* Windows has no flag glyphs: the emoji degrades to the letters IT / GB, which
-              still reads correctly — so no redundant text code next to it. */}
-          <span className="text-[15px] leading-none">{flag}</span>
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${lang === code ? "bg-indigo-600 text-white shadow-glow" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"}`}>
+          <Flag className="w-7 h-5 rounded-sm shrink-0 ring-1 ring-black/30" />
+          <span className="font-mono text-xs uppercase tracking-wide">{code}</span>
         </button>
       ))}
     </div>
@@ -2448,7 +2474,9 @@ function NullModule() {
    VERIFICHE AL VOLO  (una per modulo, retrieval practice)
    ===================================================================== */
 
-const QUIZZES = {
+/* Quiz text is data, so it must be built per language — see memoByLang.
+   Entries not yet translated simply keep their Italian string. */
+const QUIZZES = memoByLang(() => ({
   "regression": [
     { "q": "Un agente che gira per più clienti sbaglia per il cliente A. Dove sta quasi sempre la causa?", "options": ["Nel prompt dell'agente, va riscritto per A", "Nello step di estrazione/normalizzazione dati: l'agente ragiona bene su un input già corrotto a monte", "Nel modello LLM, va cambiato"], "correct": 1, "why": "Garbage in, garbage out: il trace mostra che l'agente riceve dati sbagliati dallo step di estrazione. Si fixa lì e si parametrizza per cliente in config, senza toccare la logica dell'agente." },
     { "q": "Perché NON conviene creare un agente dedicato per ogni cliente?", "options": ["Costa troppa GPU", "Dopo N clienti hai N agenti da mantenere e ogni fix va replicata N volte: uccide la scalabilità e la riusabilità", "Gli LLM non lo permettono"], "correct": 1, "why": "Logica condivisa per tutti, differenze nella config (mapping, soglie, skill per pattern). È anche la metrica di successo dell'FDE: quanto ciò che costruisci per un cliente è riusabile sugli altri." },
@@ -3973,458 +4001,416 @@ const QUIZZES = {
   ],
   "panoramica": [
     {
-      "q": "Un cliente dice «l'app è lenta». Qual è la prima mossa giusta?",
-      "options": [
-        "Capire in quale livello (rete, server o database) sta il ritardo",
-        "Riscrivere subito il codice del server",
-        "Comprare una macchina più potente"
-      ],
+      "q": T("Un cliente dice «l'app è lenta». Qual è la prima mossa giusta?", "A customer says “the app is slow”. What's the right first move?"),
+      "options": T(
+        ["Capire in quale livello (rete, server o database) sta il ritardo", "Riscrivere subito il codice del server", "Comprare una macchina più potente"],
+        ["Work out which layer (network, server or database) the delay is in", "Immediately rewrite the server code", "Buy a more powerful machine"]
+      ),
       "correct": 0,
-      "why": "Prima si localizza il collo di bottiglia, poi si interviene lì. Ottimizzare il livello sbagliato è tempo buttato."
+      "why": T("Prima si localizza il collo di bottiglia, poi si interviene lì. Ottimizzare il livello sbagliato è tempo buttato.", "First you locate the bottleneck, then you act on it. Optimising the wrong layer is wasted time.")
     },
     {
-      "q": "Chi parla direttamente con il database?",
-      "options": [
-        "L'utente",
-        "Il client (browser/app)",
-        "Il server"
-      ],
+      "q": T("Chi parla direttamente con il database?", "Who talks to the database directly?"),
+      "options": T(
+        ["L'utente", "Il client (browser/app)", "Il server"],
+        ["The user", "The client (browser/app)", "The server"]
+      ),
       "correct": 2,
-      "why": "Il client parla solo col server via HTTP. È il server che interroga il database: il client non lo vede mai."
+      "why": T("Il client parla solo col server via HTTP. È il server che interroga il database: il client non lo vede mai.", "The client only talks to the server over HTTP. It's the server that queries the database: the client never sees it.")
     }
   ],
   "http": [
     {
-      "q": "Un GET va in timeout. È sicuro riprovarlo?",
-      "options": [
-        "Sì: è idempotente, non cambia niente sul server",
-        "No: rischi di creare doppioni",
-        "Solo se aspetti qualche secondo"
-      ],
+      "q": T("Un GET va in timeout. È sicuro riprovarlo?", "A GET times out. Is it safe to retry it?"),
+      "options": T(
+        ["Sì: è idempotente, non cambia niente sul server", "No: rischi di creare doppioni", "Solo se aspetti qualche secondo"],
+        ["Yes: it's idempotent, it changes nothing on the server", "No: you risk creating duplicates", "Only if you wait a few seconds"]
+      ),
       "correct": 0,
-      "why": "GET è di sola lettura e idempotente: ripeterlo non altera lo stato. È il POST quello a rischio doppioni."
+      "why": T("GET è di sola lettura e idempotente: ripeterlo non altera lo stato. È il POST quello a rischio doppioni.", "GET is read-only and idempotent: repeating it doesn't alter state. POST is the one that risks duplicates.")
     },
     {
-      "q": "Il server risponde 403. Che significa?",
-      "options": [
-        "Non so chi sei",
-        "So chi sei, ma non hai i permessi",
-        "La risorsa non esiste"
-      ],
+      "q": T("Il server risponde 403. Che significa?", "The server answers 403. What does that mean?"),
+      "options": T(
+        ["Non so chi sei", "So chi sei, ma non hai i permessi", "La risorsa non esiste"],
+        ["I don't know who you are", "I know who you are, but you don't have permission", "The resource doesn't exist"]
+      ),
       "correct": 1,
-      "why": "403 = autenticato ma non autorizzato. 401 = «non so chi sei». 404 = «la risorsa non esiste»."
+      "why": T("403 = autenticato ma non autorizzato. 401 = «non so chi sei». 404 = «la risorsa non esiste».", "403 = authenticated but not authorised. 401 = “I don't know who you are”. 404 = “the resource doesn't exist”.")
     },
     {
-      "q": "Un errore 500 di chi è la colpa?",
-      "options": [
-        "Del client, ha mandato dati sbagliati",
-        "Della rete",
-        "Del server, è esploso qualcosa al suo interno"
-      ],
+      "q": T("Un errore 500 di chi è la colpa?", "Whose fault is a 500 error?"),
+      "options": T(
+        ["Del client, ha mandato dati sbagliati", "Della rete", "Del server, è esploso qualcosa al suo interno"],
+        ["The client's, it sent bad data", "The network's", "The server's, something blew up inside it"]
+      ),
       "correct": 2,
-      "why": "5xx = problema lato server. I 4xx invece sono colpa del client (richiesta malformata, non autenticato, ecc.)."
+      "why": T("5xx = problema lato server. I 4xx invece sono colpa del client (richiesta malformata, non autenticato, ecc.).", "5xx = a server-side problem. 4xx, on the other hand, are the client's fault (malformed request, not authenticated, etc.).")
     }
   ],
   "json": [
     {
-      "q": "Togli una virgola dal JSON che mandi nel body. Come risponde il server?",
-      "options": [
-        "500 Internal Server Error",
-        "200, lo corregge da solo",
-        "400 Bad Request"
-      ],
+      "q": T("Togli una virgola dal JSON che mandi nel body. Come risponde il server?", "You drop a comma from the JSON you send in the body. How does the server respond?"),
+      "options": T(
+        ["500 Internal Server Error", "200, lo corregge da solo", "400 Bad Request"],
+        ["500 Internal Server Error", "200, it fixes it by itself", "400 Bad Request"]
+      ),
       "correct": 2,
-      "why": "JSON malformato = richiesta del client non valida = 400. Il server non riesce nemmeno a leggere i dati che gli hai mandato."
+      "why": T("JSON malformato = richiesta del client non valida = 400. Il server non riesce nemmeno a leggere i dati che gli hai mandato.", "Malformed JSON = an invalid client request = 400. The server can't even read the data you sent it.")
     },
     {
-      "q": "Quale di questi NON è un valore JSON valido?",
-      "options": [
-        "null",
-        "una lista di numeri",
-        "una data come oggetto Date"
-      ],
+      "q": T("Quale di questi NON è un valore JSON valido?", "Which of these is NOT a valid JSON value?"),
+      "options": T(
+        ["null", "una lista di numeri", "una data come oggetto Date"],
+        ["null", "a list of numbers", "a date as a Date object"]
+      ),
       "correct": 2,
-      "why": "JSON ha solo stringhe, numeri, booleani, null, oggetti e liste. Una data viaggia come stringa, es. \"2026-07-08\"."
+      "why": T("JSON ha solo stringhe, numeri, booleani, null, oggetti e liste. Una data viaggia come stringa, es. \"2026-07-08\".", "JSON only has strings, numbers, booleans, null, objects and lists. A date travels as a string, e.g. \"2026-07-08\".")
     }
   ],
   "rest": [
     {
-      "q": "Fai POST /users due volte con lo stesso body. Cosa ottieni?",
-      "options": [
-        "Un solo utente: il secondo POST aggiorna il primo",
-        "Due utenti: POST non è idempotente",
-        "Un errore, l'email è duplicata"
-      ],
+      "q": T("Fai POST /users due volte con lo stesso body. Cosa ottieni?", "You POST /users twice with the same body. What do you get?"),
+      "options": T(
+        ["Un solo utente: il secondo POST aggiorna il primo", "Due utenti: POST non è idempotente", "Un errore, l'email è duplicata"],
+        ["One user: the second POST updates the first", "Two users: POST is not idempotent", "An error, the email is duplicated"]
+      ),
       "correct": 1,
-      "why": "Ogni POST crea una nuova risorsa. Due POST = due righe. È esattamente perché POST non è idempotente."
+      "why": T("Ogni POST crea una nuova risorsa. Due POST = due righe. È esattamente perché POST non è idempotente.", "Every POST creates a new resource. Two POSTs = two rows. That's exactly why POST isn't idempotent.")
     },
     {
-      "q": "GET /users/999 su un id che non esiste restituisce:",
-      "options": [
-        "404 Not Found",
-        "200 con corpo vuoto",
-        "500"
-      ],
+      "q": T("GET /users/999 su un id che non esiste restituisce:", "GET /users/999 on an id that doesn't exist returns:"),
+      "options": T(
+        ["404 Not Found", "200 con corpo vuoto", "500"],
+        ["404 Not Found", "200 with an empty body", "500"]
+      ),
       "correct": 0,
-      "why": "La risorsa non c'è → 404. La richiesta è valida: semplicemente quell'utente non esiste. Non è colpa del server."
+      "why": T("La risorsa non c'è → 404. La richiesta è valida: semplicemente quell'utente non esiste. Non è colpa del server.", "The resource isn't there → 404. The request is valid: that user simply doesn't exist. It isn't the server's fault.")
     }
   ],
   "schema": [
     {
-      "q": "Provi a inserire un utente senza email (colonna NOT NULL). Chi blocca l'operazione?",
-      "options": [
-        "Il database, tramite il vincolo",
-        "Nessuno, la riga entra vuota",
-        "Il codice dell'app"
-      ],
+      "q": T("Provi a inserire un utente senza email (colonna NOT NULL). Chi blocca l'operazione?", "You try to insert a user with no email (a NOT NULL column). Who blocks the operation?"),
+      "options": T(
+        ["Il database, tramite il vincolo", "Nessuno, la riga entra vuota", "Il codice dell'app"],
+        ["The database, through the constraint", "Nobody, the row goes in empty", "The app code"]
+      ),
       "correct": 0,
-      "why": "Il vincolo vive nel database: protegge i dati anche se il codice dimentica il controllo, o se una seconda app scrive sulla stessa tabella."
+      "why": T("Il vincolo vive nel database: protegge i dati anche se il codice dimentica il controllo, o se una seconda app scrive sulla stessa tabella.", "The constraint lives in the database: it protects the data even if the code forgets the check, or if a second app writes to the same table.")
     },
     {
-      "q": "A cosa serve DEFAULT 'member' sulla colonna role?",
-      "options": [
-        "Impedisce di modificare role in futuro",
-        "Obbliga role a valere sempre 'member'",
-        "Se non fornisci role all'inserimento, il DB ci mette 'member'"
-      ],
+      "q": T("A cosa serve DEFAULT 'member' sulla colonna role?", "What is DEFAULT 'member' on the role column for?"),
+      "options": T(
+        ["Impedisce di modificare role in futuro", "Obbliga role a valere sempre 'member'", "Se non fornisci role all'inserimento, il DB ci mette 'member'"],
+        ["It prevents role from ever being changed", "It forces role to always be 'member'", "If you don't supply role on insert, the DB fills in 'member'"]
+      ),
       "correct": 2,
-      "why": "DEFAULT riempie il valore quando non lo passi. Puoi comunque specificarne un altro tu."
+      "why": T("DEFAULT riempie il valore quando non lo passi. Puoi comunque specificarne un altro tu.", "DEFAULT fills the value in when you don't pass one. You can still specify a different one yourself.")
     }
   ],
   "modello": [
     {
-      "q": "Relazione 1:N (un utente, molti ordini): dove sta la chiave esterna?",
-      "options": [
-        "In una terza tabella a parte",
-        "In orders, che punta all'utente",
-        "In users, che punta agli ordini"
-      ],
+      "q": T("Relazione 1:N (un utente, molti ordini): dove sta la chiave esterna?", "A 1:N relation (one user, many orders): where does the foreign key live?"),
+      "options": T(
+        ["In una terza tabella a parte", "In orders, che punta all'utente", "In users, che punta agli ordini"],
+        ["In a separate third table", "In orders, pointing at the user", "In users, pointing at the orders"]
+      ),
       "correct": 1,
-      "why": "La FK sta sempre dalla parte del «molti»: ogni ordine punta al suo unico utente (orders.user_id → users.id)."
+      "why": T("La FK sta sempre dalla parte del «molti»: ogni ordine punta al suo unico utente (orders.user_id → users.id).", "The FK always sits on the “many” side: each order points at its single user (orders.user_id → users.id).")
     },
     {
-      "q": "Un ordine ha molti prodotti e un prodotto sta in molti ordini (N:M). Come si modella?",
-      "options": [
-        "Copiando i prodotti dentro ogni ordine",
-        "Con una terza tabella-ponte (order_items)",
-        "Con una FK diretta tra le due tabelle"
-      ],
+      "q": T("Un ordine ha molti prodotti e un prodotto sta in molti ordini (N:M). Come si modella?", "An order has many products and a product is in many orders (N:M). How do you model it?"),
+      "options": T(
+        ["Copiando i prodotti dentro ogni ordine", "Con una terza tabella-ponte (order_items)", "Con una FK diretta tra le due tabelle"],
+        ["By copying the products into each order", "With a third bridge table (order_items)", "With a direct FK between the two tables"]
+      ),
       "correct": 1,
-      "why": "Il molti-a-molti richiede una tabella intermedia con una FK verso ciascuna delle due: si scompone in due normali 1:N."
+      "why": T("Il molti-a-molti richiede una tabella intermedia con una FK verso ciascuna delle due: si scompone in due normali 1:N.", "Many-to-many needs an intermediate table with an FK to each side: it decomposes into two ordinary 1:N relations.")
     },
     {
-      "q": "Ti accorgi di riscrivere il nome dell'utente su ognuno dei suoi ordini. È il sintomo di:",
-      "options": [
-        "Manca una tabella",
-        "Niente, così è più veloce",
-        "Serve un indice"
-      ],
+      "q": T("Ti accorgi di riscrivere il nome dell'utente su ognuno dei suoi ordini. È il sintomo di:", "You notice you're rewriting the user's name on every one of their orders. That's a symptom of:"),
+      "options": T(
+        ["Manca una tabella", "Niente, così è più veloce", "Serve un indice"],
+        ["A missing table", "Nothing, it's faster this way", "A missing index"]
+      ),
       "correct": 0,
-      "why": "Lo stesso dato copiato su tante righe = quasi sempre manca una tabella. Ogni fatto deve avere una sola casa: è il cuore della normalizzazione."
+      "why": T("Lo stesso dato copiato su tante righe = quasi sempre manca una tabella. Ogni fatto deve avere una sola casa: è il cuore della normalizzazione.", "The same value copied across many rows almost always means a table is missing. Every fact must have exactly one home: that's the heart of normalisation.")
     }
   ],
   "playground": [
     {
-      "q": "Vuoi l'incasso totale per ogni categoria. Quale clausola raggruppa le righe per categoria?",
-      "options": [
-        "WHERE categoria",
-        "GROUP BY categoria",
-        "ORDER BY categoria"
-      ],
+      "q": T("Vuoi l'incasso totale per ogni categoria. Quale clausola raggruppa le righe per categoria?", "You want total revenue per category. Which clause groups the rows by category?"),
+      "options": T(
+        ["WHERE categoria", "GROUP BY categoria", "ORDER BY categoria"],
+        ["WHERE categoria", "GROUP BY categoria", "ORDER BY categoria"]
+      ),
       "correct": 1,
-      "why": "GROUP BY collassa le righe in un gruppo per valore di categoria; le funzioni come SUM(importo) vengono calcolate su ciascun gruppo. WHERE filtra le righe, ORDER BY le ordina."
+      "why": T("GROUP BY collassa le righe in un gruppo per valore di categoria; le funzioni come SUM(importo) vengono calcolate su ciascun gruppo. WHERE filtra le righe, ORDER BY le ordina.", "GROUP BY collapses rows into one group per category value; functions like SUM(importo) are computed over each group. WHERE filters rows, ORDER BY sorts them.")
     },
     {
-      "q": "SELECT * FROM vendite WHERE sconto = NULL torna 0 righe, sempre. Perché?",
-      "options": [
-        "Perché NULL non è mai «uguale» a niente: serve IS NULL",
-        "Perché la colonna sconto non esiste",
-        "Perché manca un GROUP BY"
-      ],
+      "q": T("SELECT * FROM vendite WHERE sconto = NULL torna 0 righe, sempre. Perché?", "SELECT * FROM vendite WHERE sconto = NULL returns 0 rows, always. Why?"),
+      "options": T(
+        ["Perché NULL non è mai «uguale» a niente: serve IS NULL", "Perché la colonna sconto non esiste", "Perché manca un GROUP BY"],
+        ["Because NULL is never “equal” to anything: you need IS NULL", "Because the sconto column doesn't exist", "Because a GROUP BY is missing"]
+      ),
       "correct": 0,
-      "why": "NULL significa «valore sconosciuto»: qualsiasi confronto con = dà esito indefinito, mai vero. Per cercarlo si usa la forma apposita IS NULL (o IS NOT NULL)."
+      "why": T("NULL significa «valore sconosciuto»: qualsiasi confronto con = dà esito indefinito, mai vero. Per cercarlo si usa la forma apposita IS NULL (o IS NOT NULL).", "NULL means “unknown value”: any comparison with = evaluates to undefined, never true. To look for it you use the dedicated form IS NULL (or IS NOT NULL).")
     }
   ],
   "query": [
     {
-      "q": "Cosa deve dire, come minimo, una SELECT?",
-      "options": [
-        "Colonne, tabella e obbligatoriamente un WHERE",
-        "Quali colonne (SELECT) e da quale tabella (FROM)",
-        "Solo quali colonne vuoi"
-      ],
+      "q": T("Cosa deve dire, come minimo, una SELECT?", "What does a SELECT have to say, as a minimum?"),
+      "options": T(
+        ["Colonne, tabella e obbligatoriamente un WHERE", "Quali colonne (SELECT) e da quale tabella (FROM)", "Solo quali colonne vuoi"],
+        ["Columns, table and necessarily a WHERE", "Which columns (SELECT) and from which table (FROM)", "Only which columns you want"]
+      ),
       "correct": 1,
-      "why": "SELECT (le colonne) e FROM (la tabella) sono obbligatori. Il WHERE è un filtro opzionale."
+      "why": T("SELECT (le colonne) e FROM (la tabella) sono obbligatori. Il WHERE è un filtro opzionale.", "SELECT (the columns) and FROM (the table) are mandatory. WHERE is an optional filter.")
     },
     {
-      "q": "Scrivi SELECT foo FROM users, ma la colonna 'foo' non esiste. Cosa succede?",
-      "options": [
-        "Restituisce NULL su ogni riga",
-        "Restituisce tutte le colonne",
-        "Un errore preciso: colonna sconosciuta"
-      ],
+      "q": T("Scrivi SELECT foo FROM users, ma la colonna 'foo' non esiste. Cosa succede?", "You write SELECT foo FROM users, but the column 'foo' doesn't exist. What happens?"),
+      "options": T(
+        ["Restituisce NULL su ogni riga", "Restituisce tutte le colonne", "Un errore preciso: colonna sconosciuta"],
+        ["It returns NULL on every row", "It returns every column", "A precise error: unknown column"]
+      ),
       "correct": 2,
-      "why": "Il DB non inventa colonne: dà un errore («column does not exist») che ti dice subito dove guardare. Leggere l'errore è metà del mestiere."
+      "why": T("Il DB non inventa colonne: dà un errore («column does not exist») che ti dice subito dove guardare. Leggere l'errore è metà del mestiere.", "The DB doesn't invent columns: it gives an error (“column does not exist”) that tells you immediately where to look. Reading the error is half the job.")
     }
   ],
   "aggregazioni": [
     {
-      "q": "Vuoi solo gli utenti con più di un ordine. Usi WHERE o HAVING?",
-      "options": [
-        "WHERE COUNT(*) > 1",
-        "Sono equivalenti",
-        "HAVING COUNT(*) > 1"
-      ],
+      "q": T("Vuoi solo gli utenti con più di un ordine. Usi WHERE o HAVING?", "You want only the users with more than one order. Do you use WHERE or HAVING?"),
+      "options": T(
+        ["WHERE COUNT(*) > 1", "Sono equivalenti", "HAVING COUNT(*) > 1"],
+        ["WHERE COUNT(*) > 1", "They're equivalent", "HAVING COUNT(*) > 1"]
+      ),
       "correct": 2,
-      "why": "COUNT esiste solo DOPO aver raggruppato, e HAVING filtra i gruppi. WHERE agisce PRIMA, sulle righe, quando quel conteggio non esiste ancora."
+      "why": T("COUNT esiste solo DOPO aver raggruppato, e HAVING filtra i gruppi. WHERE agisce PRIMA, sulle righe, quando quel conteggio non esiste ancora.", "COUNT only exists AFTER grouping, and HAVING filters groups. WHERE acts BEFORE, on the rows, when that count doesn't exist yet.")
     },
     {
-      "q": "SELECT name, COUNT(*) FROM users, senza GROUP BY. Cosa succede?",
-      "options": [
-        "Mostra name ripetuto su ogni riga",
-        "Errore: name deve stare in GROUP BY",
-        "Mostra il primo name e il totale"
-      ],
+      "q": T("SELECT name, COUNT(*) FROM users, senza GROUP BY. Cosa succede?", "SELECT name, COUNT(*) FROM users, with no GROUP BY. What happens?"),
+      "options": T(
+        ["Mostra name ripetuto su ogni riga", "Errore: name deve stare in GROUP BY", "Mostra il primo name e il totale"],
+        ["It shows name repeated on every row", "Error: name has to be in GROUP BY", "It shows the first name and the total"]
+      ),
       "correct": 1,
-      "why": "Con un'aggregazione descrivi un gruppo, non una riga: ogni colonna non aggregata deve stare in GROUP BY, altrimenti il DB non sa quale valore mostrare."
+      "why": T("Con un'aggregazione descrivi un gruppo, non una riga: ogni colonna non aggregata deve stare in GROUP BY, altrimenti il DB non sa quale valore mostrare.", "With an aggregate you're describing a group, not a row: every non-aggregated column has to be in GROUP BY, otherwise the DB doesn't know which value to show.")
     },
     {
-      "q": "COUNT(*) su un gruppo conta:",
-      "options": [
-        "I soli valori distinti",
-        "Tutte le righe del gruppo",
-        "Solo i valori non-NULL"
-      ],
+      "q": T("COUNT(*) su un gruppo conta:", "COUNT(*) over a group counts:"),
+      "options": T(
+        ["I soli valori distinti", "Tutte le righe del gruppo", "Solo i valori non-NULL"],
+        ["Distinct values only", "Every row in the group", "Only the non-NULL values"]
+      ),
       "correct": 1,
-      "why": "COUNT(*) conta le righe. COUNT(colonna), invece, salta i NULL di quella colonna."
+      "why": T("COUNT(*) conta le righe. COUNT(colonna), invece, salta i NULL di quella colonna.", "COUNT(*) counts rows. COUNT(column), by contrast, skips the NULLs in that column.")
     }
   ],
   "join": [
     {
-      "q": "Ti servono TUTTI gli utenti, anche quelli senza ordini. Quale JOIN?",
-      "options": [
-        "INNER JOIN",
-        "LEFT JOIN",
-        "Serve per forza fare due query separate"
-      ],
+      "q": T("Ti servono TUTTI gli utenti, anche quelli senza ordini. Quale JOIN?", "You need ALL users, including those with no orders. Which JOIN?"),
+      "options": T(
+        ["INNER JOIN", "LEFT JOIN", "Serve per forza fare due query separate"],
+        ["INNER JOIN", "LEFT JOIN", "You necessarily need two separate queries"]
+      ),
       "correct": 1,
-      "why": "LEFT JOIN tiene tutta la tabella di sinistra (users) e mette NULL dove non c'è corrispondenza. INNER scarterebbe gli utenti senza ordini."
+      "why": T("LEFT JOIN tiene tutta la tabella di sinistra (users) e mette NULL dove non c'è corrispondenza. INNER scarterebbe gli utenti senza ordini.", "LEFT JOIN keeps the whole left table (users) and puts NULL where there's no match. INNER would discard the users with no orders.")
     },
     {
-      "q": "Con INNER JOIN, gli utenti 10-12 (che non hanno ordini):",
-      "options": [
-        "Spariscono dal risultato",
-        "Danno errore",
-        "Compaiono con le colonne ordine a NULL"
-      ],
+      "q": T("Con INNER JOIN, gli utenti 10-12 (che non hanno ordini):", "With an INNER JOIN, users 10-12 (who have no orders):"),
+      "options": T(
+        ["Spariscono dal risultato", "Danno errore", "Compaiono con le colonne ordine a NULL"],
+        ["Disappear from the result", "Throw an error", "Appear with the order columns set to NULL"]
+      ),
       "correct": 0,
-      "why": "INNER = intersezione: restano solo le righe che combaciano da entrambe le parti. Nessun ordine, nessuna riga."
+      "why": T("INNER = intersezione: restano solo le righe che combaciano da entrambe le parti. Nessun ordine, nessuna riga.", "INNER = intersection: only rows matching on both sides remain. No order, no row.")
     }
   ],
   "null": [
     {
-      "q": "WHERE phone = NULL restituisce:",
-      "options": [
-        "Le righe che non hanno telefono",
-        "0 righe, sempre",
-        "Tutte le righe"
-      ],
+      "q": T("WHERE phone = NULL restituisce:", "WHERE phone = NULL returns:"),
+      "options": T(
+        ["Le righe che non hanno telefono", "0 righe, sempre", "Tutte le righe"],
+        ["The rows with no phone number", "0 rows, always", "Every row"]
+      ),
       "correct": 1,
-      "why": "NULL non è «uguale» a niente, nemmeno a un altro NULL. Il confronto vale «sconosciuto» e la riga non passa mai. Serve IS NULL."
+      "why": T("NULL non è «uguale» a niente, nemmeno a un altro NULL. Il confronto vale «sconosciuto» e la riga non passa mai. Serve IS NULL.", "NULL isn't “equal” to anything, not even to another NULL. The comparison evaluates to “unknown” and the row never passes. You need IS NULL.")
     },
     {
-      "q": "Fai un LEFT JOIN e poi aggiungi WHERE o.status = 'paid'. Cosa ne è degli utenti senza ordini?",
-      "options": [
-        "Danno errore",
-        "Spariscono: il LEFT è ridiventato un INNER",
-        "Restano, con status NULL"
-      ],
+      "q": T("Fai un LEFT JOIN e poi aggiungi WHERE o.status = 'paid'. Cosa ne è degli utenti senza ordini?", "You do a LEFT JOIN and then add WHERE o.status = 'paid'. What becomes of the users with no orders?"),
+      "options": T(
+        ["Danno errore", "Spariscono: il LEFT è ridiventato un INNER", "Restano, con status NULL"],
+        ["They throw an error", "They vanish: the LEFT turned back into an INNER", "They stay, with status NULL"]
+      ),
       "correct": 1,
-      "why": "Le loro righe hanno status NULL, che non passa il filtro 'paid': vengono eliminate. Un filtro su colonna nullable trasforma di nascosto il LEFT in INNER."
+      "why": T("Le loro righe hanno status NULL, che non passa il filtro 'paid': vengono eliminate. Un filtro su colonna nullable trasforma di nascosto il LEFT in INNER.", "Their rows have status NULL, which fails the 'paid' filter: they get dropped. A filter on a nullable column silently turns a LEFT into an INNER.")
     },
     {
-      "q": "Vuoi mostrare 'n/d' quando il telefono manca. Cosa usi?",
-      "options": [
-        "IS NULL phone",
-        "COALESCE(phone, 'n/d')",
-        "phone = 'n/d'"
-      ],
+      "q": T("Vuoi mostrare 'n/d' quando il telefono manca. Cosa usi?", "You want to show 'n/a' when the phone number is missing. What do you use?"),
+      "options": T(
+        ["IS NULL phone", "COALESCE(phone, 'n/d')", "phone = 'n/d'"],
+        ["IS NULL phone", "COALESCE(phone, 'n/a')", "phone = 'n/a'"]
+      ),
       "correct": 1,
-      "why": "COALESCE restituisce il primo valore non-NULL: il telefono se c'è, altrimenti il ripiego che gli dai. Serve a non mostrare «NULL» in interfaccia."
+      "why": T("COALESCE restituisce il primo valore non-NULL: il telefono se c'è, altrimenti il ripiego che gli dai. Serve a non mostrare «NULL» in interfaccia.", "COALESCE returns the first non-NULL value: the phone if there is one, otherwise the fallback you give it. It keeps “NULL” out of the interface.")
     }
   ],
   "indici": [
     {
-      "q": "Senza indice, per trovare una riga il database:",
-      "options": [
-        "Legge le righe una a una finché la trova",
-        "Salta direttamente alla riga giusta",
-        "La indovina"
-      ],
+      "q": T("Senza indice, per trovare una riga il database:", "Without an index, to find a row the database:"),
+      "options": T(
+        ["Legge le righe una a una finché la trova", "Salta direttamente alla riga giusta", "La indovina"],
+        ["Reads the rows one by one until it finds it", "Jumps straight to the right row", "Guesses it"]
+      ),
       "correct": 0,
-      "why": "Senza indice è uno scan lineare: su 10 milioni di righe diventa lentissimo. L'indice (struttura ordinata) permette una ricerca «a salti» (binaria)."
+      "why": T("Senza indice è uno scan lineare: su 10 milioni di righe diventa lentissimo. L'indice (struttura ordinata) permette una ricerca «a salti» (binaria).", "Without an index it's a linear scan: on 10 million rows that becomes glacial. The index (an ordered structure) enables a jump-ahead (binary) search.")
     },
     {
-      "q": "Su quale colonna NON conviene mettere un indice?",
-      "options": [
-        "email, usata spesso nei filtri",
-        "user_id, usato nelle JOIN",
-        "un flag attivo sì/no"
-      ],
+      "q": T("Su quale colonna NON conviene mettere un indice?", "Which column is NOT worth indexing?"),
+      "options": T(
+        ["email, usata spesso nei filtri", "user_id, usato nelle JOIN", "un flag attivo sì/no"],
+        ["email, often used in filters", "user_id, used in JOINs", "an active yes/no flag"]
+      ),
       "correct": 2,
-      "why": "Con pochi valori distinti (sì/no) l'indice fa comunque scansionare metà tabella: non aiuta e rallenta le scritture. Indicizza colonne selettive su cui cerchi o fai JOIN."
+      "why": T("Con pochi valori distinti (sì/no) l'indice fa comunque scansionare metà tabella: non aiuta e rallenta le scritture. Indicizza colonne selettive su cui cerchi o fai JOIN.", "With few distinct values (yes/no) the index still ends up scanning half the table: it doesn't help and it slows writes. Index selective columns you search or JOIN on.")
     },
     {
-      "q": "Un indice è gratis?",
-      "options": [
-        "No: occupa spazio e rallenta le scritture",
-        "Solo su alcuni database",
-        "Sì, sempre"
-      ],
+      "q": T("Un indice è gratis?", "Is an index free?"),
+      "options": T(
+        ["No: occupa spazio e rallenta le scritture", "Solo su alcuni database", "Sì, sempre"],
+        ["No: it takes space and slows down writes", "Only on some databases", "Yes, always"]
+      ),
       "correct": 0,
-      "why": "Ogni INSERT/UPDATE deve aggiornare anche l'indice. È un compromesso: letture più veloci in cambio di scritture un po' più lente."
+      "why": T("Ogni INSERT/UPDATE deve aggiornare anche l'indice. È un compromesso: letture più veloci in cambio di scritture un po' più lente.", "Every INSERT/UPDATE has to update the index too. It's a trade-off: faster reads in exchange for slightly slower writes.")
     }
   ],
   "relazioni": [
     {
-      "q": "La FK ha ON DELETE RESTRICT. Provi a cancellare un utente che ha ordini:",
-      "options": [
-        "Il DB blocca: ci sono ordini collegati",
-        "Cancella utente e ordini a cascata",
-        "Cancella l'utente e lascia ordini orfani"
-      ],
+      "q": T("La FK ha ON DELETE RESTRICT. Provi a cancellare un utente che ha ordini:", "The FK has ON DELETE RESTRICT. You try to delete a user who has orders:"),
+      "options": T(
+        ["Il DB blocca: ci sono ordini collegati", "Cancella utente e ordini a cascata", "Cancella l'utente e lascia ordini orfani"],
+        ["The DB blocks it: there are linked orders", "It deletes user and orders in a cascade", "It deletes the user and leaves orphan orders"]
+      ),
       "correct": 0,
-      "why": "RESTRICT protegge l'integrità: non ti lascia creare ordini «orfani» che puntano al nulla. CASCADE, al contrario, cancellerebbe anche gli ordini."
+      "why": T("RESTRICT protegge l'integrità: non ti lascia creare ordini «orfani» che puntano al nulla. CASCADE, al contrario, cancellerebbe anche gli ordini.", "RESTRICT protects integrity: it won't let you create “orphan” orders pointing at nothing. CASCADE, by contrast, would delete the orders too.")
     },
     {
-      "q": "Un bonifico (togli da A, aggiungi a B) e il server crasha a metà, SENZA transazione:",
-      "options": [
-        "A è addebitato ma B mai accreditato: soldi persi",
-        "Viene annullato tutto",
-        "Riparte da solo"
-      ],
+      "q": T("Un bonifico (togli da A, aggiungi a B) e il server crasha a metà, SENZA transazione:", "A transfer (take from A, add to B) and the server crashes halfway, WITHOUT a transaction:"),
+      "options": T(
+        ["A è addebitato ma B mai accreditato: soldi persi", "Viene annullato tutto", "Riparte da solo"],
+        ["A is debited but B never credited: money lost", "Everything is rolled back", "It restarts by itself"]
+      ),
       "correct": 0,
-      "why": "Senza transazione i due passi sono indipendenti: il primo resta, il secondo no. La transazione li rende «tutto o niente» (atomicità), con ROLLBACK automatico."
+      "why": T("Senza transazione i due passi sono indipendenti: il primo resta, il secondo no. La transazione li rende «tutto o niente» (atomicità), con ROLLBACK automatico.", "Without a transaction the two steps are independent: the first sticks, the second doesn't. A transaction makes them “all or nothing” (atomicity), with an automatic ROLLBACK.")
     }
   ],
   "hosting": [
     {
-      "q": "Utente in USA, server in Europa: il collo di bottiglia è la rete. La soluzione è:",
-      "options": [
-        "Avvicinare l'hosting agli utenti (o usare una CDN)",
-        "Aggiungere un indice al database",
-        "Riscrivere la logica del server"
-      ],
+      "q": T("Utente in USA, server in Europa: il collo di bottiglia è la rete. La soluzione è:", "User in the USA, server in Europe: the bottleneck is the network. The fix is:"),
+      "options": T(
+        ["Avvicinare l'hosting agli utenti (o usare una CDN)", "Aggiungere un indice al database", "Riscrivere la logica del server"],
+        ["Move the hosting closer to the users (or use a CDN)", "Add an index to the database", "Rewrite the server logic"]
+      ),
       "correct": 0,
-      "why": "Se il tempo se ne va nella rete, si accorcia la distanza (regione più vicina o CDN). Indici e codice non cambiano la latenza di rete."
+      "why": T("Se il tempo se ne va nella rete, si accorcia la distanza (regione più vicina o CDN). Indici e codice non cambiano la latenza di rete.", "If the time goes into the network, you shorten the distance (a closer region or a CDN). Indexes and code don't change network latency.")
     },
     {
-      "q": "Il database impiega 80ms ed è la voce più grande. La soluzione è:",
-      "options": [
-        "Cambiare regione del server",
-        "Aggiungere RAM al server",
-        "Aggiungere un indice"
-      ],
+      "q": T("Il database impiega 80ms ed è la voce più grande. La soluzione è:", "The database takes 80ms and is the largest item. The fix is:"),
+      "options": T(
+        ["Cambiare regione del server", "Aggiungere RAM al server", "Aggiungere un indice"],
+        ["Change the server's region", "Add RAM to the server", "Add an index"]
+      ),
       "correct": 2,
-      "why": "Il ritardo è nel database: un indice porta quel tempo da ~80ms a pochi ms. La regione conta per la rete, non per il tempo di query."
+      "why": T("Il ritardo è nel database: un indice porta quel tempo da ~80ms a pochi ms. La regione conta per la rete, non per il tempo di query.", "The delay is in the database: an index takes that time from ~80ms down to a few ms. Region matters for the network, not for query time.")
     }
   ],
   "auth": [
     {
-      "q": "Chiami un endpoint protetto senza token. La risposta è:",
-      "options": [
-        "401 Unauthorized",
-        "403 Forbidden",
-        "404 Not Found"
-      ],
+      "q": T("Chiami un endpoint protetto senza token. La risposta è:", "You call a protected endpoint with no token. The response is:"),
+      "options": T(
+        ["401 Unauthorized", "403 Forbidden", "404 Not Found"],
+        ["401 Unauthorized", "403 Forbidden", "404 Not Found"]
+      ),
       "correct": 0,
-      "why": "Senza token il server non sa chi sei: 401 (autenticazione). 403 sarebbe «so chi sei, ma non puoi»."
+      "why": T("Senza token il server non sa chi sei: 401 (autenticazione). 403 sarebbe «so chi sei, ma non puoi».", "With no token the server doesn't know who you are: 401 (authentication). 403 would be “I know who you are, but you can't”.")
     },
     {
-      "q": "Perché il payload di un JWT può viaggiare leggibile, senza cifrarlo?",
-      "options": [
-        "In realtà è cifrato",
-        "Perché non contiene dati sensibili",
-        "La firma lo rende non falsificabile: se lo modifichi, non torna più"
-      ],
+      "q": T("Perché il payload di un JWT può viaggiare leggibile, senza cifrarlo?", "Why can a JWT payload travel readable, without being encrypted?"),
+      "options": T(
+        ["In realtà è cifrato", "Perché non contiene dati sensibili", "La firma lo rende non falsificabile: se lo modifichi, non torna più"],
+        ["It actually is encrypted", "Because it contains no sensitive data", "The signature makes it unforgeable: if you modify it, it no longer matches"]
+      ),
       "correct": 2,
-      "why": "Il JWT non nasconde il contenuto, lo rende non modificabile: cambiare «role» invalida la firma calcolata con la chiave segreta del server."
+      "why": T("Il JWT non nasconde il contenuto, lo rende non modificabile: cambiare «role» invalida la firma calcolata con la chiave segreta del server.", "A JWT doesn't hide the content, it makes it unmodifiable: changing “role” invalidates the signature computed with the server's secret key.")
     },
     {
-      "q": "Come vanno salvate le password nel database?",
-      "options": [
-        "In chiaro, tanto il DB è protetto",
-        "Con un hash a senso unico (bcrypt)",
-        "Cifrate con la chiave del server"
-      ],
+      "q": T("Come vanno salvate le password nel database?", "How should passwords be stored in the database?"),
+      "options": T(
+        ["In chiaro, tanto il DB è protetto", "Con un hash a senso unico (bcrypt)", "Cifrate con la chiave del server"],
+        ["In plain text, the DB is protected anyway", "With a one-way hash (bcrypt)", "Encrypted with the server's key"]
+      ),
       "correct": 1,
-      "why": "Si salva l'hash, non la password. Al login si ricalcola l'hash e si confrontano: anche rubando il DB, le password vere restano protette."
+      "why": T("Si salva l'hash, non la password. Al login si ricalcola l'hash e si confrontano: anche rubando il DB, le password vere restano protette.", "You store the hash, not the password. At login you recompute the hash and compare: even if the DB is stolen, the real passwords stay protected.")
     }
   ],
   "caching": [
     {
-      "q": "Prima richiesta di un prodotto, cache ancora vuota. È un:",
-      "options": [
-        "Errore",
-        "MISS: si legge dal DB e poi si popola la cache",
-        "HIT, veloce"
-      ],
+      "q": T("Prima richiesta di un prodotto, cache ancora vuota. È un:", "First request for a product, cache still empty. That's a:"),
+      "options": T(
+        ["Errore", "MISS: si legge dal DB e poi si popola la cache", "HIT, veloce"],
+        ["Error", "MISS: you read from the DB and then populate the cache", "HIT, fast"]
+      ),
       "correct": 1,
-      "why": "Cache vuota = MISS: si paga il giro al DB (lento), ma il valore finisce in cache. La richiesta successiva sarà un HIT quasi istantaneo."
+      "why": T("Cache vuota = MISS: si paga il giro al DB (lento), ma il valore finisce in cache. La richiesta successiva sarà un HIT quasi istantaneo.", "Empty cache = MISS: you pay the round trip to the DB (slow), but the value lands in the cache. The next request will be a near-instant HIT.")
     },
     {
-      "q": "Il prezzo cambia, ma in cache c'è ancora il vecchio. Qual è il rischio?",
-      "options": [
-        "La cache si svuota automaticamente",
-        "Servire un dato vecchio: la cache va invalidata",
-        "Nessuno, si aggiorna da sola"
-      ],
+      "q": T("Il prezzo cambia, ma in cache c'è ancora il vecchio. Qual è il rischio?", "The price changes, but the cache still holds the old one. What's the risk?"),
+      "options": T(
+        ["La cache si svuota automaticamente", "Servire un dato vecchio: la cache va invalidata", "Nessuno, si aggiorna da sola"],
+        ["The cache empties itself automatically", "Serving stale data: the cache has to be invalidated", "None, it updates itself"]
+      ),
       "correct": 1,
-      "why": "La cache non sa che il dato è cambiato: va invalidata esplicitamente. Non a caso «invalidare la cache» è uno dei problemi più difficili dell'informatica."
+      "why": T("La cache non sa che il dato è cambiato: va invalidata esplicitamente. Non a caso «invalidare la cache» è uno dei problemi più difficili dell'informatica.", "The cache has no idea the value changed: it has to be invalidated explicitly. There's a reason “cache invalidation” is one of the hardest problems in computing.")
     }
   ],
   "logging": [
     {
-      "q": "Un cliente dice: «alle 10:05 ho avuto un errore». Cosa cerchi nei log?",
-      "options": [
-        "Tutti i log ERROR della giornata",
-        "Il request-id per isolare quella singola richiesta",
-        "Riavvii il server"
-      ],
+      "q": T("Un cliente dice: «alle 10:05 ho avuto un errore». Cosa cerchi nei log?", "A customer says: “at 10:05 I got an error”. What do you look for in the logs?"),
+      "options": T(
+        ["Tutti i log ERROR della giornata", "Il request-id per isolare quella singola richiesta", "Riavvii il server"],
+        ["Every ERROR log of the day", "The request-id, to isolate that single request", "You restart the server"]
+      ),
       "correct": 1,
-      "why": "Il request-id lega insieme tutte le righe di una richiesta: lo cerchi e vedi l'intera storia, invece di migliaia di righe scollegate."
+      "why": T("Il request-id lega insieme tutte le righe di una richiesta: lo cerchi e vedi l'intera storia, invece di migliaia di righe scollegate.", "The request-id ties together every line of one request: you look it up and see the whole story, instead of thousands of disconnected lines.")
     },
     {
-      "q": "Log, metriche e trace: chi dà i numeri aggregati (richieste/sec, % errori)?",
-      "options": [
-        "Le metriche",
-        "Le trace",
-        "I log"
-      ],
+      "q": T("Log, metriche e trace: chi dà i numeri aggregati (richieste/sec, % errori)?", "Logs, metrics and traces: which one gives the aggregated numbers (requests/sec, error %)?"),
+      "options": T(
+        ["Le metriche", "Le trace", "I log"],
+        ["Metrics", "Traces", "Logs"]
+      ),
       "correct": 0,
-      "why": "Le metriche sono numeri aggregati nel tempo. I log sono righe puntuali; la trace è il percorso di una singola richiesta tra i vari servizi."
+      "why": T("Le metriche sono numeri aggregati nel tempo. I log sono righe puntuali; la trace è il percorso di una singola richiesta tra i vari servizi.", "Metrics are numbers aggregated over time. Logs are individual lines; a trace is the path of a single request across the various services.")
     }
   ],
   "llm": [
     {
-      "q": "Chiamare un LLM via API è, tecnicamente:",
-      "options": [
-        "Un protocollo speciale tutto suo",
-        "Una normale POST HTTP con body JSON",
-        "Un accesso diretto a un database"
-      ],
+      "q": T("Chiamare un LLM via API è, tecnicamente:", "Calling an LLM via API is, technically:"),
+      "options": T(
+        ["Un protocollo speciale tutto suo", "Una normale POST HTTP con body JSON", "Un accesso diretto a un database"],
+        ["A special protocol all of its own", "An ordinary HTTP POST with a JSON body", "Direct access to a database"]
+      ),
       "correct": 1,
-      "why": "È una POST HTTP come le altre: mandi model + messages in JSON e ricevi JSON. Cambia solo il modo di ricevere l'output (in blocco, in streaming...)."
+      "why": T("È una POST HTTP come le altre: mandi model + messages in JSON e ricevi JSON. Cambia solo il modo di ricevere l'output (in blocco, in streaming...).", "It's an HTTP POST like any other: you send model + messages as JSON and get JSON back. Only the way you receive the output changes (in one block, streaming...).")
     },
     {
-      "q": "L'API è senza stato (stateless). Per continuare una conversazione:",
-      "options": [
-        "Il server ricorda i turni precedenti",
-        "Rimandi tutta la storia dei messaggi a ogni chiamata",
-        "Apri una sessione persistente"
-      ],
+      "q": T("L'API è senza stato (stateless). Per continuare una conversazione:", "The API is stateless. To continue a conversation:"),
+      "options": T(
+        ["Il server ricorda i turni precedenti", "Rimandi tutta la storia dei messaggi a ogni chiamata", "Apri una sessione persistente"],
+        ["The server remembers the previous turns", "You resend the whole message history on every call", "You open a persistent session"]
+      ),
       "correct": 1,
-      "why": "L'API non ha memoria: la «conversazione» è la lista messages che rispedisci per intero ogni volta, cresciuta di un turno."
+      "why": T("L'API non ha memoria: la «conversazione» è la lista messages che rispedisci per intero ogni volta, cresciuta di un turno.", "The API has no memory: the “conversation” is the messages list you resend in full every time, one turn longer.")
     }
   ],
   "sdmetodo": [
@@ -4737,8 +4723,8 @@ const QUIZZES = {
     { "q": "Qual è il primo passo corretto davanti a un caso da colloquio PM tipo «come miglioreresti X»?", "options": ["Proporre subito 3 soluzioni per mostrare velocità di pensiero", "Chiarire l'obiettivo e la metrica di business dietro la domanda, prima di proporre qualunque soluzione", "Chiedere quanto budget è disponibile"], "correct": 1, "why": "Lanciarsi sulle soluzioni prima di capire l'obiettivo è l'errore più comune nei case interview: mostra fretta, non giudizio." },
     { "q": "Perché un candidato dovrebbe dichiarare esplicitamente cosa NON farà, nel caso?", "options": ["Per riempire tempo se non ha altre idee", "Perché mostra che ha valutato i trade-off e non vede solo il lato positivo del proprio piano", "Non è mai necessario, meglio restare vaghi"], "correct": 1, "why": "Un piano senza trade-off dichiarati è un piano non ancora pensato a fondo: gli intervistatori lo notano subito." }
   ]
-};
-const QUIZ_TOTAL = Object.keys(QUIZZES).length;
+}));
+const QUIZ_TOTAL = Object.keys(QUIZZES()).length;
 
 /* =====================================================================
    RIPASSO — Quadro completo (una richiesta end-to-end) + Glossario
@@ -5137,13 +5123,13 @@ function ClassBox({ name, stereotype, fields = [], methods = [], tone = "indigo"
 function ClassDiagram({ classes, relations = [] }) {
   return (
     <Card>
-      <div className="flex items-center gap-2 mb-3"><Component size={15} className="text-indigo-400" /><span className="text-sm font-semibold text-zinc-200">Diagramma delle classi</span></div>
+      <div className="flex items-center gap-2 mb-3"><Component size={15} className="text-indigo-400" /><span className="text-sm font-semibold text-zinc-200">{T("Diagramma delle classi", "Class diagram")}</span></div>
       <div className="grid sm:grid-cols-2 gap-3">
         {classes.map((c) => <ClassBox key={c.name} {...c} />)}
       </div>
       {relations.length > 0 && (
         <div className="mt-3 pt-3 border-t border-zinc-800 space-y-1">
-          <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-mono mb-1">Relazioni</div>
+          <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-mono mb-1">{T("Relazioni", "Relations")}</div>
           {relations.map((r, i) => <div key={i} className="font-mono text-[12px] text-zinc-400"><span className="text-indigo-300">{r.from}</span> <span className="text-zinc-500">{r.label}</span> <span className="text-amber-300">{r.to}</span>{r.note ? <span className="text-zinc-500"> — {r.note}</span> : null}</div>)}
         </div>
       )}
@@ -5156,11 +5142,11 @@ function Requisiti({ functional, nonFunctional, scale }) {
     <Card>
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">Funzionali · cosa fa</div>
+          <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{T("Funzionali · cosa fa", "Functional · what it does")}</div>
           <ul className="space-y-1.5">{functional.map((f, i) => <li key={i} className="text-sm text-zinc-300 flex gap-2 leading-snug"><CheckSquare size={14} className="text-emerald-400 mt-0.5 shrink-0" />{f}</li>)}</ul>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">Non funzionali · come regge</div>
+          <div className="text-xs uppercase tracking-wide text-zinc-500 font-mono mb-2">{T("Non funzionali · come regge", "Non-functional · how it holds up")}</div>
           <ul className="space-y-1.5">{nonFunctional.map((f, i) => <li key={i} className="text-sm text-zinc-300 flex gap-2 leading-snug"><Gauge size={14} className="text-blue-400 mt-0.5 shrink-0" />{f}</li>)}</ul>
         </div>
       </div>
@@ -5169,7 +5155,8 @@ function Requisiti({ functional, nonFunctional, scale }) {
   );
 }
 
-function Tradeoffs({ title = "Trade-off & ragionamento", items }) {
+function Tradeoffs({ title, items }) {
+  title = title ?? T("Trade-off & ragionamento", "Trade-offs & reasoning");
   return (
     <Card>
       <div className="flex items-center gap-2 mb-3"><Scale size={15} className="text-amber-400" /><span className="text-sm font-semibold text-zinc-200">{title}</span></div>
@@ -5181,7 +5168,7 @@ function Tradeoffs({ title = "Trade-off & ragionamento", items }) {
               <div className="rounded border border-zinc-800 bg-zinc-900 p-2"><div className="text-zinc-200 font-mono mb-1">{it.a.name}</div><div className="text-emerald-300 leading-snug mb-0.5">+ {it.a.pro}</div><div className="text-red-300 leading-snug">– {it.a.con}</div></div>
               <div className="rounded border border-zinc-800 bg-zinc-900 p-2"><div className="text-zinc-200 font-mono mb-1">{it.b.name}</div><div className="text-emerald-300 leading-snug mb-0.5">+ {it.b.pro}</div><div className="text-red-300 leading-snug">– {it.b.con}</div></div>
             </div>
-            <div className="text-xs text-zinc-400 mt-2 leading-relaxed"><span className="text-indigo-300 font-medium">Cosa sceglierei:</span> {it.pick}</div>
+            <div className="text-xs text-zinc-400 mt-2 leading-relaxed"><span className="text-indigo-300 font-medium">{T("Cosa sceglierei:", "What I would pick:")}</span> {it.pick}</div>
           </div>
         ))}
       </div>
@@ -5201,9 +5188,9 @@ function DesignChallenge({ brief, pool, reference }) {
   const feedback = pool.filter((p) => p.role === "essential" || sel[p.id]);
   return (
     <div className="mt-7 rounded-xl border border-indigo-900 bg-zinc-900 p-4">
-      <div className="flex items-center gap-2 mb-2"><Wrench size={15} className="text-indigo-400" /><span className="text-xs uppercase tracking-wide text-indigo-400 font-mono">Sfida: progettalo tu</span></div>
+      <div className="flex items-center gap-2 mb-2"><Wrench size={15} className="text-indigo-400" /><span className="text-xs uppercase tracking-wide text-indigo-400 font-mono">{T("Sfida: progettalo tu", "Challenge: design it yourself")}</span></div>
       <div className="text-sm text-zinc-200 mb-1 leading-relaxed">{brief}</div>
-      <p className="text-xs text-zinc-500 mb-3">Prima pensa la tua architettura <span className="text-zinc-400">da zero</span> (schizzala anche su carta). Poi seleziona qui i pezzi che ci metteresti e premi «Verifica»: ti dico cosa manca e cosa è di troppo, con il perché.</p>
+      <p className="text-xs text-zinc-500 mb-3">{T(<>Prima pensa la tua architettura <span className="text-zinc-400">da zero</span> (schizzala anche su carta). Poi seleziona qui i pezzi che ci metteresti e premi «Verifica»: ti dico cosa manca e cosa è di troppo, con il perché.</>, <>First design your architecture <span className="text-zinc-400">from scratch</span> (sketch it on paper if you like). Then select the pieces you would use and hit “Check”: I will tell you what is missing and what is superfluous, and why.</>)}</p>
       <div className="grid sm:grid-cols-2 gap-1.5 mb-3">
         {pool.map((p) => {
           const on = !!sel[p.id];
@@ -5223,22 +5210,22 @@ function DesignChallenge({ brief, pool, reference }) {
           );
         })}
       </div>
-      {!checked && <button onClick={() => setChecked(true)} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors">Verifica</button>}
+      {!checked && <button onClick={() => setChecked(true)} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors">{T("Verifica", "Check")}</button>}
       {checked && (
         <div className="space-y-2">
-          <div className={`text-sm font-medium ${allGood ? "text-emerald-300" : "text-amber-300"}`}>{allGood ? "Architettura solida: tutti gli elementi essenziali, nessuno di troppo." : `Essenziali presi: ${gotEss}/${essentials.length}${wrongPicked ? ` · ${wrongPicked} da evitare` : ""}. Rivedi i punti qui sotto.`}</div>
+          <div className={`text-sm font-medium ${allGood ? "text-emerald-300" : "text-amber-300"}`}>{allGood ? T("Architettura solida: tutti gli elementi essenziali, nessuno di troppo.", "Solid architecture: every essential piece, nothing superfluous.") : T(`Essenziali presi: ${gotEss}/${essentials.length}${wrongPicked ? ` · ${wrongPicked} da evitare` : ""}. Rivedi i punti qui sotto.`, `Essentials picked: ${gotEss}/${essentials.length}${wrongPicked ? ` · ${wrongPicked} to avoid` : ""}. Review the points below.`)}</div>
           <div className="space-y-1.5">
             {feedback.map((p) => (
               <div key={p.id} className="text-xs leading-relaxed text-zinc-400">
                 <span className={`font-mono mr-1 ${p.role === "essential" ? (sel[p.id] ? "text-emerald-300" : "text-red-300") : p.role === "wrong" ? "text-red-300" : "text-blue-300"}`}>
-                  {p.role === "essential" ? (sel[p.id] ? "✓ giusto" : "✗ mancava") : p.role === "wrong" ? "✗ da evitare" : "≈ opzionale"}
+                  {p.role === "essential" ? (sel[p.id] ? T("✓ giusto", "✓ right") : T("✗ mancava", "✗ missing")) : p.role === "wrong" ? T("✗ da evitare", "✗ avoid") : T("≈ opzionale", "≈ optional")}
                 </span>
                 <span className="text-zinc-200">{p.label}</span> — {p.why}
               </div>
             ))}
           </div>
-          {reference && <div className="text-xs text-zinc-400 leading-relaxed rounded-lg border border-zinc-800 bg-zinc-950 p-3"><span className="text-indigo-300 font-mono">Soluzione di riferimento — </span>{reference}</div>}
-          <button onClick={() => { setChecked(false); setSel({}); }} className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1"><RotateCcw size={12} /> riprova da capo</button>
+          {reference && <div className="text-xs text-zinc-400 leading-relaxed rounded-lg border border-zinc-800 bg-zinc-950 p-3"><span className="text-indigo-300 font-mono">{T("Soluzione di riferimento — ", "Reference solution — ")}</span>{reference}</div>}
+          <button onClick={() => { setChecked(false); setSel({}); }} className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1"><RotateCcw size={12} /> {T("riprova da capo", "start over")}</button>
         </div>
       )}
     </div>
@@ -5246,8 +5233,8 @@ function DesignChallenge({ brief, pool, reference }) {
 }
 
 function fmtNum(n) {
-  if (n >= 1e9) return (n / 1e9).toFixed(1) + " Mld";
-  if (n >= 1e6) return (n / 1e6).toFixed(1) + " Mln";
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + T(" Mld", "B");
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + T(" Mln", "M");
   if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
   return String(Math.round(n));
 }
@@ -5359,7 +5346,7 @@ function Architecture({ arch }) {
   // iniettato in ogni case-*.html — vedi diagrams-src/buildmode.mjs).
   function pick(item) {
     if (item.kind === "distractor") { setLog((l) => [{ t: "bad", m: `✗ ${item.label} — ${item.why}` }, ...l].slice(0, 6)); return; }
-    if (placed.includes(item.id)) { setLog((l) => [{ t: "warn", m: `${item.label}: è già nell'architettura.` }, ...l].slice(0, 6)); return; }
+    if (placed.includes(item.id)) { setLog((l) => [{ t: "warn", m: T(`${item.label}: è già nell’architettura.`, `${item.label}: already in the architecture.`) }, ...l].slice(0, 6)); return; }
     const recBefore = rec, stepObj = arch.steps.find((s) => s.id === item.id), isRec = recBefore && recBefore.id === item.id;
     const last = placed.length + 1 === arch.nodes.length;
     setPlaced((p) => [...p, item.id]);
@@ -5367,8 +5354,8 @@ function Architecture({ arch }) {
     setLog((l) => {
       const entry = isRec
         ? { t: "good", m: `✓ ${item.label} — ${stepObj.choice}` }
-        : { t: "warn", m: `≈ ${item.label}: scelta lecita. Io però avrei aggiunto prima «${byId[recBefore.id].label}» — ${recBefore.choice}` };
-      const end = last ? [{ t: "done", m: "🎉 Architettura ricostruita! Passa a «Guidami» per i trade-off che ti sei perso." }] : [];
+        : { t: "warn", m: T(`≈ ${item.label}: scelta lecita. Io però avrei aggiunto prima «${byId[recBefore.id].label}» — ${recBefore.choice}`, `≈ ${item.label}: legitimate choice. I would have added «${byId[recBefore.id].label}» first though — ${recBefore.choice}`) };
+      const end = last ? [{ t: "done", m: T("🎉 Architettura ricostruita! Passa a «Guidami» per i trade-off che ti sei perso.", "🎉 Architecture rebuilt! Switch to «Guide me» for the trade-offs you missed.") }] : [];
       return [...end, entry, ...l].slice(0, 6);
     });
   }
@@ -5387,11 +5374,11 @@ function Architecture({ arch }) {
     <Card>
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <Network size={15} className="text-indigo-400" />
-        <span className="text-sm font-semibold text-zinc-200">Architettura — {arch.title}</span>
+        <span className="text-sm font-semibold text-zinc-200">{T("Architettura", "Architecture")} — {arch.title}</span>
         <div className="ml-auto flex flex-wrap gap-1.5">
-          <Btn tone="ghost" active={mode === "guide"} onClick={() => switchMode("guide")}>Guidami</Btn>
-          <Btn tone="ghost" active={mode === "build"} onClick={() => switchMode("build")}>Ricostruiscilo tu</Btn>
-          <Btn tone="ghost" active={mode === "explore"} onClick={() => switchMode("explore")}>Esplora</Btn>
+          <Btn tone="ghost" active={mode === "guide"} onClick={() => switchMode("guide")}>{T("Guidami", "Guide me")}</Btn>
+          <Btn tone="ghost" active={mode === "build"} onClick={() => switchMode("build")}>{T("Ricostruiscilo tu", "Rebuild it yourself")}</Btn>
+          <Btn tone="ghost" active={mode === "explore"} onClick={() => switchMode("explore")}>{T("Esplora", "Explore")}</Btn>
         </div>
       </div>
 
@@ -5401,16 +5388,16 @@ function Architecture({ arch }) {
             className="w-full block" style={{ height: frameH, border: 0 }} />
         </div>
       ) : (
-        <Note tone="amber" icon={AlertTriangle}>Diagramma archify non disponibile per questo caso.</Note>
+        <Note tone="amber" icon={AlertTriangle}>{T("Diagramma archify non disponibile per questo caso.", "No archify diagram available for this case.")}</Note>
       )}
 
       {mode === "guide" && (
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <Btn tone="ghost" onClick={() => { setAuto(false); goStep(step - 1); }} disabled={step <= 1}>◀</Btn>
-            <Btn tone="ghost" onClick={() => { setAuto(false); goStep(step + 1); }} disabled={step >= arch.steps.length}>Avanti ▶</Btn>
-            <button onClick={() => { if (step >= arch.steps.length) goStep(1); setAuto((a) => !a); }} className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors flex items-center gap-1.5"><Play size={13} />{auto ? "pausa" : "auto"}</button>
-            <span className="ml-auto font-mono text-xs text-zinc-600">passo {step} / {arch.steps.length}</span>
+            <Btn tone="ghost" onClick={() => { setAuto(false); goStep(step + 1); }} disabled={step >= arch.steps.length}>{T("Avanti", "Next")} ▶</Btn>
+            <button onClick={() => { if (step >= arch.steps.length) goStep(1); setAuto((a) => !a); }} className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors flex items-center gap-1.5"><Play size={13} />{auto ? T("pausa", "pause") : "auto"}</button>
+            <span className="ml-auto font-mono text-xs text-zinc-600">{T("passo", "step")} {step} / {arch.steps.length}</span>
           </div>
           <div className="flex items-center gap-1 mb-3">
             {arch.steps.map((s, i) => (
@@ -5425,7 +5412,7 @@ function Architecture({ arch }) {
               {cur.trade && <div className="text-xs text-zinc-400 leading-relaxed"><span className="text-amber-300 font-mono">trade-off</span> — {cur.trade}</div>}
               {activeEdges.length > 0 && (
                 <div className="mt-2.5 pt-2.5 border-t border-zinc-800">
-                  <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-mono mb-1.5">Come si collega</div>
+                  <div className="text-[10px] uppercase tracking-wide text-zinc-500 font-mono mb-1.5">{T("Come si collega", "How it connects")}</div>
                   <div className="space-y-1">
                     {activeEdges.map((e, i) => (
                       <div key={i} className="flex items-center gap-1.5 font-mono text-[11px] flex-wrap">
@@ -5459,9 +5446,9 @@ function Architecture({ arch }) {
             })}
           </div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs text-zinc-500">{placed.length}/{arch.nodes.length} pezzi</span>
-            {rec && <button onClick={() => setLog((l) => [{ t: "warn", m: `💡 Prossimo consigliato: «${byId[rec.id].label}».` }, ...l].slice(0, 6))} className="text-xs text-indigo-400 hover:text-indigo-300">suggerisci il prossimo</button>}
-            <button onClick={restartBuild} className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1 ml-auto"><RotateCcw size={12} /> ricomincia</button>
+            <span className="text-xs text-zinc-500">{placed.length}/{arch.nodes.length} {T("pezzi", "pieces")}</span>
+            {rec && <button onClick={() => setLog((l) => [{ t: "warn", m: T(`💡 Prossimo consigliato: «${byId[rec.id].label}».`, `💡 Recommended next: «${byId[rec.id].label}».`) }, ...l].slice(0, 6))} className="text-xs text-indigo-400 hover:text-indigo-300">{T("suggerisci il prossimo", "suggest the next one")}</button>}
+            <button onClick={restartBuild} className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1 ml-auto"><RotateCcw size={12} /> {T("ricomincia", "restart")}</button>
           </div>
           {log.length > 0 && (
             <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 space-y-1.5">
@@ -5472,7 +5459,7 @@ function Architecture({ arch }) {
       )}
 
       {mode === "explore" && (
-        <p className="mt-3 text-xs text-zinc-500">Vista archify completa — pan/zoom, lente semantica, ricerca, focus ed export. Quello che vedi è il diagramma vero, non una copia.</p>
+        <p className="mt-3 text-xs text-zinc-500">{T("Vista archify completa — pan/zoom, lente semantica, ricerca, focus ed export. Quello che vedi è il diagramma vero, non una copia.", "Full archify view — pan/zoom, semantic lens, search, focus and export. What you see is the real diagram, not a copy.")}</p>
       )}
     </Card>
   );
@@ -5567,13 +5554,13 @@ function Sequence({ seq }) {
     <Card>
       <div className="flex items-center gap-2 mb-1 flex-wrap">
         <ArrowLeftRight size={15} className="text-emerald-400" />
-        <span className="text-sm font-semibold text-zinc-200">Sequenza — {seq.title}</span>
+        <span className="text-sm font-semibold text-zinc-200">{T("Sequenza", "Sequence")} — {seq.title}</span>
         <div className="ml-auto flex flex-wrap gap-1.5">
-          <Btn tone="ghost" active={mode === "guide"} onClick={() => switchMode("guide")}>Guidami</Btn>
-          <Btn tone="ghost" active={mode === "explore"} onClick={() => switchMode("explore")}>Esplora</Btn>
+          <Btn tone="ghost" active={mode === "guide"} onClick={() => switchMode("guide")}>{T("Guidami", "Guide me")}</Btn>
+          <Btn tone="ghost" active={mode === "explore"} onClick={() => switchMode("explore")}>{T("Esplora", "Explore")}</Btn>
         </div>
       </div>
-      <p className="text-xs text-zinc-500 mb-3">Chi parla con chi, in che ordine. Ogni freccia è un messaggio; il tempo scorre verso il basso.</p>
+      <p className="text-xs text-zinc-500 mb-3">{T("Chi parla con chi, in che ordine. Ogni freccia è un messaggio; il tempo scorre verso il basso.", "Who talks to whom, in what order. Each arrow is a message; time flows downwards.")}</p>
 
       {base ? (
         <div className="rounded-lg border border-zinc-800 bg-zinc-950 overflow-hidden">
@@ -5581,16 +5568,16 @@ function Sequence({ seq }) {
             className="w-full block" style={{ height: frameH, border: 0 }} />
         </div>
       ) : (
-        <Note tone="amber" icon={AlertTriangle}>Diagramma archify non disponibile per questo caso.</Note>
+        <Note tone="amber" icon={AlertTriangle}>{T("Diagramma archify non disponibile per questo caso.", "No archify diagram available for this case.")}</Note>
       )}
 
       {mode === "guide" && (
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <Btn tone="ghost" onClick={() => { setAuto(false); goStep(step - 1); }} disabled={step <= 1}>◀</Btn>
-            <Btn tone="ghost" onClick={() => { setAuto(false); goStep(step + 1); }} disabled={step >= n}>Avanti ▶</Btn>
-            <button onClick={() => { if (step >= n) goStep(1); setAuto((a) => !a); }} className="px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors flex items-center gap-1.5"><Play size={13} />{auto ? "pausa" : "auto"}</button>
-            <span className="ml-auto font-mono text-xs text-zinc-600">passo {step} / {n}</span>
+            <Btn tone="ghost" onClick={() => { setAuto(false); goStep(step + 1); }} disabled={step >= n}>{T("Avanti", "Next")} ▶</Btn>
+            <button onClick={() => { if (step >= n) goStep(1); setAuto((a) => !a); }} className="px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors flex items-center gap-1.5"><Play size={13} />{auto ? T("pausa", "pause") : "auto"}</button>
+            <span className="ml-auto font-mono text-xs text-zinc-600">{T("passo", "step")} {step} / {n}</span>
           </div>
           <div className="flex items-center gap-1 mb-3">
             {seq.steps.map((s, i) => (
@@ -5613,7 +5600,7 @@ function Sequence({ seq }) {
       )}
 
       {mode === "explore" && (
-        <p className="mt-3 text-xs text-zinc-500">Vista archify completa — pan/zoom, lente semantica, ricerca, focus ed export. Quello che vedi è il diagramma vero, non una copia.</p>
+        <p className="mt-3 text-xs text-zinc-500">{T("Vista archify completa — pan/zoom, lente semantica, ricerca, focus ed export. Quello che vedi è il diagramma vero, non una copia.", "Full archify view — pan/zoom, semantic lens, search, focus and export. What you see is the real diagram, not a copy.")}</p>
       )}
     </Card>
   );
@@ -15447,7 +15434,11 @@ export default function LezioneBasiBackend() {
   useEffect(() => { store.set("mastered", [...mastered]); }, [mastered]);
   useEffect(() => { store.set("mode", mode); }, [mode]);
   useEffect(() => { store.set("flash", flash); }, [flash]);
-  useEffect(() => { store.set("lang", lang); document.documentElement.lang = lang; }, [lang]);
+  useEffect(() => {
+    store.set("lang", lang);
+    document.documentElement.lang = lang;
+    document.title = T("Le basi del backend + System Design", "Backend basics + System Design");
+  }, [lang]);
 
   const master = (mid) => setMastered((s) => (s.has(mid) ? s : new Set(s).add(mid)));
   const modsInSection = MODULES.filter((m) => m.section === sectionTab);
@@ -15539,7 +15530,7 @@ export default function LezioneBasiBackend() {
         {/* module */}
         <main key={active} className="anim-rise mt-6">
           <Cur />
-          <Quiz id={active} questions={QUIZZES[active]} onDone={master} />
+          <Quiz id={active} questions={QUIZZES()[active]} onDone={master} />
         </main>
 
         {/* footer prev/next */}
