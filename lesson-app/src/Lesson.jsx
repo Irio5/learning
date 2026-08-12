@@ -9495,23 +9495,25 @@ function AwSalesModule() {
    Moduli di approfondimento, agganciati alle sezioni esistenti.
    ===================================================================== */
 
-const API_PRINCIPLES = [
-  { bad: "POST /createUser  ·  GET /getUser?id=5  ·  POST /deleteUser", good: "POST /users  ·  GET /users/5  ·  DELETE /users/5", why: "Il verbo lo dà il metodo HTTP, non l'URL. L'URL nomina la risorsa (un sostantivo), il metodo dice l'azione. Così quattro verbi coprono ogni operazione." },
-  { bad: "GET /users/5/orders/12/items/3/product", good: "GET /order-items/3  (o /products/… )", why: "Non annidare all'infinito: oltre un livello, l'URL diventa fragile. Esponi la risorsa direttamente col suo id quando ha senso da sola." },
-  { bad: "200 OK  { \"error\": \"utente non trovato\" }", good: "404 Not Found  { \"error\": {...} }", why: "Lo status code È la risposta: un client legge prima quello. Restituire 200 su un errore costringe tutti a leggere il body per sapere se è andata bene." },
-  { bad: "GET /usersByCitySortedByName", good: "GET /users?city=Roma&sort=name&limit=20", why: "Filtri, ordinamento e paginazione vanno nella query string, non in nuovi endpoint. Un endpoint /users, infinite viste, senza esplosione di URL." },
-  { bad: "Cambio la risposta e rompo tutti i client", good: "/v1/users → /v2/users  (o header di versione)", why: "Un'API pubblica è un contratto. Le modifiche che rompono vanno in una nuova versione; la vecchia resta finché i client migrano." },
-];
+const API_PRINCIPLES = memoByLang(() => [
+  { bad: "POST /createUser  ·  GET /getUser?id=5  ·  POST /deleteUser", good: "POST /users  ·  GET /users/5  ·  DELETE /users/5", why: T("Il verbo lo dà il metodo HTTP, non l'URL. L'URL nomina la risorsa (un sostantivo), il metodo dice l'azione. Così quattro verbi coprono ogni operazione.", "The verb comes from the HTTP method, not the URL. The URL names the resource (a noun), the method states the action. Four verbs then cover every operation.") },
+  { bad: "GET /users/5/orders/12/items/3/product", good: T("GET /order-items/3  (o /products/… )", "GET /order-items/3  (or /products/… )"), why: T("Non annidare all'infinito: oltre un livello, l'URL diventa fragile. Esponi la risorsa direttamente col suo id quando ha senso da sola.", "Don't nest forever: past one level the URL gets brittle. Expose the resource directly by its id when it stands on its own.") },
+  { bad: T("200 OK  { \"error\": \"utente non trovato\" }", "200 OK  { \"error\": \"user not found\" }"), good: "404 Not Found  { \"error\": {...} }", why: T("Lo status code È la risposta: un client legge prima quello. Restituire 200 su un errore costringe tutti a leggere il body per sapere se è andata bene.", "The status code IS the answer: a client reads that first. Returning 200 on an error forces everyone to parse the body just to learn whether it worked.") },
+  { bad: "GET /usersByCitySortedByName", good: T("GET /users?city=Roma&sort=name&limit=20", "GET /users?city=Rome&sort=name&limit=20"), why: T("Filtri, ordinamento e paginazione vanno nella query string, non in nuovi endpoint. Un endpoint /users, infinite viste, senza esplosione di URL.", "Filtering, sorting and pagination belong in the query string, not in new endpoints. One /users endpoint, endless views, no URL explosion.") },
+  { bad: T("Cambio la risposta e rompo tutti i client", "I change the response and break every client"), good: T("/v1/users → /v2/users  (o header di versione)", "/v1/users → /v2/users  (or a version header)"), why: T("Un'API pubblica è un contratto. Le modifiche che rompono vanno in una nuova versione; la vecchia resta finché i client migrano.", "A public API is a contract. Breaking changes go into a new version; the old one stays until clients migrate.") },
+]);
 
 /* Stesso compito («dammi l'utente 42 e i suoi ordini») risolto con i tre stili,
    per vedere davvero cosa CHIAMI e cosa TORNA con ciascuno. */
-const PROTO_COMPARE = {
+const PROTO_COMPARE = memoByLang(() => ({
   rest: {
-    label: "REST", tone: "blue", tag: "risorse + verbi HTTP · il default del web",
-    req: `# di solito DUE chiamate (due "round trip"):
+    label: "REST", tone: "blue", tag: T("risorse + verbi HTTP · il default del web", "resources + HTTP verbs · the web's default"),
+    req: T(`# di solito DUE chiamate (due "round trip"):
 GET /users/42          → il profilo
-GET /users/42/orders   → i suoi ordini`,
-    resp: `// GET /users/42 → 200 OK  (JSON di forma FISSA)
+GET /users/42/orders   → i suoi ordini`, `# usually TWO calls (two "round trips"):
+GET /users/42          → the profile
+GET /users/42/orders   → their orders`),
+    resp: T(`// GET /users/42 → 200 OK  (JSON di forma FISSA)
 {
   "id": 42,
   "name": "Ada",
@@ -9519,21 +9521,44 @@ GET /users/42/orders   → i suoi ordini`,
   "created_at": "2021-03-01",
   "address": { "city": "Roma", ... }   // ⚠️ campi che
                                        // magari non ti servivano
-}`,
-    rows: { chiami: "un URL per risorsa (GET/POST/PUT/DELETE)", ritorna: "JSON di forma FISSA, decisa dal server", round: "spesso 1 per risorsa → utente + ordini = 2 chiamate", spreco: "over-fetching (campi di troppo) o under-fetching (troppe chiamate)", cache: "facile — è HTTP, le GET si cachano per URL", tipi: "nessun contratto forte di serie (aggiungi OpenAPI)", browser: "sì, nativo" },
-    when: "Default per API pubbliche su risorse (CRUD). Semplice, cacheabile, lo capiscono tutti.",
+}`, `// GET /users/42 → 200 OK  (JSON of FIXED shape)
+{
+  "id": 42,
+  "name": "Ada",
+  "email": "ada@example.com",
+  "created_at": "2021-03-01",
+  "address": { "city": "Rome", ... }   // ⚠️ fields you
+                                       // may not have needed
+}`),
+    rows: {
+      chiami: T("un URL per risorsa (GET/POST/PUT/DELETE)", "one URL per resource (GET/POST/PUT/DELETE)"),
+      ritorna: T("JSON di forma FISSA, decisa dal server", "JSON of FIXED shape, decided by the server"),
+      round: T("spesso 1 per risorsa → utente + ordini = 2 chiamate", "often 1 per resource → user + orders = 2 calls"),
+      spreco: T("over-fetching (campi di troppo) o under-fetching (troppe chiamate)", "over-fetching (extra fields) or under-fetching (too many calls)"),
+      cache: T("facile — è HTTP, le GET si cachano per URL", "easy — it's HTTP, GETs cache by URL"),
+      tipi: T("nessun contratto forte di serie (aggiungi OpenAPI)", "no strong contract out of the box (add OpenAPI)"),
+      browser: T("sì, nativo", "yes, natively"),
+    },
+    when: T("Default per API pubbliche su risorse (CRUD). Semplice, cacheabile, lo capiscono tutti.", "The default for public resource APIs (CRUD). Simple, cacheable, everyone understands it."),
   },
   graphql: {
-    label: "GraphQL", tone: "emerald", tag: "il client chiede ESATTAMENTE i campi che vuole",
-    req: `# UNA sola chiamata, tu scegli i campi:
+    label: "GraphQL", tone: "emerald", tag: T("il client chiede ESATTAMENTE i campi che vuole", "the client asks for EXACTLY the fields it wants"),
+    req: T(`# UNA sola chiamata, tu scegli i campi:
 POST /graphql
 query {
   user(id: 42) {
     name
     orders { id, total }   # solo questi campi
   }
-}`,
-    resp: `// 200 OK — SOLO ciò che hai chiesto, niente di più
+}`, `# ONE single call, you pick the fields:
+POST /graphql
+query {
+  user(id: 42) {
+    name
+    orders { id, total }   # only these fields
+  }
+}`),
+    resp: T(`// 200 OK — SOLO ciò che hai chiesto, niente di più
 {
   "data": {
     "user": {
@@ -9544,47 +9569,98 @@ query {
       ]
     }
   }
-}`,
-    rows: { chiami: "un solo endpoint POST /graphql con una query", ritorna: "esattamente i campi chiesti, niente di più", round: "1 chiamata anche per dati annidati (utente + ordini)", spreco: "nessuno: prendi i dati su misura", cache: "difficile — è sempre lo stesso POST, la cache HTTP non aiuta", tipi: "schema tipizzato forte (lo schema È il contratto)", browser: "sì (è pur sempre HTTP/JSON)" },
-    when: "UI complesse e app mobili che vogliono pochi giri e pochi byte. Costo: caching e rate-limiting più difficili.",
+}`, `// 200 OK — ONLY what you asked for, nothing more
+{
+  "data": {
+    "user": {
+      "name": "Ada",
+      "orders": [
+        { "id": 1001, "total": 49 },
+        { "id": 1002, "total": 19 }
+      ]
+    }
+  }
+}`),
+    rows: {
+      chiami: T("un solo endpoint POST /graphql con una query", "a single POST /graphql endpoint with a query"),
+      ritorna: T("esattamente i campi chiesti, niente di più", "exactly the fields you asked for, nothing more"),
+      round: T("1 chiamata anche per dati annidati (utente + ordini)", "1 call even for nested data (user + orders)"),
+      spreco: T("nessuno: prendi i dati su misura", "none: you get the data tailored"),
+      cache: T("difficile — è sempre lo stesso POST, la cache HTTP non aiuta", "hard — it's always the same POST, HTTP caching doesn't help"),
+      tipi: T("schema tipizzato forte (lo schema È il contratto)", "strongly typed schema (the schema IS the contract)"),
+      browser: T("sì (è pur sempre HTTP/JSON)", "yes (it's still HTTP/JSON)"),
+    },
+    when: T("UI complesse e app mobili che vogliono pochi giri e pochi byte. Costo: caching e rate-limiting più difficili.", "Complex UIs and mobile apps that want few round trips and few bytes. Cost: caching and rate-limiting get harder."),
   },
   grpc: {
-    label: "gRPC", tone: "amber", tag: "chiamata a funzione tipizzata tra servizi · binario",
-    req: `// 1) il contratto vive in un file .proto:
+    label: "gRPC", tone: "amber", tag: T("chiamata a funzione tipizzata tra servizi · binario", "typed function call between services · binary"),
+    req: T(`// 1) il contratto vive in un file .proto:
 service Users {
   rpc GetUser(GetUserReq) returns (User);
 }
 // 2) lo chiami come una funzione locale:
-stub.GetUser(GetUserReq(id=42))`,
-    resp: `// NON è JSON: è protobuf (binario, compatto).
+stub.GetUser(GetUserReq(id=42))`, `// 1) the contract lives in a .proto file:
+service Users {
+  rpc GetUser(GetUserReq) returns (User);
+}
+// 2) you call it like a local function:
+stub.GetUser(GetUserReq(id=42))`),
+    resp: T(`// NON è JSON: è protobuf (binario, compatto).
 // Il tuo codice lo riceve già come OGGETTO tipizzato:
 User(
   id=42, name="Ada",
   orders=[Order(id=1001, total=49),
           Order(id=1002, total=19)]
-)   // meno byte e (de)serializzazione più veloce del JSON`,
-    rows: { chiami: "un metodo tipizzato (RPC), come una funzione", ritorna: "un messaggio protobuf tipizzato (non testo)", round: "1 chiamata; supporta anche streaming bidirezionale", spreco: "payload binario compatto: pochi byte, molto veloce", cache: "no cache HTTP (non nasce per il browser)", tipi: "contratto fortissimo: il .proto genera client e server", browser: "no diretto (serve un proxy, es. grpc-web)" },
-    when: "Comunicazione veloce e tipizzata TRA microservizi interni. Non per browser pubblici.",
+)   // meno byte e (de)serializzazione più veloce del JSON`, `// NOT JSON: it's protobuf (binary, compact).
+// Your code receives it already as a typed OBJECT:
+User(
+  id=42, name="Ada",
+  orders=[Order(id=1001, total=49),
+          Order(id=1002, total=19)]
+)   // fewer bytes and faster (de)serialisation than JSON`),
+    rows: {
+      chiami: T("un metodo tipizzato (RPC), come una funzione", "a typed method (RPC), like a function"),
+      ritorna: T("un messaggio protobuf tipizzato (non testo)", "a typed protobuf message (not text)"),
+      round: T("1 chiamata; supporta anche streaming bidirezionale", "1 call; also supports bidirectional streaming"),
+      spreco: T("payload binario compatto: pochi byte, molto veloce", "compact binary payload: few bytes, very fast"),
+      cache: T("no cache HTTP (non nasce per il browser)", "no HTTP caching (it wasn't built for the browser)"),
+      tipi: T("contratto fortissimo: il .proto genera client e server", "very strong contract: the .proto generates client and server"),
+      browser: T("no diretto (serve un proxy, es. grpc-web)", "not directly (you need a proxy, e.g. grpc-web)"),
+    },
+    when: T("Comunicazione veloce e tipizzata TRA microservizi interni. Non per browser pubblici.", "Fast, typed communication BETWEEN internal microservices. Not for public browsers."),
   },
-};
-const PROTO_ROWS = [["chiami", "cosa chiami"], ["ritorna", "cosa ritorna"], ["round", "round trip"], ["spreco", "dati sprecati?"], ["cache", "caching"], ["tipi", "tipi / contratto"], ["browser", "dal browser?"]];
+}));
+const PROTO_ROWS = memoByLang(() => [
+  ["chiami", T("cosa chiami", "what you call")],
+  ["ritorna", T("cosa ritorna", "what comes back")],
+  ["round", T("round trip", "round trips")],
+  ["spreco", T("dati sprecati?", "wasted data?")],
+  ["cache", T("caching", "caching")],
+  ["tipi", T("tipi / contratto", "types / contract")],
+  ["browser", T("dal browser?", "from the browser?")],
+]);
 
 function ApiDesignModule() {
   const [open, setOpen] = useState(0);
   const [proto, setProto] = useState("rest");
-  const pc = PROTO_COMPARE[proto];
+  const pc = PROTO_COMPARE()[proto];
   return (
     <div className="space-y-4">
       <Lead>
-        Un'API ben progettata si <span className="text-white font-medium">indovina</span>: chi la usa capisce gli endpoint senza leggere la doc, perché segue
-        convenzioni prevedibili. Progettare bene non è estetica — è ciò che rende un'API <span className="text-white font-medium">facile da consumare, difficile da usare
-        male, e possibile da evolvere</span> senza rompere chi ci si è già appoggiato.
+        {T(
+          <>Un'API ben progettata si <span className="text-white font-medium">indovina</span>: chi la usa capisce gli endpoint senza leggere la doc, perché segue
+          convenzioni prevedibili. Progettare bene non è estetica — è ciò che rende un'API <span className="text-white font-medium">facile da consumare, difficile da usare
+          male, e possibile da evolvere</span> senza rompere chi ci si è già appoggiato.</>,
+          <>A well-designed API is <span className="text-white font-medium">guessable</span>: whoever uses it works out the endpoints without reading the docs, because it
+          follows predictable conventions. Good design isn't aesthetics — it's what makes an API <span className="text-white font-medium">easy to consume, hard to misuse,
+          and possible to evolve</span> without breaking whoever already leaned on it.</>
+        )}
       </Lead>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">i principi · clicca per rivelare la versione buona</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("i principi · clicca per rivelare la versione buona", "the principles · click to reveal the good version")}</div>
         <div className="space-y-1.5">
-          {API_PRINCIPLES.map((p, i) => {
+          {API_PRINCIPLES().map((p, i) => {
             const on = open === i;
             return (
               <button key={i} onClick={() => setOpen(on ? -1 : i)} className={`w-full text-left rounded-lg border px-3 py-2 transition-all ${on ? "border-indigo-700 bg-zinc-900" : "border-zinc-800 bg-zinc-950 hover:border-zinc-600"}`}>
@@ -9601,79 +9677,108 @@ function ApiDesignModule() {
 
       <div className="grid sm:grid-cols-2 gap-3">
         <Card>
-          <div className="text-xs text-zinc-500 font-mono mb-2 flex items-center gap-1.5"><ShieldAlert size={13} /> forma degli errori (coerente)</div>
+          <div className="text-xs text-zinc-500 font-mono mb-2 flex items-center gap-1.5"><ShieldAlert size={13} /> {T("forma degli errori (coerente)", "error shape (consistent)")}</div>
           <Code>{`{
   "error": {
     "code": "insufficient_funds",
-    "message": "Saldo non sufficiente",
+    "message": "${T("Saldo non sufficiente", "Insufficient balance")}",
     "request_id": "req_9f3a"
   }
 }`}</Code>
-          <p className="text-[12.5px] text-zinc-400 mt-2 leading-relaxed">Stessa struttura per <span className="text-white">ogni</span> errore: un <span className="font-mono">code</span> stabile per il codice del client, un <span className="font-mono">message</span> per gli umani, il <span className="font-mono">request_id</span> per i log.</p>
+          <p className="text-[12.5px] text-zinc-400 mt-2 leading-relaxed">{T(
+            <>Stessa struttura per <span className="text-white">ogni</span> errore: un <span className="font-mono">code</span> stabile per il codice del client, un <span className="font-mono">message</span> per gli umani, il <span className="font-mono">request_id</span> per i log.</>,
+            <>The same structure for <span className="text-white">every</span> error: a stable <span className="font-mono">code</span> for the client's code, a <span className="font-mono">message</span> for humans, the <span className="font-mono">request_id</span> for the logs.</>
+          )}</p>
         </Card>
         <Card>
-          <div className="text-xs text-zinc-500 font-mono mb-2 flex items-center gap-1.5"><Key size={13} /> idempotency key (scritture sicure)</div>
-          <Code>{`POST /payments
+          <div className="text-xs text-zinc-500 font-mono mb-2 flex items-center gap-1.5"><Key size={13} /> {T("idempotency key (scritture sicure)", "idempotency key (safe writes)")}</div>
+          <Code>{T(`POST /payments
 Idempotency-Key: a1b2c3
 
 // il client riprova con la STESSA
 // chiave dopo un timeout → il server
 // riconosce il doppione e non
-// addebita due volte.`}</Code>
-          <p className="text-[12.5px] text-zinc-400 mt-2 leading-relaxed">Rende un <span className="font-mono">POST</span> sicuro da ritentare: la rete è inaffidabile, questo evita i doppi pagamenti.</p>
+// addebita due volte.`, `POST /payments
+Idempotency-Key: a1b2c3
+
+// the client retries with the SAME
+// key after a timeout → the server
+// recognises the duplicate and does
+// not charge twice.`)}</Code>
+          <p className="text-[12.5px] text-zinc-400 mt-2 leading-relaxed">{T(
+            <>Rende un <span className="font-mono">POST</span> sicuro da ritentare: la rete è inaffidabile, questo evita i doppi pagamenti.</>,
+            <>It makes a <span className="font-mono">POST</span> safe to retry: the network is unreliable, and this prevents double payments.</>
+          )}</p>
         </Card>
       </div>
 
       <Card tone={pc.tone}>
-        <div className="text-xs text-zinc-500 font-mono mb-1">stesso compito · «dammi l'utente 42 e i suoi ordini» risolto nei tre stili</div>
+        <div className="text-xs text-zinc-500 font-mono mb-1">{T("stesso compito · «dammi l’utente 42 e i suoi ordini» risolto nei tre stili", "same task · “give me user 42 and their orders” solved in all three styles")}</div>
         <div className="flex flex-wrap gap-1.5 mb-1">
-          {Object.entries(PROTO_COMPARE).map(([k, v]) => <Btn key={k} tone="ghost" active={proto === k} onClick={() => setProto(k)}>{v.label}</Btn>)}
+          {Object.entries(PROTO_COMPARE()).map(([k, v]) => <Btn key={k} tone="ghost" active={proto === k} onClick={() => setProto(k)}>{v.label}</Btn>)}
         </div>
         <p className="text-[12px] text-zinc-500 mb-3">{pc.tag}</p>
 
         <div className="grid lg:grid-cols-2 gap-2 mb-3">
           <div>
-            <div className="text-[11px] text-zinc-500 font-mono mb-1 flex items-center gap-1"><ArrowRight size={12} /> cosa CHIAMI (richiesta)</div>
+            <div className="text-[11px] text-zinc-500 font-mono mb-1 flex items-center gap-1"><ArrowRight size={12} /> {T("cosa CHIAMI (richiesta)", "what you CALL (request)")}</div>
             <Code>{pc.req}</Code>
           </div>
           <div>
-            <div className="text-[11px] text-zinc-500 font-mono mb-1 flex items-center gap-1"><ArrowLeftRight size={12} /> cosa TORNA (risposta)</div>
+            <div className="text-[11px] text-zinc-500 font-mono mb-1 flex items-center gap-1"><ArrowLeftRight size={12} /> {T("cosa TORNA (risposta)", "what COMES BACK (response)")}</div>
             <Code>{pc.resp}</Code>
           </div>
         </div>
 
         <div className="rounded-lg border border-zinc-800 overflow-hidden">
-          {PROTO_ROWS.map(([key, label], i) => (
+          {PROTO_ROWS().map(([key, label], i) => (
             <div key={key} className={`flex gap-3 px-3 py-1.5 text-[12.5px] ${i % 2 ? "bg-zinc-950" : "bg-zinc-900"}`}>
               <span className="font-mono text-zinc-500 w-28 shrink-0">{label}</span>
               <span className="text-zinc-300 leading-snug">{pc.rows[key]}</span>
             </div>
           ))}
         </div>
-        <p className="text-sm text-zinc-300 leading-relaxed mt-3"><span className="text-white font-medium">Quando:</span> {pc.when}</p>
+        <p className="text-sm text-zinc-300 leading-relaxed mt-3"><span className="text-white font-medium">{T("Quando:", "When:")}</span> {pc.when}</p>
       </Card>
 
       <Note tone="indigo" icon={Split}>
-        <span className="font-medium">Come sceglierlo in una riga.</span> API pubblica su risorse → <span className="font-mono text-blue-200">REST</span>. Un client (app/mobile) che vuole
-        pochi giri e dati su misura → <span className="font-mono text-emerald-200">GraphQL</span>. Due tuoi microservizi che si parlano veloce e tipizzato →
-        <span className="font-mono text-amber-200"> gRPC</span>. Non sono religioni: molte aziende usano REST verso l'esterno e gRPC dietro le quinte.
+        {T(
+          <><span className="font-medium">Come sceglierlo in una riga.</span> API pubblica su risorse → <span className="font-mono text-blue-200">REST</span>. Un client (app/mobile) che vuole
+          pochi giri e dati su misura → <span className="font-mono text-emerald-200">GraphQL</span>. Due tuoi microservizi che si parlano veloce e tipizzato →
+          <span className="font-mono text-amber-200"> gRPC</span>. Non sono religioni: molte aziende usano REST verso l'esterno e gRPC dietro le quinte.</>,
+          <><span className="font-medium">How to choose, in one line.</span> Public resource API → <span className="font-mono text-blue-200">REST</span>. A client (app/mobile) that wants
+          few round trips and tailored data → <span className="font-mono text-emerald-200">GraphQL</span>. Two of your microservices talking fast and typed →
+          <span className="font-mono text-amber-200"> gRPC</span>. These aren't religions: plenty of companies use REST outward and gRPC behind the scenes.</>
+        )}
       </Note>
 
       <Note tone="indigo" icon={FileJson}>
-        <span className="font-medium">Contract-first.</span> Prima di scrivere il codice, definisci il contratto in <span className="text-white">OpenAPI</span>: endpoint, tipi, errori. Da lì
-        generi client, doc e mock, e front-end e back-end lavorano in parallelo sullo stesso accordo. Aggiungi <span className="text-white">paginazione</span> (cursore),
-        <span className="text-white"> rate limit</span> e <span className="text-white">versioning</span> fin dal giorno uno: aggiungerli dopo, su un'API già usata, è doloroso.
+        {T(
+          <><span className="font-medium">Contract-first.</span> Prima di scrivere il codice, definisci il contratto in <span className="text-white">OpenAPI</span>: endpoint, tipi, errori. Da lì
+          generi client, doc e mock, e front-end e back-end lavorano in parallelo sullo stesso accordo. Aggiungi <span className="text-white">paginazione</span> (cursore),
+          <span className="text-white"> rate limit</span> e <span className="text-white">versioning</span> fin dal giorno uno: aggiungerli dopo, su un'API già usata, è doloroso.</>,
+          <><span className="font-medium">Contract-first.</span> Before writing code, define the contract in <span className="text-white">OpenAPI</span>: endpoints, types, errors. From there
+          you generate clients, docs and mocks, and front-end and back-end work in parallel against the same agreement. Add <span className="text-white">pagination</span> (cursor),
+          <span className="text-white"> rate limits</span> and <span className="text-white">versioning</span> from day one: bolting them on later, to an API already in use, hurts.</>
+        )}
       </Note>
 
       <Analogy>
-        Progettare un'API è come progettare le prese elettriche di un edificio. Se sono tutte uguali e standard, chiunque attacca un apparecchio senza istruzioni.
-        Se ognuna è fatta a modo suo, servono adattatori e manuali per ogni stanza — e cambiarne una rischia di friggere ciò che era già collegato.
+        {T(
+          "Progettare un'API è come progettare le prese elettriche di un edificio. Se sono tutte uguali e standard, chiunque attacca un apparecchio senza istruzioni. Se ognuna è fatta a modo suo, servono adattatori e manuali per ogni stanza — e cambiarne una rischia di friggere ciò che era già collegato.",
+          "Designing an API is like designing the power sockets in a building. If they're all identical and standard, anyone plugs in an appliance without instructions. If each one is its own invention, you need adapters and manuals for every room — and changing one risks frying whatever was already plugged in."
+        )}
       </Analogy>
 
       <Takeaway>
-        API design = <span className="text-white">prevedibilità + contratto</span>. Sostantivi negli URL e verbi nei metodi, status code onesti, filtri in query string,
-        errori con una forma unica, <span className="text-white">idempotency key</span> sulle scritture. Scegli lo stile (REST di default) e blinda dal principio
-        <span className="text-white"> versioning, paginazione e rate limit</span>. Un'API che si indovina è un'API che la gente adotta.
+        {T(
+          <>API design = <span className="text-white">prevedibilità + contratto</span>. Sostantivi negli URL e verbi nei metodi, status code onesti, filtri in query string,
+          errori con una forma unica, <span className="text-white">idempotency key</span> sulle scritture. Scegli lo stile (REST di default) e blinda dal principio
+          <span className="text-white"> versioning, paginazione e rate limit</span>. Un'API che si indovina è un'API che la gente adotta.</>,
+          <>API design = <span className="text-white">predictability + contract</span>. Nouns in URLs and verbs in methods, honest status codes, filters in the query string,
+          errors with one single shape, an <span className="text-white">idempotency key</span> on writes. Pick the style (REST by default) and nail down
+          <span className="text-white"> versioning, pagination and rate limits</span> from the start. An API you can guess is an API people adopt.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -10382,50 +10487,63 @@ USING ( tenant_id = current_setting('app.tenant') );`}</Code>
    ===================================================================== */
 
 function WebSocketModule() {
-  const [T, setT] = useState(5);       // intervallo di polling in secondi
-  const reqIn60 = Math.round(60 / T);
+  // NB: non chiamarlo T — collide con l'helper di traduzione globale.
+  const [pollT, setPollT] = useState(5); // intervallo di polling in secondi
+  const reqIn60 = Math.round(60 / pollT);
   const wasted = Math.max(0, reqIn60 - 1);
-  const avgLat = (T / 2).toFixed(1);
+  const avgLat = (pollT / 2).toFixed(1);
   return (
     <div className="space-y-4">
       <Lead>
-        HTTP funziona a turni: il <span className="text-white font-medium">client chiede</span>, il <span className="text-white font-medium">server risponde</span>, la connessione si chiude. Perfetto per «dammi questa pagina».
-        Ma quando è il <span className="text-white font-medium">server</span> a dover avvertire il client <span className="italic">nell'istante</span> in cui succede qualcosa — un messaggio in chat, una notifica, un prezzo che si muove,
-        il cursore di un collega — quel modello si rompe: il client non può «restare in ascolto». Il <span className="text-white font-medium">WebSocket</span> è la soluzione: un canale <span className="text-white">sempre aperto</span> e
-        <span className="text-white"> bidirezionale</span>, dove entrambi i lati parlano quando vogliono.
+        {T(
+          <>HTTP funziona a turni: il <span className="text-white font-medium">client chiede</span>, il <span className="text-white font-medium">server risponde</span>, la connessione si chiude. Perfetto per «dammi questa pagina».
+          Ma quando è il <span className="text-white font-medium">server</span> a dover avvertire il client <span className="italic">nell'istante</span> in cui succede qualcosa — un messaggio in chat, una notifica, un prezzo che si muove,
+          il cursore di un collega — quel modello si rompe: il client non può «restare in ascolto». Il <span className="text-white font-medium">WebSocket</span> è la soluzione: un canale <span className="text-white">sempre aperto</span> e
+          <span className="text-white"> bidirezionale</span>, dove entrambi i lati parlano quando vogliono.</>,
+          <>HTTP works in turns: the <span className="text-white font-medium">client asks</span>, the <span className="text-white font-medium">server answers</span>, the connection closes. Perfect for “give me this page”.
+          But when it's the <span className="text-white font-medium">server</span> that has to alert the client <span className="italic">the instant</span> something happens — a chat message, a notification, a moving price,
+          a colleague's cursor — that model breaks: the client can't “stay listening”. The <span className="text-white font-medium">WebSocket</span> is the answer: a channel that's <span className="text-white">always open</span> and
+          <span className="text-white"> bidirectional</span>, where both sides speak whenever they want.</>
+        )}
       </Lead>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">il problema · «un messaggio arriva in un momento qualsiasi dei prossimi 60s»</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("il problema · «un messaggio arriva in un momento qualsiasi dei prossimi 60s»", "the problem · “a message arrives at some point in the next 60s”")}</div>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="rounded-lg border border-amber-900 bg-amber-950 p-3">
-            <div className="flex items-center gap-1.5 mb-2"><RotateCcw size={14} className="text-amber-300" /><span className="font-mono text-[12px] text-amber-200">Polling su HTTP</span></div>
-            <p className="text-[12px] text-zinc-400 leading-relaxed mb-2">Il client richiede «c'è qualcosa di nuovo?» ogni {T}s.</p>
-            <label className="text-[11px] text-zinc-400 font-mono">ogni {T}s</label>
-            <input type="range" min="1" max="30" value={T} onChange={(e) => setT(+e.target.value)} className="w-full accent-amber-500 mb-2" />
+            <div className="flex items-center gap-1.5 mb-2"><RotateCcw size={14} className="text-amber-300" /><span className="font-mono text-[12px] text-amber-200">{T("Polling su HTTP", "Polling over HTTP")}</span></div>
+            <p className="text-[12px] text-zinc-400 leading-relaxed mb-2">{T(`Il client richiede «c'è qualcosa di nuovo?» ogni ${pollT}s.`, `The client asks “anything new?” every ${pollT}s.`)}</p>
+            <label className="text-[11px] text-zinc-400 font-mono">{T("ogni", "every")} {pollT}s</label>
+            <input type="range" min="1" max="30" value={pollT} onChange={(e) => setPollT(+e.target.value)} className="w-full accent-amber-500 mb-2" />
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div><div className="text-xl font-bold text-amber-200">{reqIn60}</div><div className="text-[10px] text-zinc-500 font-mono">richieste/60s</div></div>
-              <div><div className="text-xl font-bold text-red-300">{wasted}</div><div className="text-[10px] text-zinc-500 font-mono">a vuoto</div></div>
-              <div><div className="text-xl font-bold text-amber-200">~{avgLat}s</div><div className="text-[10px] text-zinc-500 font-mono">ritardo medio</div></div>
+              <div><div className="text-xl font-bold text-amber-200">{reqIn60}</div><div className="text-[10px] text-zinc-500 font-mono">{T("richieste/60s", "requests/60s")}</div></div>
+              <div><div className="text-xl font-bold text-red-300">{wasted}</div><div className="text-[10px] text-zinc-500 font-mono">{T("a vuoto", "wasted")}</div></div>
+              <div><div className="text-xl font-bold text-amber-200">~{avgLat}s</div><div className="text-[10px] text-zinc-500 font-mono">{T("ritardo medio", "average delay")}</div></div>
             </div>
           </div>
           <div className="rounded-lg border border-emerald-900 bg-emerald-950 p-3">
             <div className="flex items-center gap-1.5 mb-2"><Radio size={14} className="text-emerald-300" /><span className="font-mono text-[12px] text-emerald-200">WebSocket</span></div>
-            <p className="text-[12px] text-zinc-400 leading-relaxed mb-2">Una connessione aperta: il server <span className="text-white">spinge</span> appena il messaggio esiste.</p>
+            <p className="text-[12px] text-zinc-400 leading-relaxed mb-2">{T(
+              <>Una connessione aperta: il server <span className="text-white">spinge</span> appena il messaggio esiste.</>,
+              <>One open connection: the server <span className="text-white">pushes</span> the moment the message exists.</>
+            )}</p>
             <div className="h-[26px] mb-2" />
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div><div className="text-xl font-bold text-emerald-200">1</div><div className="text-[10px] text-zinc-500 font-mono">connessione</div></div>
-              <div><div className="text-xl font-bold text-emerald-300">0</div><div className="text-[10px] text-zinc-500 font-mono">a vuoto</div></div>
-              <div><div className="text-xl font-bold text-emerald-200">~0s</div><div className="text-[10px] text-zinc-500 font-mono">istantaneo</div></div>
+              <div><div className="text-xl font-bold text-emerald-200">1</div><div className="text-[10px] text-zinc-500 font-mono">{T("connessione", "connection")}</div></div>
+              <div><div className="text-xl font-bold text-emerald-300">0</div><div className="text-[10px] text-zinc-500 font-mono">{T("a vuoto", "wasted")}</div></div>
+              <div><div className="text-xl font-bold text-emerald-200">~0s</div><div className="text-[10px] text-zinc-500 font-mono">{T("istantaneo", "instant")}</div></div>
             </div>
           </div>
         </div>
-        <p className="text-[12.5px] text-zinc-400 mt-3 leading-relaxed">Il polling è un compromesso perdente: <span className="text-white">più spesso chiedi</span>, meno ritardo ma più richieste sprecate; <span className="text-white">meno spesso</span>, meno spreco ma più ritardo. Il WebSocket elimina il dilemma: <span className="text-white">zero spreco e zero ritardo</span>, perché è il server a parlare per primo.</p>
+        <p className="text-[12.5px] text-zinc-400 mt-3 leading-relaxed">{T(
+          <>Il polling è un compromesso perdente: <span className="text-white">più spesso chiedi</span>, meno ritardo ma più richieste sprecate; <span className="text-white">meno spesso</span>, meno spreco ma più ritardo. Il WebSocket elimina il dilemma: <span className="text-white">zero spreco e zero ritardo</span>, perché è il server a parlare per primo.</>,
+          <>Polling is a losing trade-off: <span className="text-white">ask more often</span> and you get less delay but more wasted requests; <span className="text-white">less often</span>, less waste but more delay. The WebSocket removes the dilemma: <span className="text-white">zero waste and zero delay</span>, because the server speaks first.</>
+        )}</p>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">come nasce · parte come HTTP, poi «cambia marcia»</div>
-        <Code>{`# 1. il client chiede a HTTP di fare l'upgrade
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("come nasce · parte come HTTP, poi «cambia marcia»", "how it starts · it begins as HTTP, then “changes gear”")}</div>
+        <Code>{T(`# 1. il client chiede a HTTP di fare l'upgrade
 GET /chat  HTTP/1.1
 Host: esempio.com
 Upgrade: websocket
@@ -10435,37 +10553,72 @@ Connection: Upgrade
 HTTP/1.1  101 Switching Protocols
 
 # 3. da qui non è più domanda→risposta: è un canale aperto,
-#    i due lati si mandano "frame" quando vogliono (full-duplex)`}</Code>
-        <p className="text-[12px] text-zinc-400 mt-2 leading-relaxed">Dopo il <span className="font-mono">101 Switching Protocols</span> la stessa connessione TCP resta aperta e diventa bidirezionale. In cifrato è <span className="font-mono">wss://</span> (come <span className="font-mono">https</span>). Lato browser sono poche righe:</p>
-        <Code>{`const ws = new WebSocket("wss://esempio.com/chat");
+#    i due lati si mandano "frame" quando vogliono (full-duplex)`, `# 1. the client asks HTTP for an upgrade
+GET /chat  HTTP/1.1
+Host: example.com
+Upgrade: websocket
+Connection: Upgrade
+
+# 2. the server accepts and the connection SWITCHES protocol
+HTTP/1.1  101 Switching Protocols
+
+# 3. from here it is no longer request→response: it is an open channel,
+#    both sides send "frames" whenever they want (full-duplex)`)}</Code>
+        <p className="text-[12px] text-zinc-400 mt-2 leading-relaxed">{T(
+          <>Dopo il <span className="font-mono">101 Switching Protocols</span> la stessa connessione TCP resta aperta e diventa bidirezionale. In cifrato è <span className="font-mono">wss://</span> (come <span className="font-mono">https</span>). Lato browser sono poche righe:</>,
+          <>After the <span className="font-mono">101 Switching Protocols</span> the same TCP connection stays open and becomes bidirectional. Encrypted it's <span className="font-mono">wss://</span> (like <span className="font-mono">https</span>). On the browser side it's a few lines:</>
+        )}</p>
+        <Code>{T(`const ws = new WebSocket("wss://esempio.com/chat");
 ws.onmessage = (e) => mostra(e.data);   // il server SPINGE → arriva qui
-ws.send("ciao!");                       // e tu puoi spingere verso il server`}</Code>
+ws.send("ciao!");                       // e tu puoi spingere verso il server`, `const ws = new WebSocket("wss://example.com/chat");
+ws.onmessage = (e) => show(e.data);     // the server PUSHES → lands here
+ws.send("hello!");                      // and you can push to the server`)}</Code>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">tre modi di «stare aggiornati» · scegli il più semplice che basta</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("tre modi di «stare aggiornati» · scegli il più semplice che basta", "three ways to “stay up to date” · pick the simplest one that suffices")}</div>
         <div className="space-y-1.5 text-[13px]">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">Polling</span> <span className="text-zinc-400">— il client richiede a intervalli. Semplice, funziona ovunque, ma in ritardo e spreca richieste. Ok per aggiornamenti rari.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">SSE (Server-Sent Events)</span> <span className="text-zinc-400">— un canale aperto ma a <span className="text-white">senso unico</span> (solo server→client). Perfetto per notifiche, feed, streaming di token LLM. Più leggero del WebSocket.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">WebSocket</span> <span className="text-zinc-400">— canale aperto <span className="text-white">bidirezionale</span>. Serve quando anche il client spinge in continuo: chat, giochi, editing collaborativo, presenza.</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">Polling</span> <span className="text-zinc-400">{T("— il client richiede a intervalli. Semplice, funziona ovunque, ma in ritardo e spreca richieste. Ok per aggiornamenti rari.", "— the client asks at intervals. Simple, works everywhere, but delayed and wasteful. Fine for rare updates.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">SSE (Server-Sent Events)</span> <span className="text-zinc-400">{T(
+            <>— un canale aperto ma a <span className="text-white">senso unico</span> (solo server→client). Perfetto per notifiche, feed, streaming di token LLM. Più leggero del WebSocket.</>,
+            <>— an open channel but <span className="text-white">one-way</span> (server→client only). Perfect for notifications, feeds, LLM token streaming. Lighter than a WebSocket.</>
+          )}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">WebSocket</span> <span className="text-zinc-400">{T(
+            <>— canale aperto <span className="text-white">bidirezionale</span>. Serve quando anche il client spinge in continuo: chat, giochi, editing collaborativo, presenza.</>,
+            <>— an open <span className="text-white">bidirectional</span> channel. Needed when the client pushes continuously too: chat, games, collaborative editing, presence.</>
+          )}</span></div>
         </div>
       </Card>
 
       <Note tone="amber" icon={Radio}>
-        <span className="font-medium">Il costo della persistenza: lo stato.</span> A differenza di HTTP (senza stato, ogni richiesta indipendente), un WebSocket è una connessione <span className="text-white">viva</span> che il server deve
-        tenere in piedi <span className="text-white">per ogni client</span>. Con tanti utenti e più server, serve un <span className="text-white">registro</span> «utente → a quale server è connesso» per sapere dove instradare un messaggio,
-        più <span className="font-mono">heartbeat</span> (ping/pong) e <span className="text-white">riconnessione</span> automatica quando la rete cade. È esattamente lo scenario del caso di system design <span className="text-white">Chat</span>.
+        {T(
+          <><span className="font-medium">Il costo della persistenza: lo stato.</span> A differenza di HTTP (senza stato, ogni richiesta indipendente), un WebSocket è una connessione <span className="text-white">viva</span> che il server deve
+          tenere in piedi <span className="text-white">per ogni client</span>. Con tanti utenti e più server, serve un <span className="text-white">registro</span> «utente → a quale server è connesso» per sapere dove instradare un messaggio,
+          più <span className="font-mono">heartbeat</span> (ping/pong) e <span className="text-white">riconnessione</span> automatica quando la rete cade. È esattamente lo scenario del caso di system design <span className="text-white">Chat</span>.</>,
+          <><span className="font-medium">The price of persistence: state.</span> Unlike HTTP (stateless, every request independent), a WebSocket is a <span className="text-white">live</span> connection the server has to
+          keep alive <span className="text-white">for every client</span>. With many users and several servers, you need a <span className="text-white">registry</span> of “user → which server they're connected to” to know where to route a message,
+          plus <span className="font-mono">heartbeats</span> (ping/pong) and automatic <span className="text-white">reconnection</span> when the network drops. That's exactly the scenario in the <span className="text-white">Chat</span> system design case.</>
+        )}
       </Note>
 
       <Analogy>
-        HTTP è mandarsi <span className="text-zinc-100">lettere</span>: una domanda, una risposta, poi la busta si chiude. Il WebSocket è una <span className="text-zinc-100">telefonata aperta</span>: la linea resta attiva
-        e ciascuno parla quando ha qualcosa da dire, senza dover richiamare ogni volta. Per «ci sono novità?» ripetuto all'infinito (polling), la telefonata è molto meglio della pila di lettere.
+        {T(
+          <>HTTP è mandarsi <span className="text-zinc-100">lettere</span>: una domanda, una risposta, poi la busta si chiude. Il WebSocket è una <span className="text-zinc-100">telefonata aperta</span>: la linea resta attiva
+          e ciascuno parla quando ha qualcosa da dire, senza dover richiamare ogni volta. Per «ci sono novità?» ripetuto all'infinito (polling), la telefonata è molto meglio della pila di lettere.</>,
+          <>HTTP is sending <span className="text-zinc-100">letters</span>: one question, one answer, then the envelope closes. A WebSocket is an <span className="text-zinc-100">open phone call</span>: the line stays live
+          and either side speaks when they have something to say, without dialling again each time. For “any news?” repeated endlessly (polling), the phone call beats the stack of letters by a mile.</>
+        )}
       </Analogy>
 
       <Takeaway>
-        HTTP è <span className="text-white">domanda→risposta</span>; quando serve che il <span className="text-white">server spinga</span> in tempo reale, il polling spreca richieste e aggiunge ritardo. Il <span className="text-white">WebSocket</span>
-        apre un canale <span className="text-white">persistente e bidirezionale</span> (parte come HTTP con <span className="font-mono">Upgrade</span> → <span className="font-mono">101</span>, poi full-duplex, in cifrato <span className="font-mono">wss://</span>): zero spreco, latenza ~0.
-        Se il flusso è solo server→client, l'<span className="text-white">SSE</span> è più semplice. Il prezzo è lo <span className="text-white">stato</span>: connessioni vive da gestire con un registro di instradamento, heartbeat e riconnessione.
+        {T(
+          <>HTTP è <span className="text-white">domanda→risposta</span>; quando serve che il <span className="text-white">server spinga</span> in tempo reale, il polling spreca richieste e aggiunge ritardo. Il <span className="text-white">WebSocket</span>
+          apre un canale <span className="text-white">persistente e bidirezionale</span> (parte come HTTP con <span className="font-mono">Upgrade</span> → <span className="font-mono">101</span>, poi full-duplex, in cifrato <span className="font-mono">wss://</span>): zero spreco, latenza ~0.
+          Se il flusso è solo server→client, l'<span className="text-white">SSE</span> è più semplice. Il prezzo è lo <span className="text-white">stato</span>: connessioni vive da gestire con un registro di instradamento, heartbeat e riconnessione.</>,
+          <>HTTP is <span className="text-white">request→response</span>; when you need the <span className="text-white">server to push</span> in real time, polling wastes requests and adds delay. The <span className="text-white">WebSocket</span>
+          opens a <span className="text-white">persistent, bidirectional</span> channel (it starts as HTTP with <span className="font-mono">Upgrade</span> → <span className="font-mono">101</span>, then full-duplex, encrypted as <span className="font-mono">wss://</span>): zero waste, ~0 latency.
+          If the flow is server→client only, <span className="text-white">SSE</span> is simpler. The price is <span className="text-white">state</span>: live connections to manage with a routing registry, heartbeats and reconnection.</>
+        )}
       </Takeaway>
     </div>
   );
