@@ -10821,35 +10821,43 @@ function CloudflareModule() {
    ORM & il problema N+1. Colmano lacune della roadmap Backend.
    ===================================================================== */
 
-const TDD_STEPS = [
-  { c: "RED", tone: "red", label: "scrivi un test che fallisce", detail: "Prima del codice, scrivi il test del comportamento voluto. Fallisce (rosso): la funzione non esiste ancora. Ti costringe a definire cosa vuoi PRIMA di come." },
-  { c: "GREEN", tone: "emerald", label: "il codice minimo per passare", detail: "Scrivi il meno possibile per far diventare il test verde. Niente eleganza ancora: solo farlo funzionare." },
-  { c: "REFACTOR", tone: "indigo", label: "pulisci, con la rete", detail: "Ora riordini il codice sapendo che, se rompi qualcosa, il test diventa subito rosso. Il test è la rete che rende sicuro il refactor." },
-];
+const TDD_STEPS = memoByLang(() => [
+  { c: "RED", tone: "red", label: T("scrivi un test che fallisce", "write a failing test"), detail: T("Prima del codice, scrivi il test del comportamento voluto. Fallisce (rosso): la funzione non esiste ancora. Ti costringe a definire cosa vuoi PRIMA di come.", "Before the code, write the test for the behaviour you want. It fails (red): the function doesn't exist yet. It forces you to define what you want BEFORE how.") },
+  { c: "GREEN", tone: "emerald", label: T("il codice minimo per passare", "the minimum code to pass"), detail: T("Scrivi il meno possibile per far diventare il test verde. Niente eleganza ancora: solo farlo funzionare.", "Write as little as possible to turn the test green. No elegance yet: just make it work.") },
+  { c: "REFACTOR", tone: "indigo", label: T("pulisci, con la rete", "clean up, with a safety net"), detail: T("Ora riordini il codice sapendo che, se rompi qualcosa, il test diventa subito rosso. Il test è la rete che rende sicuro il refactor.", "Now you tidy the code knowing that if you break something the test goes red immediately. The test is the net that makes refactoring safe.") },
+]);
 function TestingModule() {
   const [i, setI] = useState(0);
-  const cur = TDD_STEPS[i];
+  const steps = TDD_STEPS();
+  const cur = steps[i];
   return (
     <div className="space-y-4">
       <Lead>
-        I test non servono a «dimostrare che il codice è giusto»: servono a farti <span className="text-white font-medium">cambiare il codice senza paura</span>. Sono la rete che ti dice, in un secondo, se hai rotto
-        qualcosa. Senza, ogni modifica è una scommessa; con, refactoring e nuove feature diventano sicuri. È la differenza tra un progetto che invecchia bene e uno che nessuno osa più toccare.
+        {T(
+          <>I test non servono a «dimostrare che il codice è giusto»: servono a farti <span className="text-white font-medium">cambiare il codice senza paura</span>. Sono la rete che ti dice, in un secondo, se hai rotto
+          qualcosa. Senza, ogni modifica è una scommessa; con, refactoring e nuove feature diventano sicuri. È la differenza tra un progetto che invecchia bene e uno che nessuno osa più toccare.</>,
+          <>Tests aren't there to “prove the code is correct”: they're there to let you <span className="text-white font-medium">change the code without fear</span>. They're the net that tells you, in a second, whether you broke
+          something. Without them every change is a gamble; with them, refactoring and new features become safe. It's the difference between a project that ages well and one nobody dares touch any more.</>
+        )}
       </Lead>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">la piramide dei test · tanti in basso, pochi in alto</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("la piramide dei test · tanti in basso, pochi in alto", "the testing pyramid · many at the bottom, few at the top")}</div>
         <div className="space-y-1.5">
-          <div className="mx-auto rounded-md border border-amber-900 bg-amber-950 px-3 py-2 text-center" style={{ width: "45%" }}><div className="font-mono text-[12px] text-amber-200">E2E</div><div className="text-[10px] text-zinc-400">l'intero flusso · lenti, fragili · pochi</div></div>
-          <div className="mx-auto rounded-md border border-blue-900 bg-blue-950 px-3 py-2 text-center" style={{ width: "70%" }}><div className="font-mono text-[12px] text-blue-200">Integration</div><div className="text-[10px] text-zinc-400">più pezzi insieme (codice + DB) · alcuni</div></div>
-          <div className="mx-auto rounded-md border border-emerald-900 bg-emerald-950 px-3 py-2 text-center" style={{ width: "100%" }}><div className="font-mono text-[12px] text-emerald-200">Unit</div><div className="text-[10px] text-zinc-400">una funzione isolata · veloci · tantissimi</div></div>
+          <div className="mx-auto rounded-md border border-amber-900 bg-amber-950 px-3 py-2 text-center" style={{ width: "45%" }}><div className="font-mono text-[12px] text-amber-200">E2E</div><div className="text-[10px] text-zinc-400">{T("l’intero flusso · lenti, fragili · pochi", "the whole flow · slow, brittle · few")}</div></div>
+          <div className="mx-auto rounded-md border border-blue-900 bg-blue-950 px-3 py-2 text-center" style={{ width: "70%" }}><div className="font-mono text-[12px] text-blue-200">Integration</div><div className="text-[10px] text-zinc-400">{T("più pezzi insieme (codice + DB) · alcuni", "several pieces together (code + DB) · some")}</div></div>
+          <div className="mx-auto rounded-md border border-emerald-900 bg-emerald-950 px-3 py-2 text-center" style={{ width: "100%" }}><div className="font-mono text-[12px] text-emerald-200">Unit</div><div className="text-[10px] text-zinc-400">{T("una funzione isolata · veloci · tantissimi", "one isolated function · fast · loads")}</div></div>
         </div>
-        <p className="text-[12px] text-zinc-500 mt-3 leading-relaxed">Più sali, più il test è realistico ma <span className="text-white">lento e fragile</span>. La base larga di unit test dà il grosso della sicurezza a costo bassissimo.</p>
+        <p className="text-[12px] text-zinc-500 mt-3 leading-relaxed">{T(
+          <>Più sali, più il test è realistico ma <span className="text-white">lento e fragile</span>. La base larga di unit test dà il grosso della sicurezza a costo bassissimo.</>,
+          <>The higher you go, the more realistic the test — but also the <span className="text-white">slower and more brittle</span>. The wide base of unit tests gives you most of the confidence at almost no cost.</>
+        )}</p>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">TDD · il ciclo rosso → verde → refactor</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("TDD · il ciclo rosso → verde → refactor", "TDD · the red → green → refactor cycle")}</div>
         <div className="flex gap-1.5 mb-3">
-          {TDD_STEPS.map((s, idx) => (
+          {steps.map((s, idx) => (
             <button key={idx} onClick={() => setI(idx)} className={`flex-1 rounded-lg border px-2 py-2 font-mono text-[12px] transition-all ${i === idx ? `${TONE[s.tone].border} bg-zinc-900 text-zinc-100` : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-600"}`}>{s.c}</button>
           ))}
         </div>
@@ -10860,22 +10868,33 @@ function TestingModule() {
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">test doubles · isolare ciò che testi</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("test doubles · isolare ciò che testi", "test doubles · isolating what you test")}</div>
         <div className="space-y-1.5 text-[13px]">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">Mock / Stub</span> <span className="text-zinc-400">— finti al posto di dipendenze lente o esterne (un'API, un pagamento): il test resta veloce e deterministico.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">Fake</span> <span className="text-zinc-400">— implementazione leggera vera (un DB in memoria) quando lo stub è troppo finto.</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">Mock / Stub</span> <span className="text-zinc-400">{T("— finti al posto di dipendenze lente o esterne (un’API, un pagamento): il test resta veloce e deterministico.", "— stand-ins for slow or external dependencies (an API, a payment): the test stays fast and deterministic.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">Fake</span> <span className="text-zinc-400">{T("— implementazione leggera vera (un DB in memoria) quando lo stub è troppo finto.", "— a real but lightweight implementation (an in-memory DB) when a stub is too fake.")}</span></div>
         </div>
-        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">Regola d'oro: testa il <span className="text-white">comportamento</span> (cosa entra → cosa esce), non i dettagli interni. Così i test sopravvivono al refactor invece di rompersi a ogni riga cambiata.</p>
+        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{T(
+          <>Regola d'oro: testa il <span className="text-white">comportamento</span> (cosa entra → cosa esce), non i dettagli interni. Così i test sopravvivono al refactor invece di rompersi a ogni riga cambiata.</>,
+          <>Golden rule: test <span className="text-white">behaviour</span> (what goes in → what comes out), not internal details. That way tests survive a refactor instead of breaking on every changed line.</>
+        )}</p>
       </Card>
 
       <Note tone="amber" icon={AlertTriangle}>
-        <span className="font-medium">Nemici da conoscere.</span> I test <span className="text-white">flaky</span> (a volte passano, a volte no) erodono la fiducia: vanno stanati (spesso dipendono da tempo/ordine/rete). E la
-        <span className="text-white"> code coverage</span> alta non garantisce qualità: 100% di righe eseguite senza assert utili è teatro. Copri i <span className="text-white">casi</span> che contano (limite, errore, vuoto), non le percentuali.
+        {T(
+          <><span className="font-medium">Nemici da conoscere.</span> I test <span className="text-white">flaky</span> (a volte passano, a volte no) erodono la fiducia: vanno stanati (spesso dipendono da tempo/ordine/rete). E la
+          <span className="text-white"> code coverage</span> alta non garantisce qualità: 100% di righe eseguite senza assert utili è teatro. Copri i <span className="text-white">casi</span> che contano (limite, errore, vuoto), non le percentuali.</>,
+          <><span className="font-medium">Enemies worth knowing.</span> <span className="text-white">Flaky</span> tests (sometimes pass, sometimes don't) erode trust: hunt them down (they usually depend on time/order/network). And high
+          <span className="text-white"> code coverage</span> doesn't guarantee quality: 100% of lines executed with no useful assertions is theatre. Cover the <span className="text-white">cases</span> that matter (boundary, error, empty), not the percentage.</>
+        )}
       </Note>
 
       <Takeaway>
-        I test danno il <span className="text-white">coraggio di cambiare</span>. Distribuiscili a <span className="text-white">piramide</span> (tanti unit, alcuni integration, pochi e2e), usa <span className="text-white">mock/fake</span> per isolare le dipendenze, e
-        testa il <span className="text-white">comportamento</span> non l'implementazione. Il <span className="text-white">TDD</span> (rosso→verde→refactor) ti fa definire il «cosa» prima del «come». In CI, i test verdi sono il cancello del deploy — il filo che lega tutto lo stack.
+        {T(
+          <>I test danno il <span className="text-white">coraggio di cambiare</span>. Distribuiscili a <span className="text-white">piramide</span> (tanti unit, alcuni integration, pochi e2e), usa <span className="text-white">mock/fake</span> per isolare le dipendenze, e
+          testa il <span className="text-white">comportamento</span> non l'implementazione. Il <span className="text-white">TDD</span> (rosso→verde→refactor) ti fa definire il «cosa» prima del «come». In CI, i test verdi sono il cancello del deploy — il filo che lega tutto lo stack.</>,
+          <>Tests give you the <span className="text-white">courage to change things</span>. Distribute them as a <span className="text-white">pyramid</span> (many unit, some integration, few e2e), use <span className="text-white">mocks/fakes</span> to isolate dependencies, and
+          test <span className="text-white">behaviour</span>, not implementation. <span className="text-white">TDD</span> (red→green→refactor) makes you define the “what” before the “how”. In CI, green tests are the deploy gate — the thread tying the whole stack together.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -10885,77 +10904,110 @@ function SecurityModule() {
   const [safe, setSafe] = useState(false);
   const [xssSafe, setXssSafe] = useState(false);
   const input = "'; DROP TABLE users; --";
-  const xssPayload = "<script>rubaCookie(document.cookie)</script>";
+  const xssPayload = T("<script>rubaCookie(document.cookie)</script>", "<script>stealCookie(document.cookie)</script>");
   return (
     <div className="space-y-4">
       <Lead>
-        La sicurezza non è un modulo da aggiungere alla fine: è un <span className="text-white font-medium">modo di non fidarsi</span>. La regola madre è una — <span className="text-white font-medium">non fidarti mai dell'input</span> — e da lì
-        discendono quasi tutte le difese. Ti bastano pochi concetti dell'<span className="text-white font-medium">OWASP</span> per evitare gli errori che affondano la maggior parte delle app.
+        {T(
+          <>La sicurezza non è un modulo da aggiungere alla fine: è un <span className="text-white font-medium">modo di non fidarsi</span>. La regola madre è una — <span className="text-white font-medium">non fidarti mai dell'input</span> — e da lì
+          discendono quasi tutte le difese. Ti bastano pochi concetti dell'<span className="text-white font-medium">OWASP</span> per evitare gli errori che affondano la maggior parte delle app.</>,
+          <>Security isn't a module you bolt on at the end: it's a <span className="text-white font-medium">way of not trusting</span>. There's one mother rule — <span className="text-white font-medium">never trust the input</span> — and nearly
+          every defence follows from it. A handful of <span className="text-white font-medium">OWASP</span> concepts is enough to avoid the mistakes that sink most apps.</>
+        )}
       </Lead>
 
       <Card>
         <div className="flex items-center justify-between mb-2">
-          <div className="text-xs text-zinc-500 font-mono">SQL injection · l'esempio classico (input: <span className="text-red-300">{input}</span>)</div>
-          <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={safe} onChange={(e) => setSafe(e.target.checked)} className="accent-emerald-500" /> query parametrizzata</label>
+          <div className="text-xs text-zinc-500 font-mono">{T("SQL injection · l’esempio classico (input:", "SQL injection · the classic example (input:")} <span className="text-red-300">{input}</span>)</div>
+          <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={safe} onChange={(e) => setSafe(e.target.checked)} className="accent-emerald-500" /> {T("query parametrizzata", "parameterised query")}</label>
         </div>
         {safe ? (
           <>
-            <Code>{`# parametrizzata: l'input è SEMPRE un dato, mai codice
+            <Code>{T(`# parametrizzata: l'input è SEMPRE un dato, mai codice
 cur.execute("SELECT * FROM users WHERE name = %s", (nome,))
 # il DB cerca l'utente chiamato letteralmente "'; DROP TABLE users; --"
-# → 0 righe. Nessun danno.`}</Code>
-            <div className="mt-2 rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200"><span className="font-medium">✓ Sicuro:</span> separando dati e comando, l'input malevolo resta testo inerte. È lo stesso principio di «dati ≠ istruzioni» degli agenti.</div>
+# → 0 righe. Nessun danno.`, `# parameterised: the input is ALWAYS data, never code
+cur.execute("SELECT * FROM users WHERE name = %s", (name,))
+# the DB looks for the user literally called "'; DROP TABLE users; --"
+# → 0 rows. No harm done.`)}</Code>
+            <div className="mt-2 rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200">{T(
+              <><span className="font-medium">✓ Sicuro:</span> separando dati e comando, l'input malevolo resta testo inerte. È lo stesso principio di «dati ≠ istruzioni» degli agenti.</>,
+              <><span className="font-medium">✓ Safe:</span> by separating data from command, the malicious input stays inert text. Same “data ≠ instructions” principle as with agents.</>
+            )}</div>
           </>
         ) : (
           <>
-            <Code>{`# concatenazione: l'input diventa parte del comando 💥
+            <Code>{T(`# concatenazione: l'input diventa parte del comando 💥
 cur.execute(f"SELECT * FROM users WHERE name = '{nome}'")
 # diventa:
-SELECT * FROM users WHERE name = ''; DROP TABLE users; --'`}</Code>
-            <div className="mt-2 rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200"><span className="font-medium">✗ Vulnerabile:</span> l'input chiude la stringa e inietta un secondo comando. La tabella <span className="font-mono">users</span> viene cancellata. Questo è il bug più antico e ancora diffuso del web.</div>
+SELECT * FROM users WHERE name = ''; DROP TABLE users; --'`, `# concatenation: the input becomes part of the command 💥
+cur.execute(f"SELECT * FROM users WHERE name = '{name}'")
+# becomes:
+SELECT * FROM users WHERE name = ''; DROP TABLE users; --'`)}</Code>
+            <div className="mt-2 rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200">{T(
+              <><span className="font-medium">✗ Vulnerabile:</span> l'input chiude la stringa e inietta un secondo comando. La tabella <span className="font-mono">users</span> viene cancellata. Questo è il bug più antico e ancora diffuso del web.</>,
+              <><span className="font-medium">✗ Vulnerable:</span> the input closes the string and injects a second command. The <span className="font-mono">users</span> table is dropped. This is the web's oldest — and still widespread — bug.</>
+            )}</div>
           </>
         )}
       </Card>
 
       <Card>
         <div className="flex items-center justify-between mb-2">
-          <div className="text-xs text-zinc-500 font-mono">XSS · un utente mette codice in un commento</div>
-          <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={xssSafe} onChange={(e) => setXssSafe(e.target.checked)} className="accent-emerald-500" /> escapa l'output</label>
+          <div className="text-xs text-zinc-500 font-mono">{T("XSS · un utente mette codice in un commento", "XSS · a user puts code in a comment")}</div>
+          <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono cursor-pointer"><input type="checkbox" checked={xssSafe} onChange={(e) => setXssSafe(e.target.checked)} className="accent-emerald-500" /> {T("escapa l’output", "escape the output")}</label>
         </div>
-        <div className="text-[12px] font-mono text-zinc-500 mb-2">commento inviato: <span className="text-red-300">{xssPayload}</span></div>
-        <div className="text-[11px] text-zinc-500 font-mono mb-1">↓ come appare la pagina ad ALTRI utenti che leggono il commento</div>
+        <div className="text-[12px] font-mono text-zinc-500 mb-2">{T("commento inviato:", "comment submitted:")} <span className="text-red-300">{xssPayload}</span></div>
+        <div className="text-[11px] text-zinc-500 font-mono mb-1">{T("↓ come appare la pagina ad ALTRI utenti che leggono il commento", "↓ how the page looks to OTHER users reading the comment")}</div>
         {xssSafe ? (
           <>
-            <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 font-mono text-[12.5px] text-emerald-100 break-all">Bel prodotto! {xssPayload}</div>
-            <div className="mt-2 rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200"><span className="font-medium">✓ Sicuro:</span> l'output è «escapato» (<span className="font-mono">&lt;</span> diventa <span className="font-mono">&amp;lt;</span>), quindi il browser lo mostra come <span className="text-white">testo</span>, non lo esegue. Il tag <span className="font-mono">&lt;script&gt;</span> resta lettere innocue.</div>
+            <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 font-mono text-[12.5px] text-emerald-100 break-all">{T("Bel prodotto!", "Nice product!")} {xssPayload}</div>
+            <div className="mt-2 rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200">{T(
+              <><span className="font-medium">✓ Sicuro:</span> l'output è «escapato» (<span className="font-mono">&lt;</span> diventa <span className="font-mono">&amp;lt;</span>), quindi il browser lo mostra come <span className="text-white">testo</span>, non lo esegue. Il tag <span className="font-mono">&lt;script&gt;</span> resta lettere innocue.</>,
+              <><span className="font-medium">✓ Safe:</span> the output is “escaped” (<span className="font-mono">&lt;</span> becomes <span className="font-mono">&amp;lt;</span>), so the browser shows it as <span className="text-white">text</span> instead of running it. The <span className="font-mono">&lt;script&gt;</span> tag stays harmless letters.</>
+            )}</div>
           </>
         ) : (
           <>
-            <div className="rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200">Bel prodotto! <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-red-900 border border-red-700">⚡ script eseguito</span></div>
-            <div className="mt-2 rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200"><span className="font-medium">✗ Vulnerabile:</span> l'input è stato reso come <span className="text-white">HTML vero</span>, così il <span className="font-mono">&lt;script&gt;</span> gira nel browser di <span className="text-white">ogni</span> visitatore — e ruba i loro cookie di sessione. È l'attacco «stored XSS».</div>
+            <div className="rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200">{T("Bel prodotto!", "Nice product!")} <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-red-900 border border-red-700">⚡ {T("script eseguito", "script executed")}</span></div>
+            <div className="mt-2 rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-[13px] text-red-200">{T(
+              <><span className="font-medium">✗ Vulnerabile:</span> l'input è stato reso come <span className="text-white">HTML vero</span>, così il <span className="font-mono">&lt;script&gt;</span> gira nel browser di <span className="text-white">ogni</span> visitatore — e ruba i loro cookie di sessione. È l'attacco «stored XSS».</>,
+              <><span className="font-medium">✗ Vulnerable:</span> the input was rendered as <span className="text-white">real HTML</span>, so the <span className="font-mono">&lt;script&gt;</span> runs in <span className="text-white">every</span> visitor's browser — and steals their session cookies. That's the “stored XSS” attack.</>
+            )}</div>
           </>
         )}
-        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">Di nuovo <span className="text-white">«dati ≠ istruzioni»</span>: il commento è un dato, non deve mai diventare codice. È lo stesso bug della SQL injection, spostato dal database alla pagina.</p>
+        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{T(
+          <>Di nuovo <span className="text-white">«dati ≠ istruzioni»</span>: il commento è un dato, non deve mai diventare codice. È lo stesso bug della SQL injection, spostato dal database alla pagina.</>,
+          <>Again <span className="text-white">“data ≠ instructions”</span>: the comment is data, it must never become code. Same bug as SQL injection, moved from the database to the page.</>
+        )}</p>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">le altre voci che devi saper nominare</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("le altre voci che devi saper nominare", "the other items you should be able to name")}</div>
         <div className="space-y-1.5 text-[13px]">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">XSS</span> <span className="text-zinc-400">— input dell'utente reso come HTML/JS nella pagina: si «escapa» l'output. Dati ≠ codice, di nuovo.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">CORS</span> <span className="text-zinc-400">— quali origini (domini) possono chiamare la tua API dal browser. Configurato male = falla o app che non funziona.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">HTTPS / TLS</span> <span className="text-zinc-400">— cifra il traffico in transito: senza, chiunque sulla rete legge token e password. Non negoziabile.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">Segreti & least privilege</span> <span className="text-zinc-400">— chiavi fuori dal codice (env), e ogni componente coi permessi minimi. Se cade, il danno è contenuto.</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">XSS</span> <span className="text-zinc-400">{T("— input dell’utente reso come HTML/JS nella pagina: si «escapa» l’output. Dati ≠ codice, di nuovo.", "— user input rendered as HTML/JS in the page: you “escape” the output. Data ≠ code, again.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">CORS</span> <span className="text-zinc-400">{T("— quali origini (domini) possono chiamare la tua API dal browser. Configurato male = falla o app che non funziona.", "— which origins (domains) may call your API from the browser. Misconfigured = a hole, or an app that simply doesn’t work.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">HTTPS / TLS</span> <span className="text-zinc-400">{T("— cifra il traffico in transito: senza, chiunque sulla rete legge token e password. Non negoziabile.", "— encrypts traffic in transit: without it, anyone on the network reads tokens and passwords. Non-negotiable.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">{T("Segreti & least privilege", "Secrets & least privilege")}</span> <span className="text-zinc-400">{T("— chiavi fuori dal codice (env), e ogni componente coi permessi minimi. Se cade, il danno è contenuto.", "— keys out of the code (env), and every component on minimum permissions. If one falls, the blast radius is small.")}</span></div>
         </div>
       </Card>
 
       <Note tone="indigo" icon={Lock}>
-        <span className="font-medium">Il filo conduttore di tutto lo stack.</span> «Dati ≠ istruzioni» (SQL injection, XSS, prompt injection), «non fidarti dell'input» (validazione, Pydantic), «permessi minimi» (auth,
-        MCP, cloud): sono la <span className="text-white">stessa idea</span> che ritorna a ogni livello. Impararla una volta ti protegge ovunque.
+        {T(
+          <><span className="font-medium">Il filo conduttore di tutto lo stack.</span> «Dati ≠ istruzioni» (SQL injection, XSS, prompt injection), «non fidarti dell'input» (validazione, Pydantic), «permessi minimi» (auth,
+          MCP, cloud): sono la <span className="text-white">stessa idea</span> che ritorna a ogni livello. Impararla una volta ti protegge ovunque.</>,
+          <><span className="font-medium">The thread running through the whole stack.</span> “Data ≠ instructions” (SQL injection, XSS, prompt injection), “don't trust the input” (validation, Pydantic), “least privilege” (auth,
+          MCP, cloud): it's the <span className="text-white">same idea</span> returning at every layer. Learn it once and you're protected everywhere.</>
+        )}
       </Note>
 
       <Takeaway>
-        Sicurezza = <span className="text-white">non fidarti dell'input</span>, a ogni confine. <span className="text-white">Parametrizza</span> le query (SQL injection), <span className="text-white">escapa</span> l'output (XSS), configura <span className="text-white">CORS</span>, imponi <span className="text-white">HTTPS</span>, tieni i
-        <span className="text-white"> segreti nell'ambiente</span> con permessi minimi. Sono poche regole OWASP che evitano gli errori più comuni — ed è lo stesso «dati ≠ istruzioni» che protegge anche gli agenti. Saperle nominare è già metà del lavoro.
+        {T(
+          <>Sicurezza = <span className="text-white">non fidarti dell'input</span>, a ogni confine. <span className="text-white">Parametrizza</span> le query (SQL injection), <span className="text-white">escapa</span> l'output (XSS), configura <span className="text-white">CORS</span>, imponi <span className="text-white">HTTPS</span>, tieni i
+          <span className="text-white"> segreti nell'ambiente</span> con permessi minimi. Sono poche regole OWASP che evitano gli errori più comuni — ed è lo stesso «dati ≠ istruzioni» che protegge anche gli agenti. Saperle nominare è già metà del lavoro.</>,
+          <>Security = <span className="text-white">don't trust the input</span>, at every boundary. <span className="text-white">Parameterise</span> queries (SQL injection), <span className="text-white">escape</span> output (XSS), configure <span className="text-white">CORS</span>, enforce <span className="text-white">HTTPS</span>, keep
+          <span className="text-white"> secrets in the environment</span> with minimum permissions. A handful of OWASP rules that avoid the most common mistakes — and it's the same “data ≠ instructions” that protects agents too. Being able to name them is already half the job.</>
+        )}
       </Takeaway>
     </div>
   );
