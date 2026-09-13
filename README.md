@@ -1,10 +1,12 @@
 # Backend Basics — Interactive Lesson
 
-Interactive lesson (Italian) covering backend fundamentals: HTTP, JSON, REST, SQL/databases,
-hosting, auth, caching, logging, LLM APIs, system design, data structures, LeetCode-style
-patterns, code review, and product management. Built as a single React component with
-118 modules across 14 sections, per-module quizzes, a searchable glossary, and animated
-architecture/sequence diagrams (Hello Interview / ByteByteGo style).
+Interactive lesson (Italian) covering backend fundamentals: HTTP, JSON, REST, SQL/databases
+and data modelling, hosting, VMs, Kubernetes, Terraform, environments and feature flags,
+auth & security (JWT, OAuth flows, SSO, OWASP), caching, logging, LLM APIs, system design
+(including Kafka, outbox/CDC and Temporal), data structures, LeetCode-style patterns, code
+review, and product management. Built as a React app with 133 modules across 15 sections,
+per-module quizzes, a searchable glossary, flashcards, and animated architecture/sequence
+diagrams (Hello Interview / ByteByteGo style).
 
 ## Run it locally
 
@@ -50,9 +52,16 @@ just won't get responses.
 
 ## Project structure
 
-- `lesson-app/src/Lesson.jsx` — source of truth, the whole app in one component
+- `lesson-app/src/Lesson.jsx` — source of truth for most of the app
   (shared UI primitives → shared data → a small in-browser SQL engine → the
-  118 lesson modules → app shell/navigation).
+  lesson modules → app shell/navigation).
+- `lesson-app/src/backend-avanzato.jsx` — the advanced chapters (VMs, Kubernetes,
+  Terraform, environments, feature flags, Kafka, outbox, Temporal, data modelling,
+  OAuth flows) plus their quizzes, glossary and flashcards; `Lesson.jsx` places
+  each one in its section. Pure logic lives in `backend-avanzato-core.js`, with a
+  self-check: `node src/backend-avanzato-core.js`.
+- `lesson-app/src/i18n.js` — the IT/EN helpers (`T`, `memoByLang`, `setLang`)
+  shared by both files.
 - `lesson-app/diagrams-src/` — source data + build scripts for the animated
   architecture/sequence diagrams (built with the [archify](https://github.com/pbakaus/archify)
   skill/CLI conventions).

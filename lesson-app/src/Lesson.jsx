@@ -20,29 +20,11 @@ import {
   Users2, Ear, ListTodo, CalendarClock, ClipboardCheck, LineChart, Flag, Beaker,
   Handshake, Megaphone, Presentation, X, Loader2
 } from "lucide-react";
+import { T, memoByLang, setLang as setActiveLang } from "./i18n.js";
+import { BK_MOD, BK_QUIZZES, BK_GLOSSARY, BK_FLASHCARDS } from "./backend-avanzato.jsx";
 
-/* =====================================================================
-   LANGUAGE (it / en)
-   LANG is a module-level global read by T() during render. The app shell
-   reassigns it at the top of its own render: React renders the tree
-   synchronously top-down, so every child below reads the fresh value.
-   That keeps 118 modules free of context plumbing and prop drilling.
-   ponytail: render-time global — if two languages ever need to render
-   side by side, promote it to a React context.
-   ===================================================================== */
-
-let LANG = "it";
-/** T("italiano", "english") — returns the string/JSX for the active language. */
-const T = (it, en) => (LANG === "en" && en !== undefined ? en : it);
-
-/* Module-level data arrays are built at import time, when LANG is still the
-   default — so any T() inside them would freeze on Italian. Wrap them in
-   memoByLang and call the result at render time: FOO() instead of FOO.
-   Built once per language, then cached. */
-const memoByLang = (build) => {
-  const cache = {};
-  return () => (cache[LANG] ??= build());
-};
+/* LANGUAGE (it / en): T(), memoByLang() and setLang() live in i18n.js — see
+   the note there. The app shell calls setLang() at the top of its render. */
 
 /* Section names double as lookup keys (m.section, GLOSS_TONE, FLASH_SECTIONS),
    so the Italian string stays the key and only the display label is translated. */
@@ -53,6 +35,7 @@ const SECTION_EN = {
   "Fondamenta": "Foundations",
   "SQL & Database": "SQL & Databases",
   "Infrastruttura": "Infrastructure",
+  "Auth & sicurezza": "Auth & security",
   "Integrazioni & dati": "Integrations & data",
   "Integrazioni cliente": "Customer integrations",
   "AI": "AI",
@@ -2949,34 +2932,31 @@ const QUIZZES = memoByLang(() => ({
   ],
   "security": [
     {
-      "q": "Come si previene la SQL injection?",
-      "options": [
-        "Validando la lunghezza dell'input",
-        "Nascondendo il nome delle tabelle",
-        "Usando query parametrizzate: l'input è sempre un dato, mai parte del comando"
-      ],
+      "q": T("Come si previene la SQL injection?", "How do you prevent SQL injection?"),
+      "options": T(
+        ["Validando la lunghezza dell'input","Nascondendo il nome delle tabelle","Usando query parametrizzate: l'input è sempre un dato, mai parte del comando"],
+        ["By validating the input's length","By hiding the table names","By using parameterised queries: input is always data, never part of the command"]
+      ),
       "correct": 2,
-      "why": "Separando dati e comando, l'input malevolo resta testo inerte. La concatenazione di stringhe è la falla: parametrizza sempre."
+      "why": T("Separando dati e comando, l'input malevolo resta testo inerte. La concatenazione di stringhe è la falla: parametrizza sempre.", "With data and command kept apart, malicious input stays inert text. String concatenation is the flaw: always parameterise.")
     },
     {
-      "q": "Qual è il filo comune tra SQL injection, XSS e prompt injection?",
-      "options": [
-        "Sono tutti bug del browser",
-        "«Dati ≠ istruzioni»: input non fidato trattato come codice/comando da eseguire",
-        "Riguardano solo le password"
-      ],
+      "q": T("Qual è il filo comune tra SQL injection, XSS e prompt injection?", "What's the common thread between SQL injection, XSS and prompt injection?"),
+      "options": T(
+        ["Sono tutti bug del browser","«Dati ≠ istruzioni»: input non fidato trattato come codice/comando da eseguire","Riguardano solo le password"],
+        ["They're all browser bugs","“Data ≠ instructions”: untrusted input treated as code/a command to execute","They only concern passwords"]
+      ),
       "correct": 1,
-      "why": "La stessa idea a livelli diversi: se mescoli dati non fidati con codice/istruzioni, apri la porta. Separarli è la difesa in tutti e tre i casi."
+      "why": T("La stessa idea a livelli diversi: se mescoli dati non fidati con codice/istruzioni, apri la porta. Separarli è la difesa in tutti e tre i casi.", "The same idea at different levels: if you mix untrusted data with code/instructions, you open the door. Keeping them apart is the defence in all three cases.")
     },
     {
-      "q": "Dove vanno le chiavi API e i segreti?",
-      "options": [
-        "In variabili d'ambiente/secret manager, fuori dal repo, con permessi minimi",
-        "In un commento",
-        "Nel codice, così non si perdono"
-      ],
+      "q": T("Dove vanno le chiavi API e i segreti?", "Where do API keys and secrets go?"),
+      "options": T(
+        ["In variabili d'ambiente/secret manager, fuori dal repo, con permessi minimi","In un commento","Nel codice, così non si perdono"],
+        ["In environment variables/a secret manager, outside the repo, with minimal permissions","In a comment","In the code, so they don't get lost"]
+      ),
       "correct": 0,
-      "why": "Segreti fuori dal codice e least privilege: se un componente cade, il danno è contenuto. È lo stesso principio di deploy, auth e MCP."
+      "why": T("Segreti fuori dal codice e least privilege: se un componente cade, il danno è contenuto. È lo stesso principio di deploy, auth e MCP.", "Secrets outside the code and least privilege: if one component falls, the damage is contained. It's the same principle as in deploys, auth and MCP.")
     }
   ],
   "ormn1": [
@@ -3173,34 +3153,31 @@ const QUIZZES = memoByLang(() => ({
   ],
   "docker": [
     {
-      "q": "Nel Dockerfile, perché mettere «COPY . .» (il codice) DOPO l'install delle dipendenze?",
-      "options": [
-        "È solo una convenzione estetica",
-        "Altrimenti l'app non parte",
-        "Così un cambio di codice non invalida la cache dell'install: build molto più veloci"
-      ],
+      "q": T("Nel Dockerfile, perché mettere «COPY . .» (il codice) DOPO l'install delle dipendenze?", "In a Dockerfile, why put “COPY . .” (the code) AFTER installing the dependencies?"),
+      "options": T(
+        ["È solo una convenzione estetica","Altrimenti l'app non parte","Così un cambio di codice non invalida la cache dell'install: build molto più veloci"],
+        ["It's just a cosmetic convention","Otherwise the app won't start","So a code change doesn't invalidate the install cache: much faster builds"]
+      ),
       "correct": 2,
-      "why": "Gli strati si invalidano a cascata dal punto che cambia in giù. Se il codice sta dopo l'install, cambiarlo lascia le dipendenze in cache."
+      "why": T("Gli strati si invalidano a cascata dal punto che cambia in giù. Se il codice sta dopo l'install, cambiarlo lascia le dipendenze in cache.", "Layers are invalidated in a cascade from the point that changes downwards. If the code comes after the install, changing it leaves the dependencies cached.")
     },
     {
-      "q": "Qual è la differenza tra immagine e container?",
-      "options": [
-        "Sono sinonimi",
-        "L'immagine è lo stampo immutabile; il container è un'istanza in esecuzione",
-        "L'immagine gira, il container è il file"
-      ],
+      "q": T("Qual è la differenza tra immagine e container?", "What's the difference between an image and a container?"),
+      "options": T(
+        ["Sono sinonimi","L'immagine è lo stampo immutabile; il container è un'istanza in esecuzione","L'immagine gira, il container è il file"],
+        ["They're synonyms","The image is the immutable mould; the container is a running instance","The image runs, the container is the file"]
+      ),
       "correct": 1,
-      "why": "Dall'immagine (stampo) avvii uno o più container (istanze). Come una classe e i suoi oggetti."
+      "why": T("Dall'immagine (stampo) avvii uno o più container (istanze). Come una classe e i suoi oggetti.", "From the image (the mould) you start one or more containers (instances). Like a class and its objects.")
     },
     {
-      "q": "A cosa serve un multi-stage build?",
-      "options": [
-        "A usare più CPU",
-        "A costruire in un'immagine pesante e copiare solo il risultato in una leggera",
-        "A eseguire più container"
-      ],
+      "q": T("A cosa serve un multi-stage build?", "What is a multi-stage build for?"),
+      "options": T(
+        ["A usare più CPU","A costruire in un'immagine pesante e copiare solo il risultato in una leggera","A eseguire più container"],
+        ["Using more CPU","Building in a heavy image and copying only the result into a light one","Running several containers"]
+      ),
       "correct": 1,
-      "why": "Tieni gli strumenti di build fuori dall'immagine finale: da GB a pochi MB, più sicura e veloce da distribuire."
+      "why": T("Tieni gli strumenti di build fuori dall'immagine finale: da GB a pochi MB, più sicura e veloce da distribuire.", "You keep the build tools out of the final image: from GB down to a few MB, safer and faster to ship.")
     }
   ],
   "cloudflare": [
@@ -3545,34 +3522,31 @@ const QUIZZES = memoByLang(() => ({
   ],
   "deploy": [
     {
-      "q": "Nella pipeline CI/CD i test falliscono. Cosa NON deve succedere?",
-      "options": [
-        "La pipeline si ferma",
-        "Ricevi una notifica",
-        "Il codice va comunque in produzione"
-      ],
+      "q": T("Nella pipeline CI/CD i test falliscono. Cosa NON deve succedere?", "The tests fail in the CI/CD pipeline. What must NOT happen?"),
+      "options": T(
+        ["La pipeline si ferma","Ricevi una notifica","Il codice va comunque in produzione"],
+        ["The pipeline stops","You get a notification","The code goes to production anyway"]
+      ),
       "correct": 2,
-      "why": "I test sono il cancello: se sono rossi, il rilascio non parte e gli utenti restano sulla versione precedente sana. È il valore stesso della CI/CD."
+      "why": T("I test sono il cancello: se sono rossi, il rilascio non parte e gli utenti restano sulla versione precedente sana. È il valore stesso della CI/CD.", "The tests are the gate: if they're red, the release doesn't start and users stay on the previous, healthy version. That's the whole value of CI/CD.")
     },
     {
-      "q": "Dove vanno le chiavi API e le password in produzione?",
-      "options": [
-        "Scritte in un commento nel codice",
-        "In variabili d'ambiente / secret manager, fuori dal codice",
-        "Committate nel repo, così non si perdono"
-      ],
+      "q": T("Dove vanno le chiavi API e le password in produzione?", "Where do API keys and passwords go in production?"),
+      "options": T(
+        ["Scritte in un commento nel codice","In variabili d'ambiente / secret manager, fuori dal codice","Committate nel repo, così non si perdono"],
+        ["Written in a code comment","In environment variables / a secret manager, outside the code","Committed to the repo, so they don't get lost"]
+      ),
       "correct": 1,
-      "why": "I segreti stanno nell'ambiente, mai nel repo. La stessa immagine gira in dev/staging/prod cambiando solo le variabili."
+      "why": T("I segreti stanno nell'ambiente, mai nel repo. La stessa immagine gira in dev/staging/prod cambiando solo le variabili.", "Secrets live in the environment, never in the repo. The same image runs in dev/staging/prod with only the variables changing.")
     },
     {
-      "q": "Un rilascio «canary» consiste nel:",
-      "options": [
-        "Mandare la nuova versione a una piccola % di utenti e osservare",
-        "Sostituire tutte le istanze in un colpo",
-        "Tornare alla versione precedente"
-      ],
+      "q": T("Un rilascio «canary» consiste nel:", "A “canary” release means:"),
+      "options": T(
+        ["Mandare la nuova versione a una piccola % di utenti e osservare","Sostituire tutte le istanze in un colpo","Tornare alla versione precedente"],
+        ["Sending the new version to a small % of users and watching","Replacing every instance in one go","Going back to the previous version"]
+      ),
       "correct": 0,
-      "why": "Il canary espone il nuovo codice all'1% prima, si guardano le metriche, poi si allarga. Limita il danno di un problema non visto."
+      "why": T("Il canary espone il nuovo codice all'1% prima, si guardano le metriche, poi si allarga. Limita il danno di un problema non visto.", "A canary exposes the new code to 1% first, you watch the metrics, then widen it. It limits the damage of a problem nobody spotted.")
     }
   ],
   "cloud": [
@@ -3737,34 +3711,31 @@ const QUIZZES = memoByLang(() => ({
   ],
   "authent": [
     {
-      "q": "Con l'SSO aziendale, la password dell'utente:",
-      "options": [
-        "La salvi tu, hashata",
-        "Viaggia in chiaro",
-        "Non tocca mai il tuo sistema: resta all'Identity Provider, tu ricevi un'asserzione firmata"
-      ],
+      "q": T("Con l'SSO aziendale, la password dell'utente:", "With company SSO, the user's password:"),
+      "options": T(
+        ["La salvi tu, hashata","Viaggia in chiaro","Non tocca mai il tuo sistema: resta all'Identity Provider, tu ricevi un'asserzione firmata"],
+        ["You store it, hashed","Travels in plain text","Never touches your system: it stays with the Identity Provider, you receive a signed assertion"]
+      ),
       "correct": 2,
-      "why": "Il senso dell'SSO è delegare l'identità: l'IdP autentica e ti manda una prova firmata di chi è l'utente. Tu non gestisci credenziali."
+      "why": T("Il senso dell'SSO è delegare l'identità: l'IdP autentica e ti manda una prova firmata di chi è l'utente. Tu non gestisci credenziali.", "The point of SSO is delegating identity: the IdP authenticates and sends you signed proof of who the user is. You don't handle credentials.")
     },
     {
-      "q": "SAML e OIDC sono:",
-      "options": [
-        "Due tipi di password",
-        "Due protocolli per lo stesso scopo (delegare l'identità all'IdP), formati diversi",
-        "Due database"
-      ],
+      "q": T("SAML e OIDC sono:", "SAML and OIDC are:"),
+      "options": T(
+        ["Due tipi di password","Due protocolli per lo stesso scopo (delegare l'identità all'IdP), formati diversi","Due database"],
+        ["Two kinds of password","Two protocols for the same purpose (delegating identity to the IdP), in different formats","Two databases"]
+      ),
       "correct": 1,
-      "why": "SAML è il classico enterprise (XML), OIDC il moderno (OAuth2 + JSON/JWT). Stesso concetto, imballaggio diverso; i prodotti B2B spesso supportano entrambi."
+      "why": T("SAML è il classico enterprise (XML), OIDC il moderno (OAuth2 + JSON/JWT). Stesso concetto, imballaggio diverso; i prodotti B2B spesso supportano entrambi.", "SAML is the enterprise classic (XML), OIDC the modern one (OAuth2 + JSON/JWT). Same concept, different packaging; B2B products often support both.")
     },
     {
-      "q": "A cosa serve lo SCIM, che l'SSO da solo non copre?",
-      "options": [
-        "A cifrare i dati",
-        "A fare il login più veloce",
-        "A creare/aggiornare/disattivare gli account automaticamente dall'IdP"
-      ],
+      "q": T("A cosa serve lo SCIM, che l'SSO da solo non copre?", "What is SCIM for, which SSO alone doesn't cover?"),
+      "options": T(
+        ["A cifrare i dati","A fare il login più veloce","A creare/aggiornare/disattivare gli account automaticamente dall'IdP"],
+        ["Encrypting the data","Making login faster","Creating/updating/deactivating accounts automatically from the IdP"]
+      ),
       "correct": 2,
-      "why": "SSO risolve il login; SCIM il ciclo di vita: quando un dipendente lascia l'azienda, viene disattivato anche dal tuo prodotto, senza interventi manuali."
+      "why": T("SSO risolve il login; SCIM il ciclo di vita: quando un dipendente lascia l'azienda, viene disattivato anche dal tuo prodotto, senza interventi manuali.", "SSO solves login; SCIM the lifecycle: when an employee leaves the company, they're deactivated in your product too, with no manual work.")
     }
   ],
   "agents": [
@@ -4656,10 +4627,42 @@ const QUIZZES = memoByLang(() => ({
     }
   ],
   "oauth": [
-    { "q": "A cosa serve il PKCE nell'Authorization Code flow?", "options": ["A cifrare l'access token", "Un code intercettato da solo non basta: al /token serve il code_verifier, che ha solo chi ha iniziato il flusso", "A evitare la schermata di login"], "correct": 1, "why": "Il code passa dal browser, canale intercettabile. Il PKCE lega il riscatto del code al segreto usa-e-getta (verifier) generato all'inizio: il ladro del code non ce l'ha." },
-    { "q": "Qual è la differenza tra OAuth 2.0 e OIDC?", "options": ["Sono sinonimi", "OAuth = autorizzazione (delega di accesso); OIDC = autenticazione costruita sopra OAuth, con l'id_token che dice chi è l'utente", "OIDC è la versione precedente di OAuth"], "correct": 1, "why": "OAuth risponde a «cosa può fare questa app per conto dell'utente»; OIDC aggiunge il livello identità («chi è l'utente»), con id_token JWT e userinfo." },
-    { "q": "I JWT sono stateless: come gestisci la revoca di un accesso?", "options": ["Cancellando il JWT dal database del server", "Access token a vita breve + refresh token rotation con reuse detection", "Cambiando la chiave di firma a ogni logout"], "correct": 1, "why": "Un JWT emesso vale fino a exp: non si «cancella». Si riduce la finestra (access corti) e si controlla il refresh: ogni uso lo ruota, e un riuso di un refresh già consumato rivela il furto → si revoca la famiglia." },
-    { "q": "Dove NON va mai salvato un token nel browser?", "options": ["In un cookie httpOnly + Secure + SameSite", "In localStorage: qualsiasi XSS (o dipendenza npm compromessa) lo legge", "Nel backend del BFF"], "correct": 1, "why": "localStorage è leggibile da tutto il JS della pagina, senza protezioni possibili. Cookie httpOnly (il JS non lo legge) o BFF (il token non arriva proprio al browser) sono le risposte giuste." }
+    {
+      "q": T("A cosa serve il PKCE nell'Authorization Code flow?", "What is PKCE for in the Authorization Code flow?"),
+      "options": T(
+        ["A cifrare l'access token","Un code intercettato da solo non basta: al /token serve il code_verifier, che ha solo chi ha iniziato il flusso","A evitare la schermata di login"],
+        ["Encrypting the access token","An intercepted code alone isn't enough: /token needs the code_verifier, which only whoever started the flow has","Skipping the login screen"]
+      ),
+      "correct": 1,
+      "why": T("Il code passa dal browser, canale intercettabile. Il PKCE lega il riscatto del code al segreto usa-e-getta (verifier) generato all'inizio: il ladro del code non ce l'ha.", "The code passes through the browser, an interceptable channel. PKCE ties redeeming the code to the throwaway secret (verifier) generated at the start: whoever steals the code doesn't have it.")
+    },
+    {
+      "q": T("Qual è la differenza tra OAuth 2.0 e OIDC?", "What's the difference between OAuth 2.0 and OIDC?"),
+      "options": T(
+        ["Sono sinonimi","OAuth = autorizzazione (delega di accesso); OIDC = autenticazione costruita sopra OAuth, con l'id_token che dice chi è l'utente","OIDC è la versione precedente di OAuth"],
+        ["They're synonyms","OAuth = authorisation (delegated access); OIDC = authentication built on top of OAuth, with the id_token saying who the user is","OIDC is the previous version of OAuth"]
+      ),
+      "correct": 1,
+      "why": T("OAuth risponde a «cosa può fare questa app per conto dell'utente»; OIDC aggiunge il livello identità («chi è l'utente»), con id_token JWT e userinfo.", "OAuth answers “what can this app do on the user's behalf”; OIDC adds the identity layer (“who is the user”), with a JWT id_token and userinfo.")
+    },
+    {
+      "q": T("I JWT sono stateless: come gestisci la revoca di un accesso?", "JWTs are stateless: how do you handle revoking access?"),
+      "options": T(
+        ["Cancellando il JWT dal database del server","Access token a vita breve + refresh token rotation con reuse detection","Cambiando la chiave di firma a ogni logout"],
+        ["By deleting the JWT from the server's database","Short-lived access tokens + refresh token rotation with reuse detection","By changing the signing key on every logout"]
+      ),
+      "correct": 1,
+      "why": T("Un JWT emesso vale fino a exp: non si «cancella». Si riduce la finestra (access corti) e si controlla il refresh: ogni uso lo ruota, e un riuso di un refresh già consumato rivela il furto → si revoca la famiglia.", "An issued JWT is valid until exp: you can't “delete” it. You shrink the window (short access tokens) and control refresh: every use rotates it, and reuse of an already-consumed refresh token reveals theft → the whole family is revoked.")
+    },
+    {
+      "q": T("Dove NON va mai salvato un token nel browser?", "Where must a token NEVER be stored in the browser?"),
+      "options": T(
+        ["In un cookie httpOnly + Secure + SameSite","In localStorage: qualsiasi XSS (o dipendenza npm compromessa) lo legge","Nel backend del BFF"],
+        ["In an httpOnly + Secure + SameSite cookie","In localStorage: any XSS (or compromised npm dependency) can read it","In the BFF's backend"]
+      ),
+      "correct": 1,
+      "why": T("localStorage è leggibile da tutto il JS della pagina, senza protezioni possibili. Cookie httpOnly (il JS non lo legge) o BFF (il token non arriva proprio al browser) sono le risposte giuste.", "localStorage can be read by all the JS on the page, with no possible protection. An httpOnly cookie (JS can't read it) or a BFF (the token never reaches the browser at all) are the right answers.")
+    }
   ],
   "pgmigra": [
     { "q": "Perché su una tabella grande si usa CREATE INDEX CONCURRENTLY?", "options": ["Perché è più veloce del CREATE INDEX normale", "Perché costruisce l'indice senza bloccare le scritture; in cambio è più lento, non sta in una transazione e se fallisce lascia un indice INVALID", "Perché usa meno spazio su disco"], "correct": 1, "why": "Il CREATE INDEX normale blocca le scritture per tutta la costruzione. CONCURRENTLY fa più passate senza quel lock: il prezzo è durata maggiore e la pulizia manuale se fallisce." },
@@ -4722,7 +4725,8 @@ const QUIZZES = memoByLang(() => ({
   "pmcase": [
     { "q": "Qual è il primo passo corretto davanti a un caso da colloquio PM tipo «come miglioreresti X»?", "options": ["Proporre subito 3 soluzioni per mostrare velocità di pensiero", "Chiarire l'obiettivo e la metrica di business dietro la domanda, prima di proporre qualunque soluzione", "Chiedere quanto budget è disponibile"], "correct": 1, "why": "Lanciarsi sulle soluzioni prima di capire l'obiettivo è l'errore più comune nei case interview: mostra fretta, non giudizio." },
     { "q": "Perché un candidato dovrebbe dichiarare esplicitamente cosa NON farà, nel caso?", "options": ["Per riempire tempo se non ha altre idee", "Perché mostra che ha valutato i trade-off e non vede solo il lato positivo del proprio piano", "Non è mai necessario, meglio restare vaghi"], "correct": 1, "why": "Un piano senza trade-off dichiarati è un piano non ancora pensato a fondo: gli intervistatori lo notano subito." }
-  ]
+  ],
+  ...BK_QUIZZES(),
 }));
 const QUIZ_TOTAL = Object.keys(QUIZZES()).length;
 
@@ -4832,9 +4836,9 @@ const GLOSSARY = [
   { t: "CDN", s: "Infrastruttura", d: "Rete di server vicini all'utente che servono copie statiche, tagliando la latenza di rete." },
   { t: "Cache / HIT / MISS", s: "Infrastruttura", d: "Copia pronta di un dato costoso. HIT = già in cache (veloce); MISS = non c'è, vai al DB e la popoli." },
   { t: "Invalidazione", s: "Infrastruttura", d: "Buttare via il valore in cache quando il dato vero è cambiato, per non servire roba vecchia." },
-  { t: "Autenticazione vs Autorizzazione", s: "Infrastruttura", d: "«Chi sei?» (401 se manca) contro «cosa puoi fare?» (403 se non hai i permessi)." },
-  { t: "JWT / Token", s: "Infrastruttura", d: "header.payload.signature: dice chi sei e con che ruolo; la firma lo rende non falsificabile." },
-  { t: "Hash / bcrypt", s: "Infrastruttura", d: "Trasformazione a senso unico: si salva l'hash della password, mai la password in chiaro." },
+  { t: "Autenticazione vs Autorizzazione", s: "Auth & sicurezza", d: "«Chi sei?» (401 se manca) contro «cosa puoi fare?» (403 se non hai i permessi)." },
+  { t: "JWT / Token", s: "Auth & sicurezza", d: "header.payload.signature: dice chi sei e con che ruolo; la firma lo rende non falsificabile." },
+  { t: "Hash / bcrypt", s: "Auth & sicurezza", d: "Trasformazione a senso unico: si salva l'hash della password, mai la password in chiaro." },
   { t: "Log / Metriche / Trace", s: "Infrastruttura", d: "I tre pilastri dell'osservabilità: righe puntuali, numeri aggregati, percorso di una singola richiesta." },
   { t: "Request-id", s: "Infrastruttura", d: "L'identificativo che lega tutte le righe di log di una richiesta: ritrovi l'intera storia di un errore." },
   { t: "LLM via API", s: "AI", d: "Chiamare un modello è una normale POST HTTP con model + messages in JSON; ricevi JSON in risposta." },
@@ -4890,10 +4894,10 @@ const GLOSSARY = [
   { t: "robots.txt", s: "Integrazioni & dati", d: "File che dice ai bot cosa possono visitare. Parte dello scraping educato: rispettarlo, mettere pause, User-Agent onesto." },
   { t: "Migrazione (up/down)", s: "Integrazioni & dati", d: "File versionato che porta lo schema avanti (up) o indietro (down), applicato una volta e in ordine in ogni ambiente." },
   { t: "Expand → backfill → contract", s: "Integrazioni & dati", d: "Cambio schema a zero downtime: aggiungi (nullable), riempi a lotti, rimuovi il vecchio quando nessuno lo usa più." },
-  { t: "SSO / Identity Provider", s: "Integrazioni & dati", d: "L'utente accede col login aziendale; la password resta all'IdP (Okta/Entra) che ti manda un'asserzione firmata." },
-  { t: "SAML / OIDC", s: "Integrazioni & dati", d: "Due protocolli SSO: SAML (enterprise, XML), OIDC (moderno, OAuth2+JSON/JWT). Stesso scopo, formato diverso." },
-  { t: "SCIM", s: "Integrazioni & dati", d: "Provisioning automatico: l'IdP crea/aggiorna/disattiva gli account da te. Chi lascia l'azienda sparisce dal prodotto." },
-  { t: "RBAC / Multi-tenancy", s: "Integrazioni & dati", d: "Permessi per ruolo (admin/editor/viewer); più aziende sullo stesso sistema, ognuna vede solo i propri dati (filtro tenant_id)." },
+  { t: "SSO / Identity Provider", s: "Auth & sicurezza", d: "L'utente accede col login aziendale; la password resta all'IdP (Okta/Entra) che ti manda un'asserzione firmata." },
+  { t: "SAML / OIDC", s: "Auth & sicurezza", d: "Due protocolli SSO: SAML (enterprise, XML), OIDC (moderno, OAuth2+JSON/JWT). Stesso scopo, formato diverso." },
+  { t: "SCIM", s: "Auth & sicurezza", d: "Provisioning automatico: l'IdP crea/aggiorna/disattiva gli account da te. Chi lascia l'azienda sparisce dal prodotto." },
+  { t: "RBAC / Multi-tenancy", s: "Auth & sicurezza", d: "Permessi per ruolo (admin/editor/viewer); più aziende sullo stesso sistema, ognuna vede solo i propri dati (filtro tenant_id)." },
   { t: "Agent", s: "AI", d: "LLM in un ciclo con tool: ragiona → agisce (tool) → osserva → ripete, decidendo i passi a runtime, finché ha la risposta." },
   { t: "Tool use / Tool call", s: "AI", d: "Il modello chiede di eseguire un tool (nome + args JSON); il tuo codice lo esegue e gli ridà il risultato. La description guida quando usarlo." },
   { t: "Chain-of-Thought (CoT)", s: "AI", d: "Far scrivere al modello i passaggi intermedi del ragionamento prima della risposta («ragiona passo per passo»). Aiuta sui problemi in più passi; è solo testo, non verifica i fatti." },
@@ -4980,9 +4984,9 @@ const GLOSSARY = [
   { t: "Testing (unit/integration/e2e)", s: "Fondamenta", d: "La piramide: tanti unit (una funzione), alcuni integration (più pezzi), pochi e2e (tutto il flusso). Rete per cambiare senza paura." },
   { t: "TDD", s: "Fondamenta", d: "Test-Driven Development: rosso (test che fallisce) → verde (codice minimo) → refactor. Definisci il «cosa» prima del «come»." },
   { t: "Mock / Fake", s: "Fondamenta", d: "Sostituti delle dipendenze nei test: mock/stub (finti) o fake (implementazione leggera vera, es. DB in memoria) per isolare ciò che testi." },
-  { t: "OWASP", s: "Infrastruttura", d: "L'elenco dei rischi di sicurezza web più comuni. Filo comune: «non fidarti dell'input», «dati ≠ istruzioni», permessi minimi." },
-  { t: "SQL injection / XSS", s: "Infrastruttura", d: "Input non fidato eseguito come comando (SQL) o codice nella pagina (XSS). Difesa: query parametrizzate ed escaping dell'output." },
-  { t: "CORS / CSP / TLS", s: "Infrastruttura", d: "CORS: quali origini chiamano l'API dal browser. CSP: cosa la pagina può caricare/eseguire. TLS/HTTPS: cifra il traffico in transito." },
+  { t: "OWASP", s: "Auth & sicurezza", d: "L'elenco dei rischi di sicurezza web più comuni. Filo comune: «non fidarti dell'input», «dati ≠ istruzioni», permessi minimi." },
+  { t: "SQL injection / XSS", s: "Auth & sicurezza", d: "Input non fidato eseguito come comando (SQL) o codice nella pagina (XSS). Difesa: query parametrizzate ed escaping dell'output." },
+  { t: "CORS / CSP / TLS", s: "Auth & sicurezza", d: "CORS: quali origini chiamano l'API dal browser. CSP: cosa la pagina può caricare/eseguire. TLS/HTTPS: cifra il traffico in transito." },
   { t: "ORM", s: "SQL & Database", d: "Object-Relational Mapper: lavori con oggetti (user.orders) invece di SQL a mano. Comodo, ma nasconde le query che genera." },
   { t: "Problema N+1", s: "SQL & Database", d: "1 query per la lista + 1 per ogni elemento del ciclo (1+N). Si cura con l'eager loading (JOIN/prefetch) → poche query costanti." },
   { t: "Eager vs lazy loading", s: "SQL & Database", d: "Lazy: i dati collegati si caricano al primo accesso (rischio N+1). Eager: si caricano in anticipo insieme, in una-due query." },
@@ -5016,12 +5020,12 @@ const GLOSSARY = [
   { t: "Dry-run", s: "Integrazioni cliente", d: "Esecuzione di prova che estrae, trasforma e valida mostrando cosa passerebbe e cosa verrebbe scartato, senza scrivere nulla. Rete di sicurezza pre-load." },
   { t: "Sync incrementale", s: "Integrazioni cliente", d: "Sincronizza solo i record modificati dopo un cursore (updated_at), invece di rileggere tutto. Alternativa a full sync e webhook." },
   { t: "Validation gate", s: "Integrazioni cliente", d: "Cancello che ferma i dati incoerenti (es. somma righe ≠ totale) e li manda a revisione umana invece che nel database. Cuore dell'ingest documenti." },
-  { t: "PKCE", s: "Infrastruttura", d: "Proof Key for Code Exchange: code_challenge (hash) all'inizio, code_verifier al riscatto del code. Un authorization code intercettato da solo non vale niente." },
-  { t: "JWKS", s: "Infrastruttura", d: "Endpoint (/.well-known/jwks.json) con le chiavi pubbliche dell'issuer, scelte per kid: il server verifica le firme RS256 e le chiavi ruotano senza deploy." },
-  { t: "Refresh token rotation", s: "Infrastruttura", d: "Ogni refresh consuma il token e ne emette uno nuovo. Se un refresh già usato ricompare (reuse detection), è la prova di un furto: si revoca l'intera famiglia." },
-  { t: "BFF (Backend-for-Frontend)", s: "Infrastruttura", d: "Un backend sottile custodisce i token OAuth e fa da proxy: al browser arriva solo un cookie di sessione httpOnly. La scelta più robusta per le SPA." },
-  { t: "CSRF / SameSite", s: "Infrastruttura", d: "Il cookie viaggia da solo con ogni richiesta: un sito ostile può fartene inviare una autenticata (CSRF). SameSite=Lax/Strict e token anti-CSRF lo bloccano." },
-  { t: "alg:none / key confusion", s: "Infrastruttura", d: "Attacchi JWT: header riscritto senza firma, o chiave pubblica RSA usata come segreto HMAC. Difesa: algoritmo fissato lato server, mai letto dal token." },
+  { t: "PKCE", s: "Auth & sicurezza", d: "Proof Key for Code Exchange: code_challenge (hash) all'inizio, code_verifier al riscatto del code. Un authorization code intercettato da solo non vale niente." },
+  { t: "JWKS", s: "Auth & sicurezza", d: "Endpoint (/.well-known/jwks.json) con le chiavi pubbliche dell'issuer, scelte per kid: il server verifica le firme RS256 e le chiavi ruotano senza deploy." },
+  { t: "Refresh token rotation", s: "Auth & sicurezza", d: "Ogni refresh consuma il token e ne emette uno nuovo. Se un refresh già usato ricompare (reuse detection), è la prova di un furto: si revoca l'intera famiglia." },
+  { t: "BFF (Backend-for-Frontend)", s: "Auth & sicurezza", d: "Un backend sottile custodisce i token OAuth e fa da proxy: al browser arriva solo un cookie di sessione httpOnly. La scelta più robusta per le SPA." },
+  { t: "CSRF / SameSite", s: "Auth & sicurezza", d: "Il cookie viaggia da solo con ogni richiesta: un sito ostile può fartene inviare una autenticata (CSRF). SameSite=Lax/Strict e token anti-CSRF lo bloccano." },
+  { t: "alg:none / key confusion", s: "Auth & sicurezza", d: "Attacchi JWT: header riscritto senza firma, o chiave pubblica RSA usata come segreto HMAC. Difesa: algoritmo fissato lato server, mai letto dal token." },
   { t: "CREATE INDEX CONCURRENTLY", s: "SQL & Database", d: "Costruisce un indice senza bloccare le scritture. Più lento, fuori transazione, e se fallisce lascia un indice INVALID da rifare." },
   { t: "NOT VALID / VALIDATE", s: "SQL & Database", d: "Il vincolo si applica subito solo alle righe nuove (istantaneo); VALIDATE verifica il pregresso con un lock leggero. La via per NOT NULL e FK senza downtime." },
   { t: "lock_timeout", s: "SQL & Database", d: "Un ALTER in attesa di lock si accoda DAVANTI alle query nuove e ferma l'app. Con lock_timeout basso la migration fallisce in fretta e si ritenta: innocuo." },
@@ -5054,13 +5058,16 @@ const GLOSSARY = [
   { t: "Seat-based / usage-based / tiered", s: "Product Management", d: "Tre modelli di pricing B2B SaaS: per posto (prevedibile, disallinea dal valore), a consumo (allineato, imprevedibile), a scaglioni (semplice, spreca margine ai bordi)." },
   { t: "Activation rate", s: "Product Management", d: "Percentuale di nuovi utenti/account che raggiunge il primo valore reale del prodotto (non solo la registrazione) entro una finestra di tempo definita." },
 ];
+GLOSSARY.push(...BK_GLOSSARY);
 
-const GLOSS_TONE = { "Python": "emerald", "Strutture dati": "emerald", "LeetCode": "indigo", "Fondamenta": "blue", "SQL & Database": "emerald", "Infrastruttura": "amber", "Integrazioni & dati": "blue", "Integrazioni cliente": "blue", "AI": "indigo", "Workflow agentici": "indigo", "System Design": "red", "Code review": "amber", "Product Management": "blue" };
+const GLOSS_TONE = { "Python": "emerald", "Strutture dati": "emerald", "LeetCode": "indigo", "Fondamenta": "blue", "SQL & Database": "emerald", "Infrastruttura": "amber", "Auth & sicurezza": "red","Integrazioni & dati": "blue", "Integrazioni cliente": "blue", "AI": "indigo", "Workflow agentici": "indigo", "System Design": "red", "Code review": "amber", "Product Management": "blue" };
 
 function GlossarioModule() {
   const [q, setQ] = useState("");
   const term = q.trim().toLowerCase();
-  const shown = GLOSSARY.filter((g) => !term || g.t.toLowerCase().includes(term) || g.d.toLowerCase().includes(term));
+  // voci con `en` (capitoli avanzati) si mostrano e si cercano nella lingua attiva
+  const gt = (g) => T(g.t, g.en?.t), gd = (g) => T(g.d, g.en?.d);
+  const shown = GLOSSARY.filter((g) => !term || gt(g).toLowerCase().includes(term) || gd(g).toLowerCase().includes(term));
   return (
     <div className="space-y-4">
       <Lead>
@@ -5078,10 +5085,10 @@ function GlossarioModule() {
         {shown.map((g) => (
           <div key={g.t} className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="font-mono text-sm text-zinc-100">{g.t}</span>
+              <span className="font-mono text-sm text-zinc-100">{gt(g)}</span>
               <Pill tone={GLOSS_TONE[g.s]}>{sect(g.s)}</Pill>
             </div>
-            <p className="text-sm text-zinc-400 leading-relaxed">{g.d}</p>
+            <p className="text-sm text-zinc-400 leading-relaxed">{gd(g)}</p>
           </div>
         ))}
         {shown.length === 0 && <div className="text-sm text-zinc-600 text-center py-6">{T("Nessun termine per", "No term matches")} «{q}».</div>}
@@ -8454,28 +8461,32 @@ function MigrazioniModule() {
   );
 }
 
-const SSO_STEPS = [
-  { who: "Utente", txt: "Vado su app.tuoprodotto.com e clicco «Accedi con l'azienda».", tone: "indigo" },
-  { who: "App (SP)", txt: "Non gestisco io la password: ti reindirizzo al tuo Identity Provider (Okta/Entra/Google).", tone: "blue" },
-  { who: "Identity Provider", txt: "Ti autentico io (password + MFA). Sei davvero ada@azienda.com? Sì.", tone: "emerald" },
-  { who: "Identity Provider", txt: "Rimando al SP un'asserzione firmata: «è Ada, gruppo=admin», non falsificabile.", tone: "emerald" },
-  { who: "App (SP)", txt: "Verifico la firma, creo la sessione. Ada è dentro — senza che io abbia mai visto la sua password.", tone: "blue" },
-];
+const SSO_STEPS = memoByLang(() => [
+  { who: T("Utente", "User"), txt: T("Vado su app.tuoprodotto.com e clicco «Accedi con l'azienda».", "I go to app.yourproduct.com and click “Sign in with your company”."), tone: "indigo" },
+  { who: "App (SP)", txt: T("Non gestisco io la password: ti reindirizzo al tuo Identity Provider (Okta/Entra/Google).", "I don't handle the password: I redirect you to your Identity Provider (Okta/Entra/Google)."), tone: "blue" },
+  { who: "Identity Provider", txt: T("Ti autentico io (password + MFA). Sei davvero ada@azienda.com? Sì.", "I authenticate you (password + MFA). Are you really ada@company.com? Yes."), tone: "emerald" },
+  { who: "Identity Provider", txt: T("Rimando al SP un'asserzione firmata: «è Ada, gruppo=admin», non falsificabile.", "I send the SP a signed assertion: “it's Ada, group=admin”, which can't be forged."), tone: "emerald" },
+  { who: "App (SP)", txt: T("Verifico la firma, creo la sessione. Ada è dentro — senza che io abbia mai visto la sua password.", "I verify the signature and create the session. Ada is in — without me ever seeing her password."), tone: "blue" },
+]);
 
 function AuthentModule() {
   const [step, setStep] = useState(0);
+  const steps = SSO_STEPS();
   return (
     <div className="space-y-4">
-      <Lead>
-        Vendere a un'azienda cambia le regole dell'auth. Un cliente enterprise non vuole che i suoi 5.000 dipendenti abbiano una password sul <span className="text-white">tuo</span>
+      <Lead>{T(
+        <>Vendere a un'azienda cambia le regole dell'auth. Un cliente enterprise non vuole che i suoi 5.000 dipendenti abbiano una password sul <span className="text-white">tuo</span>
         sistema: vuole il <span className="text-white font-medium">Single Sign-On (SSO)</span> — accedono col login aziendale che già usano, e tu ti fidi del loro
-        <span className="text-white font-medium"> Identity Provider</span>. Per un solution engineer in una startup B2B, saper parlare di questo è quasi più importante del resto.
-      </Lead>
+        <span className="text-white font-medium"> Identity Provider</span>. Per un solution engineer in una startup B2B, saper parlare di questo è quasi più importante del resto.</>,
+        <>Selling to a company changes the rules of auth. An enterprise customer doesn't want its 5,000 employees to have a password on <span className="text-white">your</span>
+        system: it wants <span className="text-white font-medium">Single Sign-On (SSO)</span> — they log in with the company login they already use, and you trust their
+        <span className="text-white font-medium"> Identity Provider</span>. For a solutions engineer at a B2B startup, being able to talk about this matters almost more than anything else.</>
+      )}</Lead>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">il flusso SSO, passo per passo</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("il flusso SSO, passo per passo", "the SSO flow, step by step")}</div>
         <div className="space-y-1.5 mb-3">
-          {SSO_STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <button key={i} onClick={() => setStep(i)} className={`w-full text-left flex items-start gap-2 rounded-lg border px-3 py-2 transition-all ${step === i ? `${TONE[s.tone].border} bg-zinc-900` : "border-zinc-800 bg-zinc-950 opacity-60 hover:opacity-100"}`}>
               <span className="font-mono text-[10px] text-zinc-600 mt-0.5">{i + 1}</span>
               <div>
@@ -8487,47 +8498,69 @@ function AuthentModule() {
         </div>
         <div className="flex gap-2">
           <button disabled={step === 0} onClick={() => setStep((s) => s - 1)} className="px-3 py-1.5 rounded-md border border-zinc-800 text-zinc-300 hover:border-zinc-600 disabled:opacity-30 text-sm">◀</button>
-          <button disabled={step === SSO_STEPS.length - 1} onClick={() => setStep((s) => s + 1)} className="flex-1 px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white text-sm">Avanti ▶</button>
+          <button disabled={step === steps.length - 1} onClick={() => setStep((s) => s + 1)} className="flex-1 px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white text-sm">{T("Avanti ▶", "Next ▶")}</button>
         </div>
-        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">La chiave: la <span className="text-white">password non tocca mai il tuo sistema</span>. Tu ricevi solo un'asserzione firmata dall'IdP che dice chi è l'utente e cosa può fare.</p>
+        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{T(
+          <>La chiave: la <span className="text-white">password non tocca mai il tuo sistema</span>. Tu ricevi solo un'asserzione firmata dall'IdP che dice chi è l'utente e cosa può fare.</>,
+          <>The key point: the <span className="text-white">password never touches your system</span>. You only receive an assertion signed by the IdP that says who the user is and what they can do.</>
+        )}</p>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">SAML vs OIDC · i due protocolli che sentirai</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("SAML vs OIDC · i due protocolli che sentirai", "SAML vs OIDC · the two protocols you'll hear about")}</div>
         <div className="grid sm:grid-cols-2 gap-2 text-sm">
-          <div className="rounded-lg border border-blue-900 bg-blue-950 px-3 py-2"><div className="font-mono text-blue-200 mb-1">SAML</div><div className="text-zinc-300 text-[13px]">Il vecchio standard enterprise, basato su XML. Ancora onnipresente in azienda (Okta, Entra/AD). Scambia «asserzioni» firmate.</div></div>
-          <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2"><div className="font-mono text-emerald-200 mb-1">OIDC</div><div className="text-zinc-300 text-[13px]">Il moderno, su OAuth 2.0 + JSON. È «Accedi con Google» sotto steroidi. Più semplice, mobile-friendly, token JWT.</div></div>
+          <div className="rounded-lg border border-blue-900 bg-blue-950 px-3 py-2"><div className="font-mono text-blue-200 mb-1">SAML</div><div className="text-zinc-300 text-[13px]">{T("Il vecchio standard enterprise, basato su XML. Ancora onnipresente in azienda (Okta, Entra/AD). Scambia «asserzioni» firmate.", "The old enterprise standard, based on XML. Still everywhere in companies (Okta, Entra/AD). It exchanges signed “assertions”.")}</div></div>
+          <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2"><div className="font-mono text-emerald-200 mb-1">OIDC</div><div className="text-zinc-300 text-[13px]">{T("Il moderno, su OAuth 2.0 + JSON. È «Accedi con Google» sotto steroidi. Più semplice, mobile-friendly, token JWT.", "The modern one, on OAuth 2.0 + JSON. It's “Sign in with Google” on steroids. Simpler, mobile-friendly, JWT tokens.")}</div></div>
         </div>
-        <p className="text-[12px] text-zinc-500 mt-2">Stesso concetto (deleghi l'identità all'IdP), imballaggio diverso. Un prodotto B2B serio spesso supporta entrambi.</p>
+        <p className="text-[12px] text-zinc-500 mt-2">{T("Stesso concetto (deleghi l'identità all'IdP), imballaggio diverso. Un prodotto B2B serio spesso supporta entrambi.", "Same concept (you delegate identity to the IdP), different packaging. A serious B2B product often supports both.")}</p>
       </Card>
 
-      <Note tone="indigo" icon={Users}>
-        <span className="font-medium">SSO risolve il login, non il ciclo di vita degli account.</span> Per quello c'è lo <span className="text-white">SCIM</span>: l'IdP aziendale
+      <Note tone="indigo" icon={Users}>{T(
+        <><span className="font-medium">SSO risolve il login, non il ciclo di vita degli account.</span> Per quello c'è lo <span className="text-white">SCIM</span>: l'IdP aziendale
         crea/aggiorna/<span className="text-white">disattiva</span> automaticamente gli utenti da te. Quando un dipendente lascia l'azienda, sparisce anche dal tuo prodotto — senza
-        che nessuno debba ricordarsene. Provisioning e de-provisioning automatici: un requisito da checklist enterprise.
-      </Note>
+        che nessuno debba ricordarsene. Provisioning e de-provisioning automatici: un requisito da checklist enterprise.</>,
+        <><span className="font-medium">SSO solves login, not the account lifecycle.</span> For that there's <span className="text-white">SCIM</span>: the company IdP
+        automatically creates/updates/<span className="text-white">deactivates</span> users on your side. When an employee leaves the company, they disappear from your product too — without
+        anyone having to remember. Automatic provisioning and de-provisioning: an item on every enterprise checklist.</>
+      )}</Note>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">gli altri mattoni enterprise</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("gli altri mattoni enterprise", "the other enterprise building blocks")}</div>
         <div className="space-y-2 text-sm">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">RBAC</span> <span className="text-zinc-400">— i permessi seguono i <span className="text-white">ruoli</span> (admin/editor/viewer), non i singoli. L'IdP manda il gruppo, tu mappi il ruolo. È il 403 del modulo Auth, organizzato.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">Multi-tenancy</span> <span className="text-zinc-400">— più aziende (tenant) sullo stesso sistema, ognuna vede <span className="text-white">solo i propri dati</span>. Ogni query filtra per <span className="font-mono">tenant_id</span>: isolamento è la regola numero uno.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">Audit log</span> <span className="text-zinc-400">— chi ha fatto cosa e quando. Gli enterprise lo esigono per compliance. È il modulo Logging, con nome e responsabilità.</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">RBAC</span> <span className="text-zinc-400">{T(
+            <>— i permessi seguono i <span className="text-white">ruoli</span> (admin/editor/viewer), non i singoli. L'IdP manda il gruppo, tu mappi il ruolo. È il 403 del modulo Auth, organizzato.</>,
+            <>— permissions follow <span className="text-white">roles</span> (admin/editor/viewer), not individuals. The IdP sends the group, you map the role. It's the 403 from the Auth module, organised.</>
+          )}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">Multi-tenancy</span> <span className="text-zinc-400">{T(
+            <>— più aziende (tenant) sullo stesso sistema, ognuna vede <span className="text-white">solo i propri dati</span>. Ogni query filtra per <span className="font-mono">tenant_id</span>: isolamento è la regola numero uno.</>,
+            <>— several companies (tenants) on the same system, each seeing <span className="text-white">only its own data</span>. Every query filters by <span className="font-mono">tenant_id</span>: isolation is rule number one.</>
+          )}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">Audit log</span> <span className="text-zinc-400">{T(
+            "— chi ha fatto cosa e quando. Gli enterprise lo esigono per compliance. È il modulo Logging, con nome e responsabilità.",
+            "— who did what and when. Enterprises demand it for compliance. It's the Logging module, with names and accountability."
+          )}</span></div>
         </div>
       </Card>
 
-      <Analogy>
-        L'SSO è il badge aziendale. Non ti fai una chiave nuova per ogni stanza (ogni app): mostri il badge, e la porta si fida dell'ufficio che l'ha emesso
+      <Analogy>{T(
+        <>L'SSO è il badge aziendale. Non ti fai una chiave nuova per ogni stanza (ogni app): mostri il badge, e la porta si fida dell'ufficio che l'ha emesso
         (l'Identity Provider). Lo SCIM è l'ufficio del personale che <span className="text-zinc-100">disattiva il badge</span> il giorno che te ne vai — e da quel momento nessuna
-        porta si apre più, ovunque.
-      </Analogy>
+        porta si apre più, ovunque.</>,
+        <>SSO is the company badge. You don't get a new key for every room (every app): you show the badge, and the door trusts the office that issued it
+        (the Identity Provider). SCIM is the HR office that <span className="text-zinc-100">deactivates the badge</span> the day you leave — and from that moment no
+        door opens for you anywhere.</>
+      )}</Analogy>
 
-      <Takeaway>
-        Enterprise auth = <span className="text-white">delega dell'identità</span>. Con l'<span className="text-white">SSO</span> (SAML o OIDC) la password resta all'Identity Provider del
+      <Takeaway>{T(
+        <>Enterprise auth = <span className="text-white">delega dell'identità</span>. Con l'<span className="text-white">SSO</span> (SAML o OIDC) la password resta all'Identity Provider del
         cliente; tu ricevi solo un'asserzione firmata. Lo <span className="text-white">SCIM</span> automatizza creazione e disattivazione degli account. Sopra ci metti
         <span className="text-white"> RBAC</span> (permessi per ruolo), <span className="text-white">multi-tenancy</span> (isolamento per tenant) e <span className="text-white">audit log</span>.
-        Sono le voci che sbloccano i contratti grossi — e saperle nominare al momento giusto è metà della vendita tecnica.
-      </Takeaway>
+        Sono le voci che sbloccano i contratti grossi — e saperle nominare al momento giusto è metà della vendita tecnica.</>,
+        <>Enterprise auth = <span className="text-white">delegating identity</span>. With <span className="text-white">SSO</span> (SAML or OIDC) the password stays with the customer's Identity
+        Provider; you only receive a signed assertion. <span className="text-white">SCIM</span> automates creating and deactivating accounts. On top you add
+        <span className="text-white"> RBAC</span> (permissions by role), <span className="text-white">multi-tenancy</span> (isolation per tenant) and <span className="text-white">audit logs</span>.
+        These are the items that unlock big contracts — and being able to name them at the right moment is half of technical selling.</>
+      )}</Takeaway>
     </div>
   );
 }
@@ -8536,15 +8569,15 @@ function AuthentModule() {
    INFRASTRUTTURA — moduli aggiuntivi (deploy/CI-CD, cloud)
    ===================================================================== */
 
-const DEPLOY_STEPS = [
-  { k: "push", label: "git push", sub: "il tuo codice va sul repo", icon: GitBranch },
-  { k: "test", label: "CI: install + test", sub: "la pipeline installa le dipendenze e lancia i test", icon: CheckSquare },
-  { k: "build", label: "build immagine", sub: "docker build → un'immagine identica ovunque", icon: Package },
-  { k: "registry", label: "push al registry", sub: "l'immagine finisce in un magazzino (registry)", icon: Container },
-  { k: "deploy", label: "deploy (rolling)", sub: "le nuove istanze salgono, le vecchie scendono a poco a poco", icon: Rocket },
-  { k: "health", label: "health check", sub: "/health risponde 200? solo allora ricevi traffico", icon: ShieldCheck },
-  { k: "live", label: "live 🎉", sub: "la nuova versione serve gli utenti", icon: Globe },
-];
+const DEPLOY_STEPS = memoByLang(() => [
+  { k: "push", label: "git push", sub: T("il tuo codice va sul repo", "your code goes to the repo"), icon: GitBranch },
+  { k: "test", label: T("CI: install + test", "CI: install + test"), sub: T("la pipeline installa le dipendenze e lancia i test", "the pipeline installs dependencies and runs the tests"), icon: CheckSquare },
+  { k: "build", label: T("build immagine", "build the image"), sub: T("docker build → un'immagine identica ovunque", "docker build → an image that's identical everywhere"), icon: Package },
+  { k: "registry", label: T("push al registry", "push to the registry"), sub: T("l'immagine finisce in un magazzino (registry)", "the image lands in a warehouse (registry)"), icon: Container },
+  { k: "deploy", label: T("deploy (rolling)", "deploy (rolling)"), sub: T("le nuove istanze salgono, le vecchie scendono a poco a poco", "new instances come up, old ones go down gradually"), icon: Rocket },
+  { k: "health", label: "health check", sub: T("/health risponde 200? solo allora ricevi traffico", "does /health answer 200? only then do you get traffic"), icon: ShieldCheck },
+  { k: "live", label: "live 🎉", sub: T("la nuova versione serve gli utenti", "the new version is serving users"), icon: Globe },
+]);
 
 function DeployModule() {
   const [idx, setIdx] = useState(-1);
@@ -8552,12 +8585,13 @@ function DeployModule() {
   const [rolled, setRolled] = useState(false);
   const timer = useRef(null);
   const failIndex = 1; // "test"
+  const steps = DEPLOY_STEPS();
   function run() {
     clearInterval(timer.current); setRolled(false); setIdx(0);
     timer.current = setInterval(() => {
       setIdx((i) => {
         if (failAt && i === failIndex) { clearInterval(timer.current); setRolled(true); return i; }
-        if (i >= DEPLOY_STEPS.length - 1) { clearInterval(timer.current); return i; }
+        if (i >= steps.length - 1) { clearInterval(timer.current); return i; }
         return i + 1;
       });
     }, 650);
@@ -8567,22 +8601,25 @@ function DeployModule() {
   const failedHere = rolled;
   return (
     <div className="space-y-4">
-      <Lead>
-        «Funziona sul mio computer» non è ancora un prodotto. Il <span className="text-white font-medium">deploy</span> è il percorso automatico che
+      <Lead>{T(
+        <>«Funziona sul mio computer» non è ancora un prodotto. Il <span className="text-white font-medium">deploy</span> è il percorso automatico che
         porta il tuo codice da un commit fino a girare su una macchina raggiungibile dagli utenti — passando da build, test e controlli, senza toccare
-        niente a mano. Automatizzarlo è la <span className="text-white font-medium">CI/CD</span>.
-      </Lead>
+        niente a mano. Automatizzarlo è la <span className="text-white font-medium">CI/CD</span>.</>,
+        <>“It works on my machine” isn't a product yet. A <span className="text-white font-medium">deploy</span> is the automated path that
+        takes your code from a commit to running on a machine users can reach — through build, tests and checks, without touching
+        anything by hand. Automating it is <span className="text-white font-medium">CI/CD</span>.</>
+      )}</Lead>
 
       <Card>
         <div className="flex items-center gap-3 mb-3 flex-wrap">
           <button onClick={run} className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"><Play size={15} /> git push → deploy</button>
           <button onClick={reset} className="px-3 py-2 rounded-md text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1"><RotateCcw size={13} /> reset</button>
           <label className="flex items-center gap-2 text-xs text-zinc-400 font-mono ml-auto cursor-pointer">
-            <input type="checkbox" checked={failAt} onChange={(e) => { setFailAt(e.target.checked); reset(); }} className="accent-red-500" /> un test fallisce
+            <input type="checkbox" checked={failAt} onChange={(e) => { setFailAt(e.target.checked); reset(); }} className="accent-red-500" /> {T("un test fallisce", "a test fails")}
           </label>
         </div>
         <div className="space-y-1.5">
-          {DEPLOY_STEPS.map((s, i) => {
+          {steps.map((s, i) => {
             const done = idx > i && !(failedHere && i >= failIndex);
             const cur = idx === i && !failedHere;
             const isFail = failedHere && i === failIndex;
@@ -8596,28 +8633,31 @@ function DeployModule() {
                 {isFail ? <XCircle size={16} className="shrink-0" /> : done ? <CheckCircle2 size={16} className="shrink-0" /> : <SIcon size={16} className="shrink-0" />}
                 <div className="min-w-0">
                   <div className="font-mono text-[13px]">{s.label}</div>
-                  <div className="text-[11px] opacity-80 truncate">{isFail ? "test rosso → la pipeline si ferma qui, non si va in produzione" : s.sub}</div>
+                  <div className="text-[11px] opacity-80 truncate">{isFail ? T("test rosso → la pipeline si ferma qui, non si va in produzione", "red test → the pipeline stops here, nothing goes to production") : s.sub}</div>
                 </div>
               </div>
             );
           })}
         </div>
         {failedHere && (
-          <div className="mt-3 rounded-lg border border-amber-900 bg-amber-950 px-3 py-2 text-sm text-amber-200">
-            <span className="font-medium">Rollback (implicito):</span> il deploy non è mai partito, quindi gli utenti restano sulla <span className="text-white">versione precedente</span>, sana.
-            È il valore della pipeline: il codice rotto non arriva mai in produzione. Correggi, ripushi, riparte.
-          </div>
+          <div className="mt-3 rounded-lg border border-amber-900 bg-amber-950 px-3 py-2 text-sm text-amber-200">{T(
+            <><span className="font-medium">Rollback (implicito):</span> il deploy non è mai partito, quindi gli utenti restano sulla <span className="text-white">versione precedente</span>, sana.
+            È il valore della pipeline: il codice rotto non arriva mai in produzione. Correggi, ripushi, riparte.</>,
+            <><span className="font-medium">Rollback (implicit):</span> the deploy never started, so users stay on the <span className="text-white">previous version</span>, which is healthy.
+            That's the value of the pipeline: broken code never reaches production. Fix it, push again, and it starts over.</>
+          )}</div>
         )}
-        {idx === DEPLOY_STEPS.length - 1 && !failedHere && (
-          <div className="mt-3 rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-sm text-emerald-200">
-            Nuova versione live. Con il <span className="text-white">rolling update</span> non c'è downtime: le vecchie istanze hanno servito le richieste finché le nuove non erano pronte e «sane».
-          </div>
+        {idx === steps.length - 1 && !failedHere && (
+          <div className="mt-3 rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-sm text-emerald-200">{T(
+            <>Nuova versione live. Con il <span className="text-white">rolling update</span> non c'è downtime: le vecchie istanze hanno servito le richieste finché le nuove non erano pronte e «sane».</>,
+            <>New version live. With a <span className="text-white">rolling update</span> there's no downtime: the old instances served requests until the new ones were ready and “healthy”.</>
+          )}</div>
         )}
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">una pipeline reale (GitHub Actions), in sostanza</div>
-        <Code>{`on: push:              # a ogni push...
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("una pipeline reale (GitHub Actions), in sostanza", "a real pipeline (GitHub Actions), in essence")}</div>
+        <Code>{T(`on: push:              # a ogni push...
   branches: [main]
 jobs:
   build:
@@ -8626,36 +8666,55 @@ jobs:
       - run: pytest            # test: se rossi, STOP
       - run: docker build -t app:$SHA .
       - run: docker push registry/app:$SHA
-      - run: deploy app:$SHA   # rolling, con health check`}</Code>
+      - run: deploy app:$SHA   # rolling, con health check`, `on: push:              # on every push...
+  branches: [main]
+jobs:
+  build:
+    steps:
+      - run: pip install -r requirements.txt
+      - run: pytest            # tests: if red, STOP
+      - run: docker build -t app:$SHA .
+      - run: docker push registry/app:$SHA
+      - run: deploy app:$SHA   # rolling, with a health check`)}</Code>
       </Card>
 
-      <Note tone="indigo" icon={KeyRound}>
-        <span className="font-medium">La config sta nel codice, i segreti no.</span> Chiavi API, password del DB e token vivono in
+      <Note tone="indigo" icon={KeyRound}>{T(
+        <><span className="font-medium">La config sta nel codice, i segreti no.</span> Chiavi API, password del DB e token vivono in
         <span className="text-white"> variabili d'ambiente</span> (o in un secret manager), <span className="text-white">mai</span> committati nel repo. Il famoso
         <span className="font-mono"> .env</span> resta in locale (in <span className="font-mono">.gitignore</span>); in produzione le stesse variabili le inietta la
-        piattaforma. È il principio del «config nell'ambiente»: la stessa immagine gira in dev, staging e prod, cambiando solo le variabili.
-      </Note>
+        piattaforma. È il principio del «config nell'ambiente»: la stessa immagine gira in dev, staging e prod, cambiando solo le variabili.</>,
+        <><span className="font-medium">Config lives in the code, secrets don't.</span> API keys, DB passwords and tokens live in
+        <span className="text-white"> environment variables</span> (or a secret manager), <span className="text-white">never</span> committed to the repo. The famous
+        <span className="font-mono"> .env</span> stays local (in <span className="font-mono">.gitignore</span>); in production the platform injects the same variables.
+        It's the “config in the environment” principle: the same image runs in dev, staging and prod, with only the variables changing.</>
+      )}</Note>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">strategie di rilascio (come cambi versione senza rompere)</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("strategie di rilascio (come cambi versione senza rompere)", "release strategies (how to change version without breaking things)")}</div>
         <div className="space-y-2 text-sm">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">rolling</span> <span className="text-zinc-400">— sostituisci le istanze a poco a poco. Zero downtime, default sensato.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">blue-green</span> <span className="text-zinc-400">— tieni due ambienti gemelli, sposti il traffico in un colpo, rollback = risposti indietro.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">canary</span> <span className="text-zinc-400">— mandi la nuova versione all'1% degli utenti, guardi le metriche, poi allarghi.</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">rolling</span> <span className="text-zinc-400">{T("— sostituisci le istanze a poco a poco. Zero downtime, default sensato.", "— replace the instances gradually. Zero downtime, the sensible default.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">blue-green</span> <span className="text-zinc-400">{T("— tieni due ambienti gemelli, sposti il traffico in un colpo, rollback = risposti indietro.", "— keep two twin environments, switch the traffic in one go, rollback = switch it back.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">canary</span> <span className="text-zinc-400">{T("— mandi la nuova versione all'1% degli utenti, guardi le metriche, poi allarghi.", "— send the new version to 1% of users, watch the metrics, then widen it.")}</span></div>
         </div>
       </Card>
 
-      <Analogy>
-        La CI/CD è la catena di montaggio con i controlli qualità: un pezzo difettoso (test rosso) viene scartato <span className="text-zinc-100">prima</span> di
+      <Analogy>{T(
+        <>La CI/CD è la catena di montaggio con i controlli qualità: un pezzo difettoso (test rosso) viene scartato <span className="text-zinc-100">prima</span> di
         arrivare al cliente, non richiamato dopo. Il <span className="text-zinc-100">rollback</span> è il pulsante rosso che riporta la linea all'ultima
-        configurazione che funzionava.
-      </Analogy>
+        configurazione che funzionava.</>,
+        <>CI/CD is an assembly line with quality control: a faulty part (a red test) is rejected <span className="text-zinc-100">before</span> it
+        reaches the customer, not recalled afterwards. The <span className="text-zinc-100">rollback</span> is the red button that puts the line back to the last
+        configuration that worked.</>
+      )}</Analogy>
 
-      <Takeaway>
-        Deploy = <span className="text-white">push → build → test → immagine → registry → rilascio → health check</span>, automatico. I test sono il
+      <Takeaway>{T(
+        <>Deploy = <span className="text-white">push → build → test → immagine → registry → rilascio → health check</span>, automatico. I test sono il
         cancello: se sono rossi, la produzione non si tocca. I <span className="text-white">segreti stanno nell'ambiente</span>, non nel codice. E il rilascio
-        <span className="text-white"> rolling/blue-green/canary</span> ti fa cambiare versione senza far cadere il sito. È esattamente lo step «deploy» del tuo progetto di ingest PDF.
-      </Takeaway>
+        <span className="text-white"> rolling/blue-green/canary</span> ti fa cambiare versione senza far cadere il sito. È esattamente lo step «deploy» del tuo progetto di ingest PDF.</>,
+        <>Deploy = <span className="text-white">push → build → test → image → registry → release → health check</span>, automated. The tests are the
+        gate: if they're red, production isn't touched. <span className="text-white">Secrets live in the environment</span>, not in the code. And a
+        <span className="text-white"> rolling/blue-green/canary</span> release lets you change version without taking the site down. It's exactly the “deploy” step of a PDF-ingest project.</>
+      )}</Takeaway>
     </div>
   );
 }
@@ -10624,14 +10683,14 @@ ws.send("hello!");                      // and you can push to the server`)}</Co
   );
 }
 
-const DOCKER_LAYERS = [
-  { txt: "FROM python:3.12-slim", note: "immagine base" },
-  { txt: "WORKDIR /app", note: "cartella di lavoro" },
-  { txt: "COPY requirements.txt .", note: "solo il manifest delle dipendenze" },
-  { txt: "RUN pip install -r requirements.txt", note: "installa le dipendenze — lento" },
-  { txt: "COPY . .", note: "il tuo codice" },
-  { txt: 'CMD ["python", "app.py"]', note: "comando di avvio" },
-];
+const DOCKER_LAYERS = memoByLang(() => [
+  { txt: "FROM python:3.12-slim", note: T("immagine base", "base image") },
+  { txt: "WORKDIR /app", note: T("cartella di lavoro", "working directory") },
+  { txt: "COPY requirements.txt .", note: T("solo il manifest delle dipendenze", "just the dependency manifest") },
+  { txt: "RUN pip install -r requirements.txt", note: T("installa le dipendenze — lento", "installs the dependencies — slow") },
+  { txt: "COPY . .", note: T("il tuo codice", "your code") },
+  { txt: 'CMD ["python", "app.py"]', note: T("comando di avvio", "start command") },
+]);
 
 function DockerModule() {
   const [changed, setChanged] = useState("codice");
@@ -10639,24 +10698,29 @@ function DockerModule() {
   return (
     <div className="space-y-4">
       <Lead>
-        <span className="text-white font-medium">Docker</span> risolve «funziona sul mio computer»: impacchetta la tua app <span className="text-white font-medium">con</span> le sue dipendenze e un
-        mini sistema operativo in un'<span className="text-white font-medium">immagine</span> che gira identica ovunque. L'immagine è lo stampo (immutabile); il <span className="text-white font-medium">container</span>
-        è un'istanza in esecuzione. Capire come si <span className="text-white">costruisce</span> l'immagine — a strati, con cache — è ciò che rende le build veloci.
+        {T(
+          <><span className="text-white font-medium">Docker</span> risolve «funziona sul mio computer»: impacchetta la tua app <span className="text-white font-medium">con</span> le sue dipendenze e un
+          mini sistema operativo in un'<span className="text-white font-medium">immagine</span> che gira identica ovunque. L'immagine è lo stampo (immutabile); il <span className="text-white font-medium">container</span>
+          è un'istanza in esecuzione. Capire come si <span className="text-white">costruisce</span> l'immagine — a strati, con cache — è ciò che rende le build veloci.</>,
+          <><span className="text-white font-medium">Docker</span> solves “it works on my machine”: it packages your app <span className="text-white font-medium">together with</span> its dependencies and a
+          mini operating system into an <span className="text-white font-medium">image</span> that runs identically anywhere. The image is the mould (immutable); the <span className="text-white font-medium">container</span>
+          is a running instance. Understanding how the image is <span className="text-white">built</span> — in layers, with caching — is what makes builds fast.</>
+        )}
       </Lead>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">un Dockerfile è una pila di strati · cosa hai cambiato prima di ri-buildare?</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("un Dockerfile è una pila di strati · cosa hai cambiato prima di ri-buildare?", "a Dockerfile is a stack of layers · what did you change before rebuilding?")}</div>
         <div className="flex flex-wrap gap-1.5 mb-3">
-          <Btn tone="ghost" active={changed === "niente"} onClick={() => setChanged("niente")}>niente</Btn>
-          <Btn tone="ghost" active={changed === "codice"} onClick={() => setChanged("codice")}>una riga di codice</Btn>
+          <Btn tone="ghost" active={changed === "niente"} onClick={() => setChanged("niente")}>{T("niente", "nothing")}</Btn>
+          <Btn tone="ghost" active={changed === "codice"} onClick={() => setChanged("codice")}>{T("una riga di codice", "one line of code")}</Btn>
           <Btn tone="ghost" active={changed === "dipendenze"} onClick={() => setChanged("dipendenze")}>requirements.txt</Btn>
         </div>
         <div className="space-y-1">
-          {DOCKER_LAYERS.map((l, i) => {
+          {DOCKER_LAYERS().map((l, i) => {
             const cached = i < rebuildFrom;
             return (
               <div key={i} className={`flex items-center gap-2 rounded-md border px-3 py-1.5 ${cached ? "border-emerald-900 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
-                <span className={`font-mono text-[10px] uppercase w-16 shrink-0 ${cached ? "text-emerald-400" : "text-amber-300"}`}>{cached ? "cache ✓" : "rebuild"}</span>
+                <span className={`font-mono text-[10px] uppercase w-16 shrink-0 ${cached ? "text-emerald-400" : "text-amber-300"}`}>{cached ? T("cache ✓", "cached ✓") : T("rebuild", "rebuild")}</span>
                 <span className="font-mono text-[12px] text-zinc-200 truncate">{l.txt}</span>
                 <span className="ml-auto text-[10px] text-zinc-600 hidden sm:inline">{l.note}</span>
               </div>
@@ -10664,24 +10728,24 @@ function DockerModule() {
           })}
         </div>
         <p className="text-[12.5px] text-zinc-400 mt-3 leading-relaxed">{changed === "dipendenze"
-          ? "Hai toccato le dipendenze: lo strato del pip install e tutti quelli sotto si rifanno. È inevitabile e costoso."
+          ? T("Hai toccato le dipendenze: lo strato del pip install e tutti quelli sotto si rifanno. È inevitabile e costoso.", "You touched the dependencies: the pip install layer and everything below it get rebuilt. Unavoidable and expensive.")
           : changed === "codice"
-          ? "Hai toccato solo il codice: le dipendenze restano in cache! Solo «COPY . .» e sotto si rifanno. Ecco perché COPY del codice va DOPO l'install: rende ogni build quotidiana velocissima."
-          : "Niente cambiato: tutti gli strati vengono riusati dalla cache. La build è quasi istantanea."}</p>
+          ? T("Hai toccato solo il codice: le dipendenze restano in cache! Solo «COPY . .» e sotto si rifanno. Ecco perché COPY del codice va DOPO l’install: rende ogni build quotidiana velocissima.", "You touched only the code: the dependencies stay cached! Only “COPY . .” and below get rebuilt. That’s why the code COPY goes AFTER the install: it makes every day-to-day build lightning fast.")
+          : T("Niente cambiato: tutti gli strati vengono riusati dalla cache. La build è quasi istantanea.", "Nothing changed: every layer is reused from cache. The build is near-instant.")}</p>
       </Card>
 
       <div className="grid sm:grid-cols-2 gap-3">
         <Card>
-          <div className="text-xs text-zinc-500 font-mono mb-2">multi-stage · immagini piccole</div>
+          <div className="text-xs text-zinc-500 font-mono mb-2">{T("multi-stage · immagini piccole", "multi-stage · small images")}</div>
           <Code>{`FROM node:20 AS build
 RUN npm ci && npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html`}</Code>
-          <p className="text-[12px] text-zinc-400 mt-2 leading-relaxed">Costruisci in un'immagine pesante, copi <span className="text-white">solo il risultato</span> in una leggera. Da GB a pochi MB.</p>
+          <p className="text-[12px] text-zinc-400 mt-2 leading-relaxed">{T(<>Costruisci in un’immagine pesante, copi <span className="text-white">solo il risultato</span> in una leggera. Da GB a pochi MB.</>, <>You build in a heavy image and copy <span className="text-white">only the result</span> into a light one. From GB down to a few MB.</>)}</p>
         </Card>
         <Card>
-          <div className="text-xs text-zinc-500 font-mono mb-2">docker compose · più container insieme</div>
+          <div className="text-xs text-zinc-500 font-mono mb-2">{T("docker compose · più container insieme", "docker compose · several containers together")}</div>
           <Code>{`services:
   api:
     build: .
@@ -10690,25 +10754,37 @@ COPY --from=build /app/dist /usr/share/nginx/html`}</Code>
   db:
     image: postgres:16
     volumes: ["pgdata:/var/lib/postgresql/data"]`}</Code>
-          <p className="text-[12px] text-zinc-400 mt-2 leading-relaxed">App + database + cache orchestrati con un file. <span className="font-mono">up</span> e sei in piedi.</p>
+          <p className="text-[12px] text-zinc-400 mt-2 leading-relaxed">{T(<>App + database + cache orchestrati con un file. <span className="font-mono">up</span> e sei in piedi.</>, <>App + database + cache orchestrated from one file. <span className="font-mono">up</span> and you are running.</>)}</p>
         </Card>
       </div>
 
       <Note tone="indigo" icon={Ship}>
-        <span className="font-medium">Container ≠ macchina virtuale.</span> Una VM porta un intero sistema operativo (pesante, lento ad avviarsi); un container condivide il kernel
-        dell'host e isola solo il resto — parte in millisecondi, pesa poco. È questa leggerezza che permette di far girare decine di container su una macchina e di
-        scalare orizzontalmente in fretta. Porte (<span className="font-mono">-p</span>), volumi (dati persistenti fuori dal container) ed env (config) sono i tre agganci col mondo.
+        {T(
+          <><span className="font-medium">Container ≠ macchina virtuale.</span> Una VM porta un intero sistema operativo (pesante, lento ad avviarsi); un container condivide il kernel
+          dell'host e isola solo il resto — parte in millisecondi, pesa poco. È questa leggerezza che permette di far girare decine di container su una macchina e di
+          scalare orizzontalmente in fretta. Porte (<span className="font-mono">-p</span>), volumi (dati persistenti fuori dal container) ed env (config) sono i tre agganci col mondo.</>,
+          <><span className="font-medium">A container is not a virtual machine.</span> A VM carries an entire operating system (heavy, slow to boot); a container shares the host's
+          kernel and isolates only the rest — it starts in milliseconds and weighs little. That lightness is what lets you run dozens of containers on one machine and
+          scale horizontally quickly. Ports (<span className="font-mono">-p</span>), volumes (persistent data outside the container) and env (config) are its three hooks into the world.</>
+        )}
       </Note>
 
       <Analogy>
-        Un'immagine Docker è la ricetta stampata con tutti gli ingredienti inclusi nella scatola; il container è il piatto cucinato da quella scatola. Chiunque, in
-        qualsiasi cucina, apre la stessa scatola e ottiene lo stesso piatto — niente più «da me gli ingredienti erano diversi».
+        {T(
+          "Un'immagine Docker è la ricetta stampata con tutti gli ingredienti inclusi nella scatola; il container è il piatto cucinato da quella scatola. Chiunque, in qualsiasi cucina, apre la stessa scatola e ottiene lo stesso piatto — niente più «da me gli ingredienti erano diversi».",
+          "A Docker image is the printed recipe with all the ingredients included in the box; the container is the dish cooked from that box. Anyone, in any kitchen, opens the same box and gets the same dish — no more “my ingredients were different”."
+        )}
       </Analogy>
 
       <Takeaway>
-        Docker impacchetta app + dipendenze in un'<span className="text-white">immagine</span> riproducibile; il <span className="text-white">container</span> è un'istanza che parte in un lampo. Le
-        immagini sono <span className="text-white">strati con cache</span>: ordina il Dockerfile mettendo ciò che cambia di rado (dipendenze) <span className="text-white">prima</span> di ciò che cambia
-        spesso (codice), e le build voleranno. <span className="text-white">Multi-stage</span> per immagini piccole, <span className="text-white">compose</span> per più servizi. È lo step «build immagine» del deploy.
+        {T(
+          <>Docker impacchetta app + dipendenze in un'<span className="text-white">immagine</span> riproducibile; il <span className="text-white">container</span> è un'istanza che parte in un lampo. Le
+          immagini sono <span className="text-white">strati con cache</span>: ordina il Dockerfile mettendo ciò che cambia di rado (dipendenze) <span className="text-white">prima</span> di ciò che cambia
+          spesso (codice), e le build voleranno. <span className="text-white">Multi-stage</span> per immagini piccole, <span className="text-white">compose</span> per più servizi. È lo step «build immagine» del deploy.</>,
+          <>Docker packages app + dependencies into a reproducible <span className="text-white">image</span>; the <span className="text-white">container</span> is an instance that starts in a flash. Images
+          are <span className="text-white">cached layers</span>: order the Dockerfile so that what rarely changes (dependencies) comes <span className="text-white">before</span> what changes
+          often (code), and your builds will fly. <span className="text-white">Multi-stage</span> for small images, <span className="text-white">compose</span> for several services. This is the “build the image” step of a deploy.</>
+        )}
       </Takeaway>
     </div>
   );
@@ -11383,44 +11459,57 @@ function AgentSecModule() {
    allucinazioni & evals, agenti in produzione (harness + Temporal)
    ===================================================================== */
 
-const PKCE_STEPS = [
-  { who: "App (client)", tone: "indigo", txt: "Genero un segreto usa-e-getta: il code_verifier (stringa casuale). Ne calcolo l'hash SHA-256 → code_challenge. Il verifier non lascia mai l'app." },
-  { who: "Browser → Auth Server", tone: "blue", txt: "Redirect a /authorize con client_id, redirect_uri, scope, state (anti-CSRF) e code_challenge. Nota: in questo passaggio non viaggia nessun segreto." },
-  { who: "Authorization Server", tone: "emerald", txt: "Autentico io l'utente (password + MFA, o l'SSO aziendale). Consenso ok → rimando al redirect_uri un authorization code monouso e a vita breve, insieme allo state di prima." },
-  { who: "App → Auth Server", tone: "indigo", txt: "POST /token (canale diretto, non via browser) con code + code_verifier. L'AS ricalcola SHA-256(verifier): combacia col challenge del passo 1? Solo chi ha INIZIATO il flusso può riscattare il code — un code intercettato da solo non vale niente." },
-  { who: "Authorization Server", tone: "emerald", txt: "Rispondo: access token (vita breve, minuti) + refresh token (+ id_token se è OIDC). Da qui l'app chiama l'API con Authorization: Bearer <access_token>." },
-];
+const PKCE_STEPS = memoByLang(() => [
+  { who: "App (client)", tone: "indigo", txt: T("Genero un segreto usa-e-getta: il code_verifier (stringa casuale). Ne calcolo l'hash SHA-256 → code_challenge. Il verifier non lascia mai l'app.", "I generate a throwaway secret: the code_verifier (a random string). I compute its SHA-256 hash → code_challenge. The verifier never leaves the app.") },
+  { who: "Browser → Auth Server", tone: "blue", txt: T("Redirect a /authorize con client_id, redirect_uri, scope, state (anti-CSRF) e code_challenge. Nota: in questo passaggio non viaggia nessun segreto.", "Redirect to /authorize with client_id, redirect_uri, scope, state (anti-CSRF) and code_challenge. Note: no secret travels in this step.") },
+  { who: "Authorization Server", tone: "emerald", txt: T("Autentico io l'utente (password + MFA, o l'SSO aziendale). Consenso ok → rimando al redirect_uri un authorization code monouso e a vita breve, insieme allo state di prima.", "I authenticate the user myself (password + MFA, or the company SSO). Consent given → I send back to the redirect_uri a single-use, short-lived authorization code, together with the earlier state.") },
+  { who: "App → Auth Server", tone: "indigo", txt: T("POST /token (canale diretto, non via browser) con code + code_verifier. L'AS ricalcola SHA-256(verifier): combacia col challenge del passo 1? Solo chi ha INIZIATO il flusso può riscattare il code — un code intercettato da solo non vale niente.", "POST /token (a direct channel, not via the browser) with code + code_verifier. The AS recomputes SHA-256(verifier): does it match the challenge from step 1? Only whoever STARTED the flow can redeem the code — an intercepted code on its own is worthless.") },
+  { who: "Authorization Server", tone: "emerald", txt: T("Rispondo: access token (vita breve, minuti) + refresh token (+ id_token se è OIDC). Da qui l'app chiama l'API con Authorization: Bearer <access_token>.", "I reply: access token (short-lived, minutes) + refresh token (+ id_token if it's OIDC). From here the app calls the API with Authorization: Bearer <access_token>.") },
+]);
 
-const JWT_ATTACKS = [
-  { k: "none", label: "alg: none", desc: "L'attaccante riscrive l'header del JWT in {\"alg\":\"none\"} e toglie la firma. Le librerie ingenue leggono l'algoritmo DAL token e accettano un token «senza firma» come valido.", fix: "Mai fidarsi dell'header: algoritmo atteso fissato in configurazione (whitelist, es. solo RS256). Se il token dichiara altro, si rifiuta a prescindere." },
-  { k: "confusion", label: "Key confusion (RS256→HS256)", desc: "Con RS256 il server verifica con la chiave PUBBLICA, che è nota a tutti. L'attaccante forgia un token HS256 usando quella chiave pubblica come segreto HMAC: se la libreria accetta entrambi gli algoritmi, la verifica passa.", fix: "Binding rigido algoritmo↔chiave: una chiave RSA non deve mai poter fare da segreto HMAC. Anche qui: algoritmo fissato lato server, mai negoziato col token." },
-  { k: "theft", label: "Token rubato (XSS, log, URL)", desc: "Un token in localStorage è leggibile da qualunque JS della pagina: basta un XSS o un pacchetto npm compromesso. Un token finito nei log o in un URL viene copiato ovunque.", fix: "Il browser non deve poter leggere il token: cookie httpOnly o pattern BFF. E vita breve + rotation: un token rubato deve valere poco e per poco tempo." },
-];
+const JWT_ATTACKS = memoByLang(() => [
+  { k: "none", label: "alg: none",
+    desc: T("L'attaccante riscrive l'header del JWT in {\"alg\":\"none\"} e toglie la firma. Le librerie ingenue leggono l'algoritmo DAL token e accettano un token «senza firma» come valido.", "The attacker rewrites the JWT header as {\"alg\":\"none\"} and strips the signature. Naive libraries read the algorithm FROM the token and accept an “unsigned” token as valid."),
+    fix: T("Mai fidarsi dell'header: algoritmo atteso fissato in configurazione (whitelist, es. solo RS256). Se il token dichiara altro, si rifiuta a prescindere.", "Never trust the header: the expected algorithm is fixed in configuration (an allow-list, e.g. RS256 only). If the token declares anything else, it's rejected regardless.") },
+  { k: "confusion", label: "Key confusion (RS256→HS256)",
+    desc: T("Con RS256 il server verifica con la chiave PUBBLICA, che è nota a tutti. L'attaccante forgia un token HS256 usando quella chiave pubblica come segreto HMAC: se la libreria accetta entrambi gli algoritmi, la verifica passa.", "With RS256 the server verifies with the PUBLIC key, which everyone knows. The attacker forges an HS256 token using that public key as the HMAC secret: if the library accepts both algorithms, verification passes."),
+    fix: T("Binding rigido algoritmo↔chiave: una chiave RSA non deve mai poter fare da segreto HMAC. Anche qui: algoritmo fissato lato server, mai negoziato col token.", "A strict algorithm↔key binding: an RSA key must never be usable as an HMAC secret. Here too: the algorithm is fixed server-side, never negotiated with the token.") },
+  { k: "theft", label: T("Token rubato (XSS, log, URL)", "Stolen token (XSS, logs, URL)"),
+    desc: T("Un token in localStorage è leggibile da qualunque JS della pagina: basta un XSS o un pacchetto npm compromesso. Un token finito nei log o in un URL viene copiato ovunque.", "A token in localStorage can be read by any JS on the page: one XSS or one compromised npm package is enough. A token that ends up in logs or in a URL gets copied everywhere."),
+    fix: T("Il browser non deve poter leggere il token: cookie httpOnly o pattern BFF. E vita breve + rotation: un token rubato deve valere poco e per poco tempo.", "The browser must not be able to read the token: an httpOnly cookie or the BFF pattern. And a short life + rotation: a stolen token should be worth little, for a short time.") },
+]);
 
-const TOKEN_STORES = [
-  { k: "local", label: "localStorage", tone: "red", verdict: "Mai", d: "Qualsiasi JavaScript che gira sulla pagina lo legge: un solo XSS (o una dipendenza npm compromessa) e il token è dell'attaccante. Non esiste mitigazione: semplicemente non si fa." },
-  { k: "cookie", label: "Cookie httpOnly + Secure + SameSite", tone: "emerald", verdict: "Lo standard", d: "httpOnly: il JS non può leggerlo → l'XSS non ruba il token. Secure: viaggia solo su HTTPS. SameSite=Lax/Strict: il browser non lo allega alle richieste partite da altri siti → mitiga il CSRF. Attenzione: il cookie viaggia «da solo» con ogni richiesta, quindi il CSRF va comunque pensato (SameSite + token anti-CSRF se serve None)." },
-  { k: "bff", label: "BFF · Backend-for-Frontend", tone: "blue", verdict: "Il più robusto", d: "I token OAuth non arrivano MAI al browser: li custodisce un backend sottile che fa da proxy verso le API. Col browser solo un cookie di sessione httpOnly. Più infrastruttura, ma superficie d'attacco minima: è la scelta enterprise." },
-];
+const TOKEN_STORES = memoByLang(() => [
+  { k: "local", label: "localStorage", tone: "red", verdict: T("Mai", "Never"),
+    d: T("Qualsiasi JavaScript che gira sulla pagina lo legge: un solo XSS (o una dipendenza npm compromessa) e il token è dell'attaccante. Non esiste mitigazione: semplicemente non si fa.", "Any JavaScript running on the page can read it: a single XSS (or a compromised npm dependency) and the token belongs to the attacker. There's no mitigation: you simply don't do it.") },
+  { k: "cookie", label: "Cookie httpOnly + Secure + SameSite", tone: "emerald", verdict: T("Lo standard", "The standard"),
+    d: T("httpOnly: il JS non può leggerlo → l'XSS non ruba il token. Secure: viaggia solo su HTTPS. SameSite=Lax/Strict: il browser non lo allega alle richieste partite da altri siti → mitiga il CSRF. Attenzione: il cookie viaggia «da solo» con ogni richiesta, quindi il CSRF va comunque pensato (SameSite + token anti-CSRF se serve None).", "httpOnly: JS can't read it → an XSS can't steal the token. Secure: it only travels over HTTPS. SameSite=Lax/Strict: the browser doesn't attach it to requests started from other sites → mitigates CSRF. Careful: the cookie travels “on its own” with every request, so you still have to think about CSRF (SameSite + an anti-CSRF token if you need None).") },
+  { k: "bff", label: "BFF · Backend-for-Frontend", tone: "blue", verdict: T("Il più robusto", "The sturdiest"),
+    d: T("I token OAuth non arrivano MAI al browser: li custodisce un backend sottile che fa da proxy verso le API. Col browser solo un cookie di sessione httpOnly. Più infrastruttura, ma superficie d'attacco minima: è la scelta enterprise.", "The OAuth tokens NEVER reach the browser: a thin backend keeps them and proxies calls to the APIs. The browser only gets an httpOnly session cookie. More infrastructure, but a minimal attack surface: it's the enterprise choice.") },
+]);
 
 function OauthModule() {
   const [step, setStep] = useState(0);
   const [atk, setAtk] = useState("none");
   const [store, setStore] = useState("local");
-  const cura = JWT_ATTACKS.find((a) => a.k === atk);
-  const curs = TOKEN_STORES.find((s) => s.k === store);
+  const steps = PKCE_STEPS(), attacks = JWT_ATTACKS(), stores = TOKEN_STORES();
+  const cura = attacks.find((a) => a.k === atk);
+  const curs = stores.find((s) => s.k === store);
   return (
     <div className="space-y-4">
-      <Lead>
-        <span className="text-white font-medium">OAuth 2.0 risponde a «cosa puoi fare»</span> (autorizzazione: delego a un'app un accesso limitato), <span className="text-white font-medium">OIDC
+      <Lead>{T(
+        <><span className="text-white font-medium">OAuth 2.0 risponde a «cosa puoi fare»</span> (autorizzazione: delego a un'app un accesso limitato), <span className="text-white font-medium">OIDC
         risponde a «chi sei»</span> (autenticazione, costruita sopra OAuth: aggiunge l'<span className="font-mono">id_token</span>). Il flusso da saper disegnare a memoria è
-        l'<span className="text-white font-medium">Authorization Code + PKCE</span> — oggi lo standard per web app, SPA e mobile.
-      </Lead>
+        l'<span className="text-white font-medium">Authorization Code + PKCE</span> — oggi lo standard per web app, SPA e mobile.</>,
+        <><span className="text-white font-medium">OAuth 2.0 answers “what can you do”</span> (authorisation: I delegate limited access to an app), <span className="text-white font-medium">OIDC
+        answers “who are you”</span> (authentication, built on top of OAuth: it adds the <span className="font-mono">id_token</span>). The flow to know how to draw from memory is
+        <span className="text-white font-medium"> Authorization Code + PKCE</span> — today the standard for web apps, SPAs and mobile.</>
+      )}</Lead>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-3">Authorization Code + PKCE · passo per passo</div>
+        <div className="text-xs text-zinc-500 font-mono mb-3">{T("Authorization Code + PKCE · passo per passo", "Authorization Code + PKCE · step by step")}</div>
         <div className="space-y-1.5 mb-3">
-          {PKCE_STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <button key={i} onClick={() => setStep(i)} className={`w-full text-left flex items-start gap-2 rounded-lg border px-3 py-2 transition-all ${step === i ? `${TONE[s.tone].border} bg-zinc-900` : "border-zinc-800 bg-zinc-950 opacity-60 hover:opacity-100"}`}>
               <span className="font-mono text-[10px] text-zinc-600 mt-0.5">{i + 1}</span>
               <div>
@@ -11432,25 +11521,31 @@ function OauthModule() {
         </div>
         <div className="flex gap-2">
           <button disabled={step === 0} onClick={() => setStep((s) => s - 1)} className="px-3 py-1.5 rounded-md border border-zinc-800 text-zinc-300 hover:border-zinc-600 disabled:opacity-30 text-sm">◀</button>
-          <button disabled={step === PKCE_STEPS.length - 1} onClick={() => setStep((s) => s + 1)} className="flex-1 px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white text-sm">Avanti ▶</button>
+          <button disabled={step === steps.length - 1} onClick={() => setStep((s) => s + 1)} className="flex-1 px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white text-sm">{T("Avanti ▶", "Next ▶")}</button>
         </div>
-        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">Il PKCE esiste perché il code passa dal <span className="text-white">browser</span> (canale intercettabile): senza, chi ruba il code ottiene i token. Col PKCE il code si riscatta solo esibendo il <span className="font-mono">code_verifier</span>, che il ladro non ha.</p>
+        <p className="text-[12px] text-zinc-500 mt-2 leading-relaxed">{T(
+          <>Il PKCE esiste perché il code passa dal <span className="text-white">browser</span> (canale intercettabile): senza, chi ruba il code ottiene i token. Col PKCE il code si riscatta solo esibendo il <span className="font-mono">code_verifier</span>, che il ladro non ha.</>,
+          <>PKCE exists because the code passes through the <span className="text-white">browser</span> (an interceptable channel): without it, whoever steals the code gets the tokens. With PKCE the code can only be redeemed by presenting the <span className="font-mono">code_verifier</span>, which the thief doesn't have.</>
+        )}</p>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">validare un JWT · la checklist che il server DEVE fare</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("validare un JWT · la checklist che il server DEVE fare", "validating a JWT · the checklist the server MUST run")}</div>
         <div className="space-y-1.5 text-[13px]">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">1 · firma</span> <span className="text-zinc-400">— con <span className="font-mono">RS256</span> l'issuer firma con la chiave privata; tu verifichi con la pubblica, scaricata dal suo <span className="font-mono">JWKS</span> endpoint (<span className="font-mono">/.well-known/jwks.json</span>) e scelta per <span className="font-mono">kid</span>. Così le chiavi ruotano senza deploy.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">2 · iss</span> <span className="text-zinc-400">— l'issuer è quello atteso? Un token firmato da un altro IdP non deve passare.</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">3 · aud</span> <span className="text-zinc-400">— l'audience sei TU? Un token valido, ma emesso per un'altra API, va rifiutato (classico buco da interview).</span></div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">4 · exp / nbf</span> <span className="text-zinc-400">— scadenza e validità temporale, con un piccolo margine di clock skew.</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-emerald-300">{T("1 · firma", "1 · signature")}</span> <span className="text-zinc-400">{T(
+            <>— con <span className="font-mono">RS256</span> l'issuer firma con la chiave privata; tu verifichi con la pubblica, scaricata dal suo <span className="font-mono">JWKS</span> endpoint (<span className="font-mono">/.well-known/jwks.json</span>) e scelta per <span className="font-mono">kid</span>. Così le chiavi ruotano senza deploy.</>,
+            <>— with <span className="font-mono">RS256</span> the issuer signs with the private key; you verify with the public one, downloaded from its <span className="font-mono">JWKS</span> endpoint (<span className="font-mono">/.well-known/jwks.json</span>) and picked by <span className="font-mono">kid</span>. That way keys rotate without a deploy.</>
+          )}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-blue-300">2 · iss</span> <span className="text-zinc-400">{T("— l'issuer è quello atteso? Un token firmato da un altro IdP non deve passare.", "— is the issuer the expected one? A token signed by another IdP must not get through.")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-indigo-300">3 · aud</span> <span className="text-zinc-400">{T("— l'audience sei TU? Un token valido, ma emesso per un'altra API, va rifiutato (classico buco da interview).", "— are YOU the audience? A valid token issued for a different API must be rejected (a classic interview gap).")}</span></div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2"><span className="font-mono text-amber-300">4 · exp / nbf</span> <span className="text-zinc-400">{T("— scadenza e validità temporale, con un piccolo margine di clock skew.", "— expiry and time validity, with a small allowance for clock skew.")}</span></div>
         </div>
       </Card>
 
       <div>
-        <div className="text-xs text-zinc-500 font-mono mb-2">attacchi classici ai JWT · clicca per vedere attacco e difesa</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("attacchi classici ai JWT · clicca per vedere attacco e difesa", "classic JWT attacks · click to see the attack and the defence")}</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {JWT_ATTACKS.map((a) => (
+          {attacks.map((a) => (
             <button key={a.k} onClick={() => setAtk(a.k)} className={`rounded-lg border px-3 py-2 text-left transition-all ${atk === a.k ? "border-red-800 bg-red-950" : "border-zinc-800 bg-zinc-950 hover:border-zinc-600"}`}>
               <div className="text-[12px] text-zinc-200 font-mono leading-tight">{a.label}</div>
             </button>
@@ -11458,22 +11553,25 @@ function OauthModule() {
         </div>
       </div>
       <Card tone="red">
-        <div className="text-[13px] text-zinc-300 leading-relaxed mb-2"><span className="font-mono text-red-300">attacco · </span>{cura.desc}</div>
-        <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200 leading-relaxed"><span className="font-medium">difesa · </span>{cura.fix}</div>
+        <div className="text-[13px] text-zinc-300 leading-relaxed mb-2"><span className="font-mono text-red-300">{T("attacco · ", "attack · ")}</span>{cura.desc}</div>
+        <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2 text-[13px] text-emerald-200 leading-relaxed"><span className="font-medium">{T("difesa · ", "defence · ")}</span>{cura.fix}</div>
       </Card>
 
       <Card>
-        <div className="text-xs text-zinc-500 font-mono mb-2">il problema della revoca · un JWT è stateless: vale fino a exp, anche se l'utente è stato bannato</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("il problema della revoca · un JWT è stateless: vale fino a exp, anche se l'utente è stato bannato", "the revocation problem · a JWT is stateless: it's valid until exp, even if the user has been banned")}</div>
         <div className="grid sm:grid-cols-2 gap-2 text-sm">
-          <div className="rounded-lg border border-blue-900 bg-blue-950 px-3 py-2"><div className="font-mono text-blue-200 mb-1">access token corto</div><div className="text-zinc-300 text-[13px]">5–15 minuti di vita. La finestra di danno di un token rubato o revocato «troppo tardi» si riduce a minuti.</div></div>
-          <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2"><div className="font-mono text-emerald-200 mb-1">refresh token rotation</div><div className="text-zinc-300 text-[13px]">Ogni refresh consuma il token e ne emette uno nuovo. <span className="text-white">Reuse detection</span>: se un refresh già usato ricompare (il ladro o tu), è la prova di un furto → si revoca l'intera famiglia di token e si riparte dal login.</div></div>
+          <div className="rounded-lg border border-blue-900 bg-blue-950 px-3 py-2"><div className="font-mono text-blue-200 mb-1">{T("access token corto", "short access token")}</div><div className="text-zinc-300 text-[13px]">{T("5–15 minuti di vita. La finestra di danno di un token rubato o revocato «troppo tardi» si riduce a minuti.", "A 5–15 minute lifetime. The damage window of a stolen token, or one revoked “too late”, shrinks to minutes.")}</div></div>
+          <div className="rounded-lg border border-emerald-900 bg-emerald-950 px-3 py-2"><div className="font-mono text-emerald-200 mb-1">refresh token rotation</div><div className="text-zinc-300 text-[13px]">{T(
+            <>Ogni refresh consuma il token e ne emette uno nuovo. <span className="text-white">Reuse detection</span>: se un refresh già usato ricompare (il ladro o tu), è la prova di un furto → si revoca l'intera famiglia di token e si riparte dal login.</>,
+            <>Every refresh consumes the token and issues a new one. <span className="text-white">Reuse detection</span>: if an already-used refresh token shows up again (the thief or you), that's proof of theft → the whole token family is revoked and it's back to login.</>
+          )}</div></div>
         </div>
       </Card>
 
       <div>
-        <div className="text-xs text-zinc-500 font-mono mb-2">dove tenere i token nel browser · confronta</div>
+        <div className="text-xs text-zinc-500 font-mono mb-2">{T("dove tenere i token nel browser · confronta", "where to keep tokens in the browser · compare")}</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {TOKEN_STORES.map((s) => (
+          {stores.map((s) => (
             <button key={s.k} onClick={() => setStore(s.k)} className={`rounded-lg border px-3 py-2 text-left transition-all ${store === s.k ? `${TONE[s.tone].border} bg-zinc-900` : "border-zinc-800 bg-zinc-950 hover:border-zinc-600"}`}>
               <div className="text-[12px] text-zinc-200 leading-tight">{s.label}</div>
               <div className={`text-[10px] font-mono mt-0.5 ${TONE[s.tone].text}`}>{s.verdict}</div>
@@ -11485,24 +11583,34 @@ function OauthModule() {
         <p className="text-sm text-zinc-300 leading-relaxed">{curs.d}</p>
       </Card>
 
-      <Note tone="indigo" icon={Building2}>
-        <span className="font-medium">Il contesto enterprise (es. un prodotto per auditor).</span> Il login non lo gestisci tu: <span className="text-white">SSO SAML/OIDC con l'IdP del
+      <Note tone="indigo" icon={Building2}>{T(
+        <><span className="font-medium">Il contesto enterprise (es. un prodotto per auditor).</span> Il login non lo gestisci tu: <span className="text-white">SSO SAML/OIDC con l'IdP del
         cliente</span> (Okta/Entra), <span className="text-white">SCIM</span> per provisioning e de-provisioning, <span className="text-white">MFA</span> imposta dall'IdP. Dentro il prodotto:
         <span className="text-white"> RBAC + scoping per engagement</span> — un auditor vede solo gli incarichi a cui è assegnato — con <span className="text-white">difesa in profondità</span>: il
-        check nel codice applicativo <span className="text-white">e</span> la Row-Level Security nel database. Se l'app sbaglia una query, il DB filtra comunque.
-      </Note>
+        check nel codice applicativo <span className="text-white">e</span> la Row-Level Security nel database. Se l'app sbaglia una query, il DB filtra comunque.</>,
+        <><span className="font-medium">The enterprise context (e.g. a product for auditors).</span> You don't run the login yourself: <span className="text-white">SSO via SAML/OIDC with the
+        customer's IdP</span> (Okta/Entra), <span className="text-white">SCIM</span> for provisioning and de-provisioning, <span className="text-white">MFA</span> enforced by the IdP. Inside the product:
+        <span className="text-white"> RBAC + per-engagement scoping</span> — an auditor only sees the engagements they're assigned to — with <span className="text-white">defence in depth</span>: the
+        check in the application code <span className="text-white">and</span> Row-Level Security in the database. If the app gets a query wrong, the DB still filters.</>
+      )}</Note>
 
-      <Analogy>
-        Il PKCE è come ritirare un pacco col codice di ritiro <span className="text-zinc-100">e</span> il documento: il codice (authorization code) può essere visto da altri sul
-        display, ma il pacco lo consegna solo a chi mostra anche il documento (code_verifier) — che non è mai uscito dalla tua tasca.
-      </Analogy>
+      <Analogy>{T(
+        <>Il PKCE è come ritirare un pacco col codice di ritiro <span className="text-zinc-100">e</span> il documento: il codice (authorization code) può essere visto da altri sul
+        display, ma il pacco lo consegna solo a chi mostra anche il documento (code_verifier) — che non è mai uscito dalla tua tasca.</>,
+        <>PKCE is like collecting a parcel with the pickup code <span className="text-zinc-100">and</span> your ID: others may see the code (the authorization code) on the
+        screen, but the parcel is only handed to whoever also shows the ID (the code_verifier) — which never left your pocket.</>
+      )}</Analogy>
 
-      <Takeaway>
-        <span className="text-white">OAuth = autorizzazione, OIDC = autenticazione sopra OAuth.</span> Flusso da sapere a memoria: Authorization Code + <span className="text-white">PKCE</span>
+      <Takeaway>{T(
+        <><span className="text-white">OAuth = autorizzazione, OIDC = autenticazione sopra OAuth.</span> Flusso da sapere a memoria: Authorization Code + <span className="text-white">PKCE</span>
         (challenge all'inizio, verifier al riscatto). JWT: firma <span className="text-white">RS256 via JWKS</span> + validare <span className="font-mono">iss/aud/exp</span>, con algoritmo fissato lato
         server (anti <span className="font-mono">alg:none</span> e key confusion). Revoca: <span className="text-white">access corti + refresh rotation con reuse detection</span>. Storage: mai
-        localStorage — cookie <span className="font-mono">httpOnly+Secure+SameSite</span> (e parla di CSRF) o pattern <span className="text-white">BFF</span>.
-      </Takeaway>
+        localStorage — cookie <span className="font-mono">httpOnly+Secure+SameSite</span> (e parla di CSRF) o pattern <span className="text-white">BFF</span>.</>,
+        <><span className="text-white">OAuth = authorisation, OIDC = authentication on top of OAuth.</span> The flow to know by heart: Authorization Code + <span className="text-white">PKCE</span>
+        (challenge at the start, verifier at redemption). JWT: <span className="text-white">RS256 signature via JWKS</span> + validate <span className="font-mono">iss/aud/exp</span>, with the algorithm fixed
+        server-side (against <span className="font-mono">alg:none</span> and key confusion). Revocation: <span className="text-white">short access tokens + refresh rotation with reuse detection</span>. Storage: never
+        localStorage — an <span className="font-mono">httpOnly+Secure+SameSite</span> cookie (and talk about CSRF) or the <span className="text-white">BFF</span> pattern.</>
+      )}</Takeaway>
     </div>
   );
 }
@@ -14173,7 +14281,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage bloccato: si degrada senza rompere */ } },
 };
 
-const FLASH_SECTIONS = ["AI", "Infrastruttura", "SQL & Database", "Integrazioni & dati", "Integrazioni cliente", "Workflow agentici"];
+const FLASH_SECTIONS = ["Python", "Strutture dati", "LeetCode", "Fondamenta", "SQL & Database", "Infrastruttura", "Auth & sicurezza", "Integrazioni & dati", "Integrazioni cliente", "AI", "Workflow agentici", "System Design", "Code review", "Product Management"];
 const FLASH_TONE = { "Definizione": "indigo", "Come funziona": "blue", "Trade-off": "amber", "Errori comuni": "red", "Da ricordare": "emerald" };
 /* Block labels are lookup keys into FLASH_TONE, so translate display only. */
 const FLASH_LABEL_EN = { "Definizione": "Definition", "Come funziona": "How it works", "Trade-off": "Trade-off", "Errori comuni": "Common mistakes", "Da ricordare": "Worth remembering" };
@@ -14291,24 +14399,24 @@ const FLASHCARDS = [
     { l: "Come funziona", i: ["Percorso di una richiesta: utente → DNS Cloudflare (ti manda al Point-of-Presence più vicino) → edge WAF/bot (filtra attacchi PRIMA che tocchino l'origine; un DDoS viene assorbito qui) → edge cache (se HIT, servito in pochi ms senza disturbare l'origine) → origine solo se MISS (poi la risposta va in cache al bordo).", "L'edge conta più l'utente è lontano dall'origine: da Tokyo verso Francoforte ~240ms senza edge vs ~14ms con un HIT sul PoP vicino.", "Piattaforma: Workers (codice al bordo, bassa latenza), R2 (object storage S3-compatibile senza costi di egress), KV/D1/Durable Objects (dati al bordo), Zero Trust/Tunnel (esponi un servizio interno senza aprire porte)."] },
     { l: "Da ricordare", i: ["Strato globale davanti all'origine: cache ai bordi (velocità), WAF/DDoS (sicurezza), codice al bordo (Workers). Più lavoro fai vicino all'utente, meno carico e latenza sull'origine. È il modulo Hosting/CDN portato all'estremo."] },
   ]},
-  { id: "fc-auth", s: "Infrastruttura", t: "Auth · 401/403, JWT, password", b: [
+  { id: "fc-auth", s: "Auth & sicurezza", t: "Auth · 401/403, JWT, password", b: [
     { l: "Definizione", i: ["Due domande diverse: autenticazione («chi sei?», risolta dal token) e autorizzazione («cosa puoi fare?», risolta dai permessi/ruolo).", "401 = non so chi sei (autenticazione). 403 = so chi sei ma non puoi (autorizzazione). Confonderle è un classico."] },
     { l: "Come funziona", i: ["Un JWT è fatto di header.payload.signature. Il payload dice chi sei e con che ruolo (leggibile da tutti: non serve nasconderlo).", "La firma è calcolata dal server con una chiave segreta (HMAC): se qualcuno cambia «role» da member ad admin, la firma non torna più → il token viene rifiutato. Serve che sia NON falsificabile, non nascosto.", "Il segreto ce l'ha solo il server: chi manomette il payload non può ricalcolare la firma."] },
     { l: "Errori comuni", i: ["Password in chiaro: MAI. Sempre con hash (bcrypt), a senso unico: al login ricalcoli l'hash di ciò che l'utente digita e confronti gli hash. Anche se rubano il database, le password vere restano protette."] },
     { l: "Da ricordare", i: ["401 autenticazione, 403 autorizzazione; JWT firmato = a prova di manomissione anche se chiunque lo legge; password sempre con hash."] },
   ]},
-  { id: "fc-oauth-1", s: "Infrastruttura", t: "OAuth · Authorization Code + PKCE", b: [
+  { id: "fc-oauth-1", s: "Auth & sicurezza", t: "OAuth · Authorization Code + PKCE", b: [
     { l: "Definizione", i: ["Flusso per delegare l'accesso a un'app senza darle la password. PKCE (Proof Key for Code Exchange) protegge il flusso sui client pubblici (SPA, mobile) dove non si può custodire un client secret."] },
     { l: "Come funziona", i: ["1. L'app genera un segreto usa-e-getta, il code_verifier (stringa casuale), e ne calcola l'hash SHA-256 → code_challenge. Il verifier non lascia mai l'app.", "2. Redirect a /authorize con client_id, redirect_uri, scope, state (anti-CSRF) e code_challenge. In questo passaggio non viaggia nessun segreto.", "3. L'Authorization Server autentica l'utente (password + MFA, o l'SSO aziendale) e rimanda al redirect_uri un authorization code monouso e a vita breve, con lo state.", "4. POST /token (canale diretto, non via browser) con code + code_verifier. L'AS ricalcola SHA-256(verifier) e lo confronta col challenge del passo 1: solo chi ha INIZIATO il flusso può riscattare il code (un code intercettato da solo non vale nulla).", "5. L'AS risponde: access token (vita breve, minuti) + refresh token (+ id_token se è OIDC). Da qui l'app chiama l'API con Authorization: Bearer <access_token>."] },
     { l: "Da ricordare", i: ["PKCE lega il code a chi ha iniziato il flusso. Access token corti; non far viaggiare segreti nel browser."] },
   ]},
-  { id: "fc-oauth-2", s: "Infrastruttura", t: "OAuth · validazione JWT, attacchi, storage & revoca", b: [
+  { id: "fc-oauth-2", s: "Auth & sicurezza", t: "OAuth · validazione JWT, attacchi, storage & revoca", b: [
     { l: "Come funziona", i: ["Validazione del token lato risorsa: firma RS256 verificata via JWKS (chiave pubblica), più i claim iss / aud / exp.", "Revoca: access token corti + refresh rotation con reuse detection (un refresh token riusato = segnale di furto → si invalida l'intera catena)."] },
     { l: "Errori comuni", i: ["alg:none: l'attaccante riscrive l'header in {alg:none} e toglie la firma; librerie ingenue accettano un token «senza firma». Fix: algoritmo atteso fissato in configurazione (whitelist, es. solo RS256), mai fidarsi dell'header.", "Key confusion (RS256→HS256): l'attaccante forgia un token HS256 usando la chiave PUBBLICA (nota a tutti) come segreto HMAC; se la libreria accetta entrambi gli algoritmi passa. Fix: binding rigido algoritmo↔chiave.", "Token rubato (XSS, log, URL): un token leggibile viene copiato ovunque. Fix: il browser non deve poterlo leggere + vita breve + rotation."] },
     { l: "Trade-off", i: ["Storage del token: localStorage = MAI (qualsiasi JS/XSS o dipendenza npm compromessa lo legge, nessuna mitigazione).", "Cookie httpOnly + Secure + SameSite = lo standard (httpOnly: il JS non lo legge; Secure: solo HTTPS; SameSite mitiga il CSRF).", "BFF (Backend-for-Frontend) = il più robusto: i token OAuth non arrivano MAI al browser, li custodisce un backend proxy; al client solo un cookie di sessione. Più infrastruttura, superficie d'attacco minima (scelta enterprise)."] },
     { l: "Da ricordare", i: ["Algoritmo fissato lato server (mai negoziato col token); token fuori dalla portata del JS; access corti + refresh rotation. Enterprise: SSO SAML/OIDC, SCIM, MFA, RBAC + scoping per engagement, difesa in profondità app + RLS."] },
   ]},
-  { id: "fc-security", s: "Infrastruttura", t: "Sicurezza web · OWASP", b: [
+  { id: "fc-security", s: "Auth & sicurezza", t: "Sicurezza web · OWASP", b: [
     { l: "Definizione", i: ["La sicurezza non è un modulo da aggiungere alla fine: è un modo di non fidarsi. La regola madre è una — non fidarti mai dell'input — e da lì discendono quasi tutte le difese."] },
     { l: "Come funziona", i: ["SQL injection: concatenare l'input nella query lo trasforma in codice (input '; DROP TABLE users; -- cancella la tabella). Cura: query parametrizzata (execute(\"… WHERE name = %s\", (nome,))) → l'input è SEMPRE un dato, mai un comando.", "XSS: input reso come HTML/JS vero gira nel browser di ogni visitatore (ruba i cookie di sessione). Cura: escapa l'output (< diventa &lt;) → il browser lo mostra come testo.", "CORS: quali origini (domini) possono chiamare la tua API dal browser; configurato male = falla o app rotta.", "HTTPS/TLS: cifra il traffico in transito; senza, chiunque sulla rete legge token e password. Non negoziabile.", "Segreti in env + least privilege: chiavi fuori dal codice, ogni componente coi permessi minimi."] },
     { l: "Da ricordare", i: ["Il filo conduttore è «dati ≠ istruzioni» (SQL injection, XSS, prompt injection), «non fidarti dell'input» (validazione, Pydantic), «permessi minimi» (auth, MCP, cloud): la stessa idea che ritorna a ogni livello."] },
@@ -14440,7 +14548,7 @@ const FLASHCARDS = [
     { l: "Come funziona", i: ["Si applicano in ordine di versione; ogni ambiente (il tuo Mac, staging, prod) ha esattamente la stessa struttura.", "Aggiungere una colonna nullable non rompe le righe esistenti."] },
     { l: "Da ricordare", i: ["Schema come codice, versionato, con up/down. Per lo zero-downtime in Postgres vedi «Migrazioni senza downtime» (INDEX CONCURRENTLY, backfill a batch, ecc.)."] },
   ]},
-  { id: "fc-authent", s: "Integrazioni & dati", t: "Auth enterprise · SSO & SCIM", b: [
+  { id: "fc-authent", s: "Auth & sicurezza", t: "Auth enterprise · SSO & SCIM", b: [
     { l: "Definizione", i: ["Vendere a un'azienda cambia le regole dell'auth. Un cliente enterprise non vuole password sul TUO sistema per i suoi dipendenti: vuole il Single Sign-On (SSO) — accedono col login aziendale che già usano, e tu ti fidi del loro Identity Provider. La password non tocca mai il tuo sistema: ricevi solo un'asserzione firmata."] },
     { l: "Come funziona", i: ["SAML: il vecchio standard enterprise (XML), ancora onnipresente (Okta, Entra/AD). Scambia «asserzioni» firmate.", "OIDC: il moderno, su OAuth 2.0 + JSON — «Accedi con Google» sotto steroidi, token JWT, mobile-friendly. Stesso concetto, imballaggio diverso.", "SCIM: l'IdP crea/aggiorna/disattiva automaticamente gli account da te (un dipendente che lascia sparisce dal tuo prodotto senza che nessuno se ne ricordi).", "Sopra ci metti RBAC (permessi per ruolo), multi-tenancy (isolamento per tenant_id), audit log (chi ha fatto cosa, per compliance)."] },
     { l: "Da ricordare", i: ["Enterprise auth = delega dell'identità (SSO SAML o OIDC) + SCIM per il ciclo di vita degli account. Sono le voci che sbloccano i contratti grossi — saperle nominare al momento giusto è metà della vendita tecnica."] },
@@ -14521,7 +14629,683 @@ const FLASHCARDS = [
     { l: "Come funziona", i: ["Temporal (esecuzione durevole, per run lunghi che non possono perdersi): il codice del workflow è DETERMINISTICO (niente I/O/random/orologio nudi, solo orchestrazione); ogni evento è appeso alla event history = la fonte di verità dello stato.", "I side effect (parsing, chiamate LLM, scritture) vivono nelle ACTIVITY, con timeout e retry dichiarativi. Se il worker crasha, nessun lavoro è perso (lo stato è nella history, non nella RAM).", "Replay su un altro worker: le activity già completate restituiscono il risultato registrato — ecco perché il workflow dev'essere deterministico e le activity idempotenti.", "Signal per lo human-in-the-loop: await condition(approved) → il run si ferma per ore/giorni senza consumare un thread, finché l'auditor approva. Scrittura idempotente (chiave = doc_id + run_id)."] },
     { l: "Da ricordare", i: ["Temporal = workflow deterministico + activity idempotenti con retry + event history come stato + signal per l'HITL.", "Document pipeline: parsing layout-aware (i PDF finanziari sono tabelle/note, non testo piatto), chunking per sezione/nota, retrieval ibrido BM25 + embedding + reranking (i termini esatti contano), citazioni obbligatorie verificate in codice.", "Principio chiave: i numeri li calcola il codice deterministico; l'LLM estrae e interpreta, NON fa aritmetica."] },
   ]},
+
+  /* ============ PYTHON ============ */
+  { id: "fc-pystrutture", s: "Python", t: "Strutture dati: list, tuple, dict, set", b: [
+    { l: "Definizione", i: ["Quattro contenitori, una domanda per sceglierli: accedo per posizione (list/tuple) o per chiave/appartenenza (dict/set)? Cambia (list/dict/set) o resta fisso (tuple)?"] },
+    { l: "Come funziona", i: ["list: accesso per indice O(1), ricerca O(n). dict: mappa chiave→valore, accesso O(1) medio — il cavallo di battaglia per record/config/JSON. set: niente duplicati, test «x in set» O(1).", "Le comprehension ([x for x in ... if ...], {k:v for ...}) costruiscono queste strutture in una riga: trasforma + filtra, come un SELECT … WHERE in memoria."] },
+    { l: "Errori comuni", i: ["«x in lista» scorre elemento per elemento (O(n)); «x in set/dict» va quasi a colpo singolo (hash, O(1)). Se ti serve solo «l'ho già visto?», usa un set."] },
+    { l: "Da ricordare", i: ["dict è quello che userai di più (ogni record/JSON è un dict, forma tipica list di dict); set è la scorciatoia per l'appartenenza; quando i 4 built-in non bastano c'è collections (Counter, defaultdict, deque, namedtuple)."] },
+  ]},
+  { id: "fc-pyfunzioni", s: "Python", t: "Funzioni: parametri, default, *args/**kwargs", b: [
+    { l: "Definizione", i: ["Una funzione è un pezzo di logica con un nome: riceve parametri, restituisce un output con return. Serve a non ripetersi e a dare un nome a un'idea."] },
+    { l: "Come funziona", i: ["I default rendono un parametro opzionale; gli argomenti keyword lo rendono leggibile (l'ordine non conta più).", "*args raccoglie i posizionali extra in una tupla, **kwargs i keyword extra in un dict — il modo con cui le librerie accettano «opzioni qualsiasi».", "Trasformare una lista: pensa comprehension prima del ciclo for+append — stesso risultato, una riga leggibile."] },
+    { l: "Errori comuni", i: ["def f(x=[]) — un valore di default mutabile (lista/dict) è creato UNA sola volta e condiviso tra tutte le chiamate. Pattern sicuro: def f(x=None) e crearla dentro."] },
+    { l: "Da ricordare", i: ["Parametri dentro, return fuori. Sono i mattoni con cui è scritto ogni endpoint che costruirai."] },
+  ]},
+  { id: "fc-pyerrori", s: "Python", t: "Gestione errori: try/except/else/finally", b: [
+    { l: "Definizione", i: ["Un errore solleva un'eccezione che, se non gestita, ferma il programma con un traceback. try prova, except cattura un TIPO specifico, else gira solo se non c'è stato errore, finally gira SEMPRE (pulizia: chiudere file/connessioni)."] },
+    { l: "Come funziona", i: ["Gli except si valutano dall'alto: il primo che «matcha» vince, quindi il più specifico va prima del più generico (es. FileNotFoundError è un OSError).", "raise + una classe di errore custom (es. SaldoInsufficiente) traduce una regola di business violata in un 400/409 pulito invece di un 500 generico."] },
+    { l: "Errori comuni", i: ["Un except: nudo (o except Exception) ingoia ogni errore e nasconde i bug veri. Cattura solo il tipo che sai gestire, lascia risalire il resto."] },
+    { l: "Da ricordare", i: ["Prova (try), cattura il tipo giusto (except), pulisci sempre (finally). Non «niente va mai storto», ma «quando va storto, so cosa succede»."] },
+  ]},
+  { id: "fc-pyfile", s: "Python", t: "Leggere/scrivere file: testo, JSON, CSV", b: [
+    { l: "Definizione", i: ["Si apre con with open(...): il file si chiude da solo anche se scoppia un errore a metà — niente risorse «perse»."] },
+    { l: "Come funziona", i: ["Modalità: \"r\" leggere · \"w\" scrivere (tronca!) · \"a\" append · \"b\" binario. json.dump/load traduce dict Python ⇄ testo JSON (True→true, None→null). csv.DictReader legge ogni riga come dict."] },
+    { l: "Errori comuni", i: ["\"w\" cancella il contenuto esistente del file — per aggiungere in coda serve \"a\". Sempre encoding=\"utf-8\", o accenti/emoji si rompono."] },
+    { l: "Da ricordare", i: ["Testo per i log, JSON per scambiare oggetti (dict ⇄ testo, il ponte fra memoria e disco), CSV per le tabelle. Stessa idea del body JSON di una richiesta HTTP."] },
+  ]},
+  { id: "fc-pyoop", s: "Python", t: "Classi & OOP", b: [
+    { l: "Definizione", i: ["Una classe è uno stampo che tiene insieme dati (attributi) e comportamenti (metodi). Da uno stampo crei tanti oggetti (istanze), ognuno col suo stato. self è «questo oggetto»."] },
+    { l: "Come funziona", i: ["Incapsulamento: i metodi sono l'UNICO varco per cambiare lo stato, e possono far rispettare le regole (es. niente saldo negativo).", "Ereditarietà: la sottoclasse eredita tutto e può sovrascrivere (override) — relazione «è-un». @dataclass genera gratis __init__/__repr__/__eq__."] },
+    { l: "Trade-off", i: ["Usa una classe quando dati e comportamenti che cambiano stato vivono insieme (un carrello, una connessione). Se ti serve solo trasportare dati, un dict o una @dataclass bastano — non tutto deve essere un oggetto."] },
+    { l: "Da ricordare", i: ["OOP = stato + comportamento impacchettati, protetti dai metodi (incapsulamento). L'ereditarietà riusa e specializza; @dataclass toglie il boilerplate."] },
+  ]},
+  { id: "fc-pyavanzato", s: "Python", t: "Iteratori, generatori, decoratori, context manager", b: [
+    { l: "Definizione", i: ["Quattro strumenti che distinguono chi «sa Python»: li incontri ovunque — framework web, librerie AI, codice che processa dati grandi."] },
+    { l: "Come funziona", i: ["Generatore (yield): produce valori uno alla volta, lazy, senza costruire tutta la lista in memoria — file enormi o stream infiniti.", "Iteratore: il protocollo dietro ogni for (__iter__/__next__); liste, dict, file, generatori sono tutti iterabili.", "Decoratore (@qualcosa): avvolge una funzione per aggiungere comportamento (log, timing, cache) SENZA toccarne il corpo — zucchero per fn = deco(fn).", "Context manager (with, __enter__/__exit__): garantisce setup all'ingresso e teardown all'uscita, sempre — anche con errore. È il meccanismo dietro open(), i lock, le transazioni."] },
+    { l: "Da ricordare", i: ["Generatori/iteratori per scorrere dati grandi senza caricarli tutti; decoratori per avvolgere comportamento riusabile; context manager per setup/teardown affidabili."] },
+  ]},
+  { id: "fc-pyasync", s: "Python", t: "Concorrenza & async: GIL, I/O vs CPU-bound", b: [
+    { l: "Definizione", i: ["Il GIL (Global Interpreter Lock) impedisce a più thread di eseguire bytecode Python davvero in parallelo. La strada giusta dipende dal TIPO di lavoro."] },
+    { l: "Come funziona", i: ["I/O-bound (rete, disco, DB): usa async/await o thread. Il tempo se ne va aspettando — mentre una chiamata aspetta, le altre partono; il GIL non è un problema perché nessuno sta calcolando.", "CPU-bound (calcolo puro): i thread NON aiutano (il GIL li serializza) — serve multiprocessing, più interpreti per usare davvero più core."] },
+    { l: "Errori comuni", i: ["Concorrenza (alternare tante cose in sospeso, async/thread) ≠ parallelismo (eseguirle davvero nello stesso istante, multiprocessing). Confonderli è la causa nº1 di «ho aggiunto thread e non è più veloce»."] },
+    { l: "Da ricordare", i: ["Aspetti fuori (rete/disco/DB) → async/thread. Calcoli dentro (numeri, immagini) → multiprocessing. È il ragionamento dietro uno scraper veloce (I/O) o un batch pesante (CPU)."] },
+  ]},
+  { id: "fc-pytyping", s: "Python", t: "Type hints & Pydantic", b: [
+    { l: "Definizione", i: ["I type hints dichiarano i tipi (opzionali); mypy li controlla staticamente e trova bug PRIMA di eseguire. Pydantic valida e converte i dati «sporchi» in ingresso (JSON, form, output LLM) in oggetti tipati."] },
+    { l: "Come funziona", i: ["Un modello Pydantic è un contratto: se il dato non lo rispetta, si ferma al confine con un ValidationError chiaro invece di propagare spazzatura — stesso principio dei vincoli del database, portato nel codice."] },
+    { l: "Da ricordare", i: ["Type hints + mypy = bug trovati scrivendo, non eseguendo. Pydantic = validare ai confini — è il cuore di FastAPI e degli structured output per gli LLM (schema = contratto sull'output)."] },
+  ]},
+  { id: "fc-pypackaging", s: "Python", t: "Ambienti, pacchetti, test", b: [
+    { l: "Definizione", i: ["Un ambiente virtuale (venv/Poetry/uv) isola le dipendenze di un progetto; un lockfile fissa le versioni esatte e riproducibili di tutto l'albero, anche indiretto."] },
+    { l: "Come funziona", i: ["Piramide dei test: tanti unit test (veloci, isolati, economici), meno integration, pochissimi end-to-end (lenti, fragili). Testa il comportamento, non i dettagli interni.", "pytest è il gate del deploy: test rossi = la pipeline blocca il rilascio, non «passa lo stesso»."] },
+    { l: "Da ricordare", i: ["Isola e dichiara le dipendenze per ambienti riproducibili (via il «da me funzionava»), poi testa: sono le abitudini che trasformano uno script in software su cui un team può lavorare."] },
+  ]},
+
+  /* ============ STRUTTURE DATI ============ */
+  { id: "fc-dsarray", s: "Strutture dati", t: "Array & hash map", b: [
+    { l: "Definizione", i: ["Array: fila di caselle numerate, accesso per indice O(1), ma cercare un valore scorre tutto (O(n)). Hash map (dict/set): trasforma la chiave in un indice via una funzione hash, va dritta alla casella giusta."] },
+    { l: "Come funziona", i: ["hash(chiave) % n_bucket individua il bucket. Con troppe collisioni un bucket diventa una lista da scorrere (degrada verso O(n)) — per questo la hash map si ridimensiona (raddoppia i bucket) al crescere del load factor."] },
+    { l: "Errori comuni", i: ["Regola d'oro: «sto cercando qualcosa in un ciclo?» → quasi sempre un dict/set trasforma un O(n²) in O(n) (es. Two Sum: ricorda ciò che hai già visto in un set/dict)."] },
+    { l: "Da ricordare", i: ["Array = accesso per posizione O(1), ricerca lineare. Hash map = accesso per chiave O(1) medio, al prezzo di perdere l'ordine e degradare con le collisioni."] },
+  ]},
+  { id: "fc-dslist", s: "Strutture dati", t: "Linked list", b: [
+    { l: "Definizione", i: ["I nodi non sono contigui: ognuno tiene il valore + un puntatore al successivo. Inserire/togliere (nodo già in mano) costa O(1) — ricuci due puntatori. Prezzo: niente accesso per indice (O(n))."] },
+    { l: "Come funziona", i: ["Pattern «fast & slow» (Floyd): due puntatori a velocità diverse trovano un ciclo o il centro in O(1) di memoria extra."] },
+    { l: "Trade-off", i: ["Array: accesso random veloce, inserire in mezzo O(n). Linked list: l'opposto. In Python: list (array dinamico) per accesso; collections.deque (linked list doppia) per code veloci ai due capi."] },
+    { l: "Da ricordare", i: ["Scegli dal collo di bottiglia: accesso casuale → array; inserire/togliere agli estremi o in punti già noti → linked list."] },
+  ]},
+  { id: "fc-dsstackqueue", s: "Strutture dati", t: "Stack & queue", b: [
+    { l: "Definizione", i: ["Stessa collezione, politica di uscita diversa. Stack = LIFO (esce l'ultimo entrato). Queue = FIFO (esce il più vecchio). Entrambe O(1) alle estremità giuste."] },
+    { l: "Come funziona", i: ["Stack: ricorsione (call stack), parentesi bilanciate, DFS, monotonic stack. Queue: BFS, job in background, buffer produttore→consumatore."] },
+    { l: "Errori comuni", i: ["In Python, list.pop(0) come coda è O(n) (ricompatta l'array) — usa collections.deque, O(1) a entrambi i capi."] },
+    { l: "Da ricordare", i: ["Chiediti: il problema vuole tornare sull'ultima cosa toccata (stack) o servire in ordine d'arrivo (queue)?"] },
+  ]},
+  { id: "fc-dstree", s: "Strutture dati", t: "Alberi & BST + attraversamenti", b: [
+    { l: "Definizione", i: ["Nel binary search tree, sinistra è sempre più piccolo, destra più grande: cerca/inserisci/cancella in O(log n) su un albero bilanciato — dimezzi lo spazio a ogni passo, come la ricerca binaria."] },
+    { l: "Come funziona", i: ["in-order (sx·radice·dx) → valori ordinati gratis. pre-order → copiare/serializzare. post-order → cancellare, calcolare taglie dal basso. BFS → cammino minimo, esplorazione per livelli."] },
+    { l: "Errori comuni", i: ["Un BST «puro» può degenerare in una lista (O(n)) se inserisci valori già ordinati — servono varianti auto-bilancianti (AVL, red-black). L'indice di Postgres è un B-tree, cugino largo e bilanciato di questa idea."] },
+    { l: "Da ricordare", i: ["4 attraversamenti come strumenti: in-order = ordinato, BFS = per livelli. Sono la base di DFS/BFS che rivedi in tutta la sezione LeetCode."] },
+  ]},
+  { id: "fc-dsheap", s: "Strutture dati", t: "Heap & priorità", b: [
+    { l: "Definizione", i: ["La heap (coda a priorità) non è del tutto ordinata: mantiene solo l'invariante «ogni genitore ≤ dei figli» — basta per dare il minimo in O(1) e per push/pop in O(log n)."] },
+    { l: "Come funziona", i: ["Top-K con una heap di dimensione K: O(n log K) invece di ordinare tutto (O(n log n)). È anche la benzina di Dijkstra e degli scheduler per priorità."] },
+    { l: "Da ricordare", i: ["Segnale da colloquio: «i K più grandi/vicini/frequenti» o «il prossimo evento in ordine di tempo» → pensa heap. Ti evita di ordinare l'intero insieme."] },
+  ]},
+  { id: "fc-dsgraph", s: "Strutture dati", t: "Grafi & BFS/DFS", b: [
+    { l: "Definizione", i: ["Un grafo è nodi collegati da archi, cicli permessi. L'unica differenza in codice rispetto all'albero: serve un set «visitati» per non ripassare sui nodi e finire in un ciclo infinito."] },
+    { l: "Come funziona", i: ["BFS (queue): esplora a onde, trova il cammino più corto (archi non pesati), livello per livello. DFS (stack/ricorsione): va a fondo su un ramo — esistenza di un cammino, cicli, ordinamento topologico, backtracking."] },
+    { l: "Errori comuni", i: ["Senza il set dei visitati, BFS/DFS su un grafo con cicli gira all'infinito. È l'errore numero uno."] },
+    { l: "Da ricordare", i: ["BFS = queue = onde = cammino minimo. DFS = stack/ricorsione = a fondo = esistenza/cicli/backtracking. Rappresenta il grafo come lista di adiacenza + set dei visitati."] },
+  ]},
+  { id: "fc-dstrie", s: "Strutture dati", t: "Trie (prefissi)", b: [
+    { l: "Definizione", i: ["Il trie memorizza parole condividendo i prefissi comuni: cercare una parola o tutte quelle con un prefisso costa O(lunghezza) — indipendente da quante parole hai."] },
+    { l: "Come funziona", i: ["È il motore dietro l'autocompletamento/typeahead, il correttore ortografico, l'instradamento IP e i filtri per prefisso."] },
+    { l: "Trade-off", i: ["Scambia più memoria (un nodo per lettera dei rami) per ricerche di prefisso velocissime — per pochi dati può non valerne la pena."] },
+    { l: "Da ricordare", i: ["Ogni volta che un problema dice «prefisso comune», «autocompletamento» o «dizionario di parole», il trie è la risposta naturale."] },
+  ]},
+  { id: "fc-dsunion", s: "Strutture dati", t: "Union-Find (disjoint set)", b: [
+    { l: "Definizione", i: ["Union-Find risponde a «questi due sono nello stesso gruppo?» (find) e «unisci due gruppi» (union), quasi O(1) con path compression + union by rank."] },
+    { l: "Come funziona", i: ["Ogni elemento punta a un capo; la radice (il capo del capo…) identifica il gruppo. find(a) == find(b) → connessi. union fonde le radici."] },
+    { l: "Trade-off", i: ["Batte BFS/DFS per contare i gruppi quando gli archi arrivano uno alla volta nel tempo e vuoi rispondere «connessi?» dopo ognuno, senza rifare l'intera esplorazione."] },
+    { l: "Da ricordare", i: ["Due operazioni quasi O(1): find e union. Strumento d'elezione per «quanti gruppi?» e «c'è un ciclo?» — componenti, cicli, Kruskal (MST)."] },
+  ]},
+
+  /* ============ LEETCODE ============ */
+  { id: "fc-lcpattern", s: "LeetCode", t: "Riconoscere il pattern", b: [
+    { l: "Definizione", i: ["Quasi tutti i problemi di coding interview ricadono in ~10 pattern. Il lavoro vero è tradurre il testo del problema nel pattern giusto — non aver memorizzato 500 problemi."] },
+    { l: "Come funziona", i: ["Metodo in 6 passi: (1) chiarisci input/output/vincoli, (2) fai un esempio a mano, (3) proponi la forza bruta e dì il suo costo, (4) individua il collo di bottiglia e il pattern che lo abbatte, (5) scrivi, (6) testa con casi limite (vuoto, un elemento, duplicati)."] },
+    { l: "Da ricordare", i: ["Metà del punteggio in colloquio è mostrare COME arrivi al pattern, non solo il codice finale. Di' ad alta voce il segnale che riconosci prima di scrivere."] },
+  ]},
+  { id: "fc-lctwoptr", s: "LeetCode", t: "Two pointers", b: [
+    { l: "Definizione", i: ["Array ordinato + cerchi una coppia/tripla → due indici che convergono dagli estremi opposti: O(n²) diventa O(n), memoria zero."] },
+    { l: "Come funziona", i: ["Somma troppo bassa → alza il sinistro (serve un numero più grande). Somma troppo alta → abbassa il destro."] },
+    { l: "Errori comuni", i: ["Funziona solo se l'array è ordinato (o ordinabile). Se non lo è e cerchi una coppia con somma data, il pattern giusto è la hash map."] },
+    { l: "Da ricordare", i: ["Segnale: array ordinato + coppia/tripla. Cugini: fast & slow per i cicli in linked list, «leggi con uno, scrivi con l'altro» per rimuovere duplicati in-place."] },
+  ]},
+  { id: "fc-lcsliding", s: "LeetCode", t: "Sliding window", b: [
+    { l: "Definizione", i: ["Sottoarray/sottostringa CONTIGUO + «più lungo/corto/somma» → una finestra con due estremi l/r: allarga a destra finché la condizione regge, restringe da sinistra quando si rompe."] },
+    { l: "Come funziona", i: ["Ogni elemento entra ed esce dalla finestra una sola volta nel complesso: è ciò che rende il tutto O(n) invece di ricalcolare ogni finestra da zero (O(n²))."] },
+    { l: "Da ricordare", i: ["Due sapori: finestra a taglia FISSA (media mobile) o VARIABILE (si allarga/restringe in base a una condizione)."] },
+  ]},
+  { id: "fc-lcbinary", s: "LeetCode", t: "Binary search (anche «sulla risposta»)", b: [
+    { l: "Definizione", i: ["Dati ordinati (o una condizione monotona sì/no) → guardare il centro dice da che parte continuare: butti via metà a ogni confronto, O(log n)."] },
+    { l: "Come funziona", i: ["«Binary search sulla risposta»: cerchi il minimo/massimo valore che soddisfa una condizione monotona (funziona/non funziona), non un elemento dentro un array — è la variante che separa un candidato forte."] },
+    { l: "Errori comuni", i: ["I due bug classici: loop infinito (lo/hi o < vs <= sbagliati) e overflow di (lo+hi) — usa lo + (hi-lo)//2. Decidi in anticipo se cerchi «uguale», «primo ≥» o «ultimo ≤»."] },
+    { l: "Da ricordare", i: ["Segnale: input ordinato oppure «minimo/massimo valore che soddisfa X» monotono."] },
+  ]},
+  { id: "fc-lctraversal", s: "LeetCode", t: "BFS/DFS su griglia (flood fill · isole)", b: [
+    { l: "Definizione", i: ["Una matrice è un grafo nascosto: ogni cella è un nodo collegato ai 4 (o 8) vicini. «Contare le isole», «flood fill», «regioni circondate» sono lo stesso schema."] },
+    { l: "Come funziona", i: ["Scorri la griglia; quando trovi terra non ancora visitata, affondi (BFS o DFS) marcando tutta l'isola sulla griglia stessa, e conti +1. BFS se temi lo stack overflow su griglie enormi."] },
+    { l: "Da ricordare", i: ["Stesso motore visto sui grafi (Strutture dati), applicato a una griglia: marca i visitati sulla struttura stessa per non ricontare."] },
+  ]},
+  { id: "fc-lcbacktrack", s: "LeetCode", t: "Backtracking", b: [
+    { l: "Definizione", i: ["«Tutte le combinazioni/permutazioni/sottoinsiemi» → DFS su un albero delle decisioni che non esiste in memoria: lo generi camminandolo. Template: scegli · esplora (ricorri) · disfa la scelta."] },
+    { l: "Come funziona", i: ["Il pruning (potatura) taglia i rami che non possono portare a una soluzione valida, riducendo l'esplorazione."] },
+    { l: "Trade-off", i: ["Intrinsecamente costoso (esponenziale, esplora tutto) — va bene quando DEVI enumerare tutte le soluzioni. Se cerchi solo «quante/il migliore» con sottoproblemi ripetuti, il DP di solito lo batte."] },
+    { l: "Da ricordare", i: ["Template universale a tre mosse; cambia solo cosa conta come «soluzione completa» e quali rami potare."] },
+  ]},
+  { id: "fc-lcdp", s: "LeetCode", t: "Programmazione dinamica", b: [
+    { l: "Definizione", i: ["Il problema si scompone in sottoproblemi che si RIPETONO. Invece di ricalcolarli (ricorsione ingenua, esponenziale), memorizzi ogni sottoproblema una volta e lo riusi."] },
+    { l: "Come funziona", i: ["Top-down: ricorsione + memoization (lru_cache). Bottom-up: riempi una tabella dal caso base in su, spesso più efficiente in memoria. Il cuore: definire lo stato (cosa cattura dp[i]) e la transizione (come si ricava dai precedenti)."] },
+    { l: "Da ricordare", i: ["Segnale: «in quanti modi», «minimo/massimo costo», scelte con sottoproblemi ripetuti. Stato + transizione sono l'ossatura di ogni DP."] },
+  ]},
+  { id: "fc-lcheap", s: "LeetCode", t: "Heap & top-K", b: [
+    { l: "Definizione", i: ["«I K più grandi/vicini/frequenti» non richiede ordinare tutto (O(n log n)): basta una heap di dimensione K, O(n log K) — funziona anche su uno stream infinito."] },
+    { l: "Come funziona", i: ["Per ogni nuovo elemento: se batte il peggiore in heap, entra e il peggiore viene espulso. Alla fine la heap contiene esattamente i K migliori (non ordinati)."] },
+    { l: "Errori comuni", i: ["Controintuitivo: per i K PIÙ GRANDI si usa una MIN-heap di taglia K (il minimo in cima è il «peggiore del podio» da scartare), e viceversa per i più piccoli."] },
+    { l: "Da ricordare", i: ["Segnale: «i K più grandi/piccoli/vicini/frequenti», «stream». Una heap di taglia K = memoria costante, non serve tenere tutto."] },
+  ]},
+  { id: "fc-lcintervals", s: "LeetCode", t: "Intervalli (merge, contare sovrapposizioni)", b: [
+    { l: "Definizione", i: ["Dati = intervalli [inizio, fine] (prenotazioni, calendario, range) → primo gesto quasi automatico: ordinali per istante di inizio."] },
+    { l: "Come funziona", i: ["Dopo l'ordinamento, una sola passata lineare: se il prossimo inizia prima che l'ultimo attivo finisca (c ≤ b), si sovrappongono → estendi la fine al massimo; altrimenti nuovo blocco."] },
+    { l: "Da ricordare", i: ["Per «quante risorse servono in parallelo» (es. sale riunioni), pensa a una min-heap delle fini invece del semplice merge."] },
+  ]},
+  { id: "fc-lcstack", s: "LeetCode", t: "Monotonic stack", b: [
+    { l: "Definizione", i: ["«Prossimo elemento più grande/piccolo a destra» sembra O(n²); uno stack monotòno (indici, valori decrescenti) lo risolve in O(n): ogni indice fa un push e al più un pop."] },
+    { l: "Come funziona", i: ["Lo stack tiene solo gli elementi ancora in attesa di una risposta. Quando arriva un elemento più grande, soddisfa e scarica tutti quelli in cima che stavano aspettando."] },
+    { l: "Da ricordare", i: ["Stesso schema per istogramma con rettangolo massimo, temperature giornaliere, span dei prezzi. Sembra O(n²), è O(n) — è il pattern che sorprende di più."] },
+  ]},
+
+  /* ============ FONDAMENTA ============ */
+  { id: "fc-panoramica", s: "Fondamenta", t: "Panoramica: la catena client → API → server → DB → hosting", b: [
+    { l: "Definizione", i: ["Il backend è una catena di livelli: client (browser/app) → API/HTTP (il contratto) → server (logica) → database (storage permanente) → hosting (dove gira). Una richiesta entra dall'alto e scende fino ai dati, poi la risposta risale."] },
+    { l: "Da ricordare", i: ["Quando senti «l'app è lenta», la domanda giusta non è «com'è scritto il codice» ma in QUALE livello sta il ritardo: rete, server o database."] },
+  ]},
+  { id: "fc-http", s: "Fondamenta", t: "HTTP: metodi, status code, idempotenza", b: [
+    { l: "Definizione", i: ["HTTP è domanda→risposta a turni. I 4 metodi CRUD: GET (leggi, non cambia nulla), POST (crea), PUT (aggiorna/sostituisce), DELETE (elimina)."] },
+    { l: "Come funziona", i: ["Status code: 2xx ok, 3xx redirect, 4xx errore del client, 5xx errore del server. 401 = non so chi sei; 403 = so chi sei ma non hai i permessi; 404 = la risorsa non esiste; 429 = rallenta (rate limit)."] },
+    { l: "Errori comuni", i: ["Idempotente = ripetere la stessa richiesta dà lo stesso stato finale. GET/PUT/DELETE lo sono, POST no: due POST identici creano due risorse — per questo un client può riprovare un GET dopo un timeout in sicurezza, ma non un POST."] },
+    { l: "Da ricordare", i: ["Metodo + URL + status code onesto sono il contratto minimo di ogni API. L'error handling parte dallo scegliere il codice giusto."] },
+  ]},
+  { id: "fc-json", s: "Fondamenta", t: "JSON: la lingua delle API", b: [
+    { l: "Definizione", i: ["JSON è fatto solo di coppie \"chiave\": valore. I valori sono stringhe, numeri, booleani, null, o altri oggetti/liste annidati — nient'altro (niente date o funzioni native)."] },
+    { l: "Errori comuni", i: ["Una virgola o una virgoletta di troppo/mancante rompe il parsing: il server risponde 400 Bad Request prima ancora di guardare la logica di business."] },
+    { l: "Da ricordare", i: ["JSON malformato = errore del client (400), non del server. È la forma con cui ogni body di richiesta/risposta viaggia."] },
+  ]},
+  { id: "fc-rest", s: "Fondamenta", t: "REST: mettere insieme metodi + JSON + status code", b: [
+    { l: "Definizione", i: ["Un'API REST applica metodi HTTP + JSON + status code a delle risorse (es. /users). Ogni chiamata corrisponde a una query SQL equivalente dietro le quinte."] },
+    { l: "Come funziona", i: ["Il giro CRUD completo: POST (→201, nuova riga), GET su quell'id (→200), PUT per modificarlo (→200), DELETE, poi GET di nuovo sullo stesso id → 404."] },
+    { l: "Da ricordare", i: ["REST è HTTP + JSON + status code applicati in modo coerente a risorse nominate con sostantivi negli URL."] },
+  ]},
+  { id: "fc-apidesign", s: "Fondamenta", t: "API design: prevedibilità + contratto", b: [
+    { l: "Definizione", i: ["Un'API ben progettata si «indovina»: sostantivi negli URL, verbi nei metodi HTTP, status code onesti, e una forma unica per ogni errore ({error:{code, message, request_id}})."] },
+    { l: "Come funziona", i: ["Idempotency-Key su una scrittura (POST) rende sicuro il retry: il client rimanda la stessa chiave dopo un timeout e il server riconosce il doppione senza addebitare due volte.", "Contract-first con OpenAPI: definisci il contratto (endpoint, tipi, errori) prima del codice, poi generi client/doc/mock e front-end/back-end lavorano in parallelo."] },
+    { l: "Trade-off", i: ["REST per API pubbliche su risorse. GraphQL quando il client vuole pochi giri e dati su misura. gRPC tra due tuoi microservizi, veloce e tipizzato. Non sono religioni: si mescolano nella stessa azienda."] },
+    { l: "Da ricordare", i: ["Versioning, paginazione e rate limit vanno blindati dal giorno uno: aggiungerli dopo, su un'API già usata, è doloroso. Un'API che si indovina è un'API che la gente adotta."] },
+  ]},
+  { id: "fc-websocket", s: "Fondamenta", t: "WebSocket & realtime", b: [
+    { l: "Definizione", i: ["HTTP è domanda→risposta; quando è il SERVER a dover avvertire il client nell'istante in cui succede qualcosa, quel modello si rompe. Il WebSocket è un canale sempre aperto e bidirezionale."] },
+    { l: "Come funziona", i: ["Parte come una richiesta HTTP con header Upgrade, il server risponde 101 Switching Protocols, e da lì la stessa connessione TCP resta aperta e diventa full-duplex (wss:// se cifrato).", "Il polling è un compromesso perdente: più spesso chiedi, meno ritardo ma più richieste sprecate; meno spesso, il contrario. Il WebSocket elimina il dilemma."] },
+    { l: "Trade-off", i: ["Se il flusso è solo server→client (notifiche, feed, streaming di token LLM), l'SSE (Server-Sent Events) è più semplice e leggero. Il WebSocket serve quando anche il client deve spingere in continuo (chat, giochi, editing collaborativo)."] },
+    { l: "Errori comuni", i: ["Il prezzo della persistenza è lo stato: con tanti utenti su più server serve un registro «utente → a quale server è connesso», più heartbeat (ping/pong) e riconnessione automatica."] },
+  ]},
+  { id: "fc-testing", s: "Fondamenta", t: "Testing: piramide, TDD, mock/fake", b: [
+    { l: "Definizione", i: ["I test non dimostrano che il codice è giusto: danno il coraggio di cambiarlo senza paura, dicendoti in un secondo se hai rotto qualcosa."] },
+    { l: "Come funziona", i: ["Piramide: tanti unit test (una funzione isolata, veloci), meno integration (più pezzi insieme, es. codice+DB), pochissimi e2e (l'intero flusso, lenti e fragili).", "TDD: rosso (scrivi il test che fallisce) → verde (codice minimo per farlo passare) → refactor (pulisci con la rete di sicurezza).", "Mock/stub sostituiscono dipendenze lente o esterne (API, pagamenti); un fake è un'implementazione leggera ma vera (DB in memoria) quando lo stub è troppo finto."] },
+    { l: "Errori comuni", i: ["I test flaky (a volte passano, a volte no) erodono la fiducia. Il 100% di code coverage senza assert utili è teatro: contano i CASI che verifichi (limite, errore, vuoto), non la percentuale."] },
+    { l: "Da ricordare", i: ["Testa il comportamento (cosa entra → cosa esce), non i dettagli interni, così i test sopravvivono al refactor. In CI, i test verdi sono il cancello del deploy."] },
+  ]},
+
+  /* ============ SYSTEM DESIGN ============ */
+  { id: "fc-sdmetodo", s: "System Design", t: "Metodo & mattoni", diag: "case-metodo.html", b: [
+    { l: "Definizione", i: ["Il system design non è magia: è comporre pochi mattoni ricorrenti per reggere una certa scala, scegliendo ogni volta i giusti compromessi. Prima il metodo (sempre lo stesso), poi i mattoni."] },
+    { l: "Come funziona", i: ["Due parole da avere sempre in testa: scaling orizzontale (aggiungi macchine intercambiabili, non una macchina più grossa) e stateless (i server non tengono stato, così sono intercambiabili dietro un load balancer)."] },
+    { l: "Da ricordare", i: ["Quasi ogni «come scala?» si risponde combinando questi mattoni — Uber, Netflix, Ticketmaster sono tutte combinazioni degli stessi pezzi."] },
+  ]},
+  { id: "fc-sdstime", s: "System Design", t: "Stime a spanne (back-of-envelope)", diag: "case-stime.html", b: [
+    { l: "Definizione", i: ["Prima di disegnare qualsiasi cosa, si fanno i conti a spanne: bastano due moltiplicazioni per sapere se serve una macchina o mille. Non serve precisione, serve l'ordine di grandezza."] },
+    { l: "Come funziona", i: ["DAU × azioni/utente = scritture/giorno; diviso 86.400s = QPS medio, ×3 per il picco. Il rapporto letture:scritture dice dove investire per primo: read-heavy → cache e read replica sono la priorità."] },
+    { l: "Da ricordare", i: ["100 QPS → una macchina e via. 100.000 QPS → load balancer, cache, repliche, forse sharding. Fai sempre questo conto all'inizio di un design."] },
+  ]},
+  { id: "fc-sddati", s: "System Design", t: "Scalare i dati: replica, sharding, hashing coerente", diag: "case-dati.html", b: [
+    { l: "Definizione", i: ["Quando i dati non stanno più in una macchina, li dividi (sharding). Con hash % N, aggiungere un nodo rimescola quasi tutte le chiavi — disastro a caldo. L'hashing coerente lo risolve: un nuovo nodo su un anello ruba solo le chiavi del suo arco (~K/N si spostano)."] },
+    { l: "Come funziona", i: ["Replica = copie in lettura del DB: scala le letture, ma può essere leggermente indietro (replica lag → eventual consistency). Sharding = fette per chiave: scala scritture e storage, ma le query cross-shard fanno male."] },
+    { l: "Trade-off", i: ["CAP: quando la rete tra nodi si spezza, scegli Consistente (rifiuti finché non sei sicuro) o Disponibile (rispondi con dati un po' vecchi) — non entrambi durante il guasto. Molti sistemi a scala scelgono disponibilità + eventual consistency."] },
+    { l: "Da ricordare", i: ["Replica per le letture, shard per scritture/storage, hashing coerente per spostare pochi dati quando la flotta di nodi cambia."] },
+  ]},
+  { id: "fc-sdasync", s: "System Design", t: "Code & asincronia", diag: "case-async.html", b: [
+    { l: "Definizione", i: ["Non tutto va fatto mentre l'utente aspetta: mandare un'email, generare una miniatura, addebitare un pagamento — l'API accetta subito e mette il lavoro in coda, un worker lo svolge dopo."] },
+    { l: "Come funziona", i: ["Se il consumatore è più lento degli arrivi, la coda cresce (backpressure): un burst breve si assorbe, se dura la coda si riempie e i messaggi si perdono — si scala aggiungendo worker in parallelo."] },
+    { l: "Errori comuni", i: ["Le tre regole d'oro: idempotenza (un messaggio che arriva due volte non deve fare danni, es. doppio addebito), retry (se il worker fallisce, il messaggio torna in coda), dead-letter queue (dopo N tentativi falliti, va in una coda a parte da ispezionare)."] },
+    { l: "Da ricordare", i: ["La coda disaccoppia produttore e consumatore, assorbe i picchi e abilita i retry — al prezzo di dover gestire duplicati e ordine."] },
+  ]},
+  { id: "fc-sdtinyurl", s: "System Design", t: "URL shortener: generazione ID + read-heavy", diag: "case-tinyurl.html", b: [
+    { l: "Definizione", i: ["Caso perfetto per capire generazione di ID unici e sistemi read-heavy: pochissime scritture (crei un link), moltissime letture (~100:1)."] },
+    { l: "Come funziona", i: ["Contatore + base62 per codici corti e unici, distribuendo blocchi di id a ogni server (Key Generation Service) così non serve un lock globale a ogni scrittura. Lettura = lookup per chiave indicizzata + cache."] },
+    { l: "Trade-off", i: ["301 (permanente) se vuoi il minimo carico e i link non cambiano mai — il browser/CDN lo cachea. 302 (temporaneo) se le statistiche di click contano: ogni click passa da te."] },
+    { l: "Da ricordare", i: ["Read-heavy 100:1 → tutto ruota attorno a cache + lookup per chiave indicizzato. La generazione di ID senza collo di bottiglia centrale è un pattern che ritorni ovunque."] },
+  ]},
+  { id: "fc-sduber", s: "System Design", t: "Uber: matching geografico", diag: "case-uber.html", b: [
+    { l: "Definizione", i: ["Il cuore di Uber è una domanda geografica ad altissima frequenza: «quali autisti sono vicini a me, ora?». Con milioni di autisti scandire tutti a ogni richiesta è impossibile: serve un indice spaziale."] },
+    { l: "Come funziona", i: ["Geohash (griglia fissa, semplice, facile da shardare) o quadtree (griglia adattiva, si infittisce dove serve) dividono la mappa in celle; cerchi solo la tua cella + le adiacenti. Le posizioni, che cambiano ogni ~4s, vivono in memoria (Redis), non su disco."] },
+    { l: "Da ricordare", i: ["Pattern ricorrente: non scandire tutto, restringi prima il campo. Stesso schema per consegne, mappe, «amici nelle vicinanze»."] },
+  ]},
+  { id: "fc-sdnetflix", s: "System Design", t: "Netflix: CDN e streaming", diag: "case-netflix.html", b: [
+    { l: "Definizione", i: ["Sistema read-heavy e pesante di banda: pochi caricamenti, miliardi di ore guardate. La domanda non è «come conservo i video» ma «come li porto vicino all'utente» — CDN e caching."] },
+    { l: "Come funziona", i: ["Pipeline una tantum: upload → transcodifica in molte risoluzioni/bitrate → segmentazione → distribuzione CDN. Adaptive bitrate: il player misura la rete e cambia qualità a ogni segmento.", "Push (pre-posizionamento) per i titoli popolari sull'edge prima ancora che li chiedano; pull (cache al primo accesso) per la coda lunga — il primo utente paga per tutti."] },
+    { l: "Da ricordare", i: ["Pattern «computa una volta, servi un miliardo di volte»: sposta il lavoro costoso prima e in asincrono, poi rendi la lettura banale e vicina (CDN)."] },
+  ]},
+  { id: "fc-sdticket", s: "System Design", t: "Ticketmaster: contesa e overselling", diag: "case-ticket.html", b: [
+    { l: "Definizione", i: ["Il problema centrale non è la scala delle letture: è non vendere due volte lo stesso posto quando due richieste arrivano nello stesso istante."] },
+    { l: "Come funziona", i: ["Prenotazione con lock temporaneo (TTL): se non paghi entro N minuti, il posto torna libero da solo. Vincolo UNIQUE su seat_id nel booking come rete di sicurezza finale — rende l'oversell impossibile anche se la logica applicativa sbaglia."] },
+    { l: "Trade-off", i: ["Per il picco di una flash sale, una sala d'attesa virtuale che ammette N utenti/sec protegge il backend e rende la fila equa, invece di far entrare tutti insieme."] },
+    { l: "Da ricordare", i: ["Ogni volta che più richieste competono per una risorsa limitata: prenotazione TTL + transazioni + idempotenza + vincolo di unicità nel DB come rete finale. Correttezza prima della scala."] },
+  ]},
+  { id: "fc-sdcrawler", s: "System Design", t: "Web crawler: BFS a scala planetaria", diag: "case-crawler.html", b: [
+    { l: "Definizione", i: ["Un web crawler è una visita di grafo (BFS) a scala planetaria. Due problemi dominano: non rivisitare le stesse pagine (il web è pieno di cicli) e non martellare lo stesso sito (politeness)."] },
+    { l: "Come funziona", i: ["URL frontier (coda, spesso a priorità) + dedup con bloom filter: a miliardi di URL un set esatto non sta in memoria, il bloom filter dice «forse visto»/«mai visto» in poco spazio con rari falsi positivi.", "Rate limiting per dominio + distribuzione per dominio via consistent hashing (stesso worker gestisce sempre lo stesso dominio → politeness coerente)."] },
+    { l: "Da ricordare", i: ["Coda di lavoro + dedup probabilistica + politeness + distribuzione per chiave sono pattern che tornano in ETL, scraping, indicizzazione."] },
+  ]},
+  { id: "fc-sddelivery", s: "System Design", t: "Consegne a domicilio: workflow a stati", diag: "case-delivery.html", b: [
+    { l: "Definizione", i: ["Una consegna a domicilio è un workflow a tre lati (cliente, ristorante, corriere) che vive nel tempo e può fallire a ogni passo. Il modello giusto è una macchina a stati guidata da eventi, non richiesta-risposta."] },
+    { l: "Come funziona", i: ["Ogni transizione è un evento pubblicato su coda: notifiche/pagamenti/tracking reagiscono senza che l'ordine sappia di loro. Se un passo fallisce (nessun corriere), parte una compensazione (retry con raggio più ampio, rimborso), non un crash."] },
+    { l: "Trade-off", i: ["Orchestrazione (un servizio guida i passi) per il flusso principale — serve visibilità e compensazioni chiare; eventi/coreografia per gli effetti collaterali (notifiche, analytics)."] },
+    { l: "Da ricordare", i: ["Quando un processo vive nel tempo e attraversa più attori, modellalo come macchina a stati + eventi, con le compensazioni pensate dal design, non come ripensamento."] },
+  ]},
+  { id: "fc-sdchat", s: "System Design", t: "Chat realtime: push, offline, fan-out", diag: "case-chat.html", b: [
+    { l: "Definizione", i: ["Una chat è comunicazione bidirezionale in tempo reale: il server deve poter spingere un messaggio, non aspettare che il client lo chieda. Deve gestire il caso normale — il destinatario offline — consegnando quando torna."] },
+    { l: "Come funziona", i: ["WebSocket + un registro «connessione→server» instrada i messaggi in arrivo verso il nodo giusto. Se offline, il messaggio va in un'inbox/coda e si consegna (flush) alla riconnessione. Un numero di sequenza preserva l'ordine."] },
+    { l: "Trade-off", i: ["Fan-out in scrittura (ogni membro ha già i suoi messaggi pronti alla lettura, costoso per gruppi enormi) vs fan-out in lettura (una scrittura sola, letture più costose) — ibrido per soglia di dimensione del gruppo."] },
+    { l: "Da ricordare", i: ["Stessi mattoni di notifiche, feed live e presence: push realtime, coda per gli offline, ordine con sequenza, dilemma del fan-out."] },
+  ]},
+
+  /* ============ CODE REVIEW ============ */
+  { id: "fc-crche", s: "Code review", t: "Le 6 lenti della code review", b: [
+    { l: "Definizione", i: ["La review non è un esame né una caccia all'errore: è come un team condivide la responsabilità del codice, diffonde conoscenza e cattura i problemi PRIMA che diventino incidenti in produzione."] },
+    { l: "Come funziona", i: ["6 lenti, in ordine di priorità: correttezza → sicurezza → design → leggibilità → test → performance."] },
+    { l: "Da ricordare", i: ["Prima correttezza e sicurezza (se sbagliano, il resto non importa), poi design/leggibilità (costano nel tempo), infine performance solo dove serve davvero. Non bloccare un PR per uno spazio: quello è un «nit»."] },
+  ]},
+  { id: "fc-crfeedback", s: "Code review", t: "Dare un buon feedback", b: [
+    { l: "Definizione", i: ["Un commento di review è un atto di comunicazione: lo stesso contenuto tecnico può costruire fiducia o generare difensività a seconda di come è scritto."] },
+    { l: "Come funziona", i: ["Regole d'oro: sii specifico (indica il caso concreto), proponi una soluzione, etichetta la severità (bloccante vs «nit»), parla del codice non della persona, spiega sempre il perché."] },
+    { l: "Da ricordare", i: ["Prima di inviare chiediti: «è chiaro cosa cambiare e perché? suonerebbe ostile letto ad alta voce?». Loda anche ciò che è fatto bene — la review non è solo difetti."] },
+  ]},
+  { id: "fc-crpractice", s: "Code review", t: "Allenare l'occhio: pattern ricorrenti", b: [
+    { l: "Definizione", i: ["Rivedere è un'abilità che si allena: l'occhio impara a inciampare su pattern ricorrenti — concatenazione in query (SQL injection), valori non controllati, dati sensibili nei log, rami non testati."] },
+    { l: "Come funziona", i: ["Ordine mentale: prima i problemi che bloccano (injection, crash, PII nei log), poi ciò che manca (test), infine i nit."] },
+    { l: "Da ricordare", i: ["Un buon reviewer separa sempre «questo va sistemato prima del merge» da «questo è un dettaglio», e comunica quella gravità."] },
+  ]},
+  { id: "fc-crflow", s: "Code review", t: "Il flusso del PR: la dimensione conta", b: [
+    { l: "Definizione", i: ["Il fattore numero uno della qualità di una review è la dimensione del PR: sotto le ~200-400 righe la review è efficace; su un mega-PR il reviewer scivola in un «LGTM» senza aver capito nulla."] },
+    { l: "Come funziona", i: ["Checklist di chi apre il PR: piccolo e focalizzato, descrizione che spiega il PERCHÉ, auto-review fatta (togli console.log/TODO/codice morto), CI verde, niente segreti nel diff."] },
+    { l: "Da ricordare", i: ["«Tante piccole PR» batte «una gigante» quasi sempre. Regola d'oro: se non riusciresti a rivederlo bene tu, non chiederlo a un collega."] },
+  ]},
+
+  /* ============ PRODUCT MANAGEMENT ============ */
+  { id: "fc-pmrole", s: "Product Management", t: "Cosa fa un PM in B2B SaaS", b: [
+    { l: "Definizione", i: ["Il PM non ha autorità diretta su nessuno: connette ingegneria, design, sales, customer success e leadership attorno a un problema condiviso. Il titolo «Product Manager» nasconde ruoli molto diversi (PM, PO, PgM, Growth PM, Technical PM)."] },
+    { l: "Come funziona", i: ["PM decide il «cosa» e il «perché» (non il «come» tecnico, quello è di eng). PO è più tattico (backlog/sprint). PgM coordina più team verso una data. Growth PM cicla esperimenti rapidi sul funnel. Technical PM serve piattaforme/API per sviluppatori."] },
+    { l: "Da ricordare", i: ["Il PM lavora per influenza, non per gerarchia. Prima di un colloquio, capisci sempre quale variante di PM sta cercando l'azienda — cambia molto le aspettative."] },
+  ]},
+  { id: "fc-pmdiscovery", s: "Product Management", t: "Customer discovery", b: [
+    { l: "Definizione", i: ["Prima di costruire, un buon PM valida che il problema esista davvero — non chiedendo se piacerebbe una feature, ma facendo raccontare comportamenti reali già successi."] },
+    { l: "Come funziona", i: ["Domande buone: aperte, ancorate al passato, specifiche a un evento reale («raccontami l'ultima volta che…»). Domande cattive: ipotetiche («useresti…?»), leading («ti piacerebbe se…?») o polarizzanti — sovrastimano sistematicamente l'interesse futuro."] },
+    { l: "Da ricordare", i: ["Jobs-to-be-Done (situazione → motivazione → risultato atteso) tiene fuori dalla trappola di raccogliere feature request invece di problemi reali."] },
+  ]},
+  { id: "fc-pmprioritize", s: "Product Management", t: "Prioritizzazione: RICE e altri framework", b: [
+    { l: "Definizione", i: ["Prioritizzare non è scegliere «la cosa migliore»: è rendere esplicito e discutibile il compromesso reach/impact/confidence/effort, invece di lasciarlo nella testa di chi urla più forte in riunione."] },
+    { l: "Come funziona", i: ["RICE = (Reach × Impact × Confidence) / Effort. Non è oggettivo (Impact e Confidence restano stime umane), ma rende la stima esplicita e discutibile."] },
+    { l: "Trade-off", i: ["MoSCoW allinea rapidamente uno stakeholder su un singolo rilascio. Kano (basic/performance/delighter) dice dove investire oltre le basi. Value-vs-Effort è la versione da lavagna in due minuti quando non serve la precisione di RICE."] },
+    { l: "Da ricordare", i: ["RICE è ottimo per confrontare molte feature eterogenee su un unico numero comparabile."] },
+  ]},
+  { id: "fc-pmroadmap", s: "Product Management", t: "Roadmap: Now/Next/Later, pubblici diversi", b: [
+    { l: "Definizione", i: ["La stessa lista di priorità va comunicata in modi diversi a pubblici diversi, e va tenuta separata dal backlog — il dettaglio esecutivo interno di cui nessuno stakeholder esterno ha bisogno."] },
+    { l: "Come funziona", i: ["Now/Next/Later ha orizzonti di confidenza decrescenti: Now quasi certo, Later solo indicativo. Stessa feature («SSO enterprise») si traduce diversamente per exec/eng/sales/cliente — mai mentire, ma enfatizzare ciò che conta per chi ascolta."] },
+    { l: "Errori comuni", i: ["Confondere roadmap con backlog, o promettere «Later» come «Now», è la ricetta più comune per bruciare la fiducia di sales e clienti."] },
+    { l: "Da ricordare", i: ["Roadmap = intento e priorità comunicati verso l'esterno (poche voci, orizzonte ampio). Backlog = dettaglio esecutivo interno (centinaia di item granulari)."] },
+  ]},
+  { id: "fc-pmprd", s: "Product Management", t: "Scrivere una PRD", b: [
+    { l: "Definizione", i: ["Una PRD non è un contratto legale né la specifica tecnica: è l'artefatto di allineamento — cosa si costruisce, per chi, e come si saprà se ha funzionato."] },
+    { l: "Come funziona", i: ["Risponde a 4 domande: il problema (con un numero, falsificabile — non «migliorare l'onboarding» ma «62% non completa il setup in 14gg»), le metriche di successo (soglia + tempo), scope/out-of-scope (dire cosa NON è incluso previene lo scope creep), edge case pensati prima (costano un paragrafo; scoperti in produzione costano un incident)."] },
+    { l: "Da ricordare", i: ["Una PRD è allineamento, non contratto: si aggiorna quando arriva un fatto nuovo, non si difende la versione originale per principio."] },
+  ]},
+  { id: "fc-pmmetrics", s: "Product Management", t: "Metriche B2B SaaS: NRR, GRR, LTV:CAC", b: [
+    { l: "Definizione", i: ["In B2B SaaS la metrica regina è l'espansione di chi resta, non solo la crescita utenti: puoi perdere metà dei loghi piccoli e crescere comunque se chi resta spende sempre di più."] },
+    { l: "Come funziona", i: ["NRR = (start + expansion − contraction − churn) / start. Sopra 100% l'azienda cresce anche a zero nuovi clienti. GRR è la stessa formula senza l'expansion.", "LTV:CAC sotto 1 = si perdono soldi a ogni vendita; sopra 3 è generalmente considerato sano nel B2B SaaS."] },
+    { l: "Da ricordare", i: ["NRR conta più della crescita «loghi»: un NRR alto dice che il prodotto vende da solo dentro i clienti esistenti — il canale più economico che esista."] },
+  ]},
+  { id: "fc-pmokr", s: "Product Management", t: "OKR: obiettivi e Key Result misurabili", b: [
+    { l: "Definizione", i: ["Gli OKR collegano l'obiettivo dell'azienda al lavoro quotidiano tramite una catena di Key Result misurabili. Il rischio più comune non è avere obiettivi sbagliati: è riempire i KR di vanity metric."] },
+    { l: "Come funziona", i: ["Un KR vero ha baseline, target e scadenza, ed è un outcome (cosa cambia per il cliente/business) — non un output (quanto lavoro hai fatto). Es. vanity: «rilasciare 12 feature»; vero: «activation dal 41% al 55% entro Q3»."] },
+    { l: "Da ricordare", i: ["Se puoi «vincere» il KR senza che nulla migliori davvero per il cliente o il business, è una vanity metric."] },
+  ]},
+  { id: "fc-pmexperiment", s: "Product Management", t: "Sperimentazione in B2B: quando NON fare un A/B test", b: [
+    { l: "Definizione", i: ["L'A/B testing da manuale assume traffico consumer (migliaia di eventi/giorno); in B2B SaaS spesso ci sono decine o centinaia di account, non milioni di utenti — un risultato «statisticamente significativo» può essere un'illusione pericolosa."] },
+    { l: "Come funziona", i: ["Più piccolo è il campione, più grande deve essere l'effetto perché ci si possa fidare. Sotto poche centinaia di account: sequential rollout (rilasci graduali, guardando metriche guardrail), canary su pochi account «amici», o interviste qualitative."] },
+    { l: "Da ricordare", i: ["Basso traffico non vuol dire nessuna evidenza: significa evidenza DIVERSA."] },
+  ]},
+  { id: "fc-pmstakeholder", s: "Product Management", t: "Stakeholder & influenza senza autorità", b: [
+    { l: "Definizione", i: ["Il PM non ha autorità formale su design/eng/sales/CS, eppure deve far convergere tutti su una decisione. L'influenza si costruisce con chiarezza sui ruoli (RACI: Responsible/Accountable/Consulted/Informed) e con dati, non gerarchia."] },
+    { l: "Come funziona", i: ["Davanti a un conflitto (es. sales vuole promettere una feature custom, eng dice che rompe l'architettura), un buon PM porta dati: generalizzabilità (quanti altri prospect la vorrebbero), costo reale in eng-weeks, un'alternativa più economica — invece di un «no» nudo o un «sì» automatico."] },
+    { l: "Da ricordare", i: ["RACI esplicito previene il 90% dei conflitti «chi doveva decidere questo?». Vince chi porta dati, non chi porta il titolo più alto in azienda."] },
+  ]},
+  { id: "fc-pmgtm", s: "Product Management", t: "GTM & pricing", b: [
+    { l: "Definizione", i: ["Il go-to-market non comincia il giorno del lancio: il modello di pricing scelto mesi prima determina chi puoi vendere, quanto, e quanto sarà facile la conversazione con sales."] },
+    { l: "Trade-off", i: ["Seat-based: prevedibile per entrambi, ma disallinea prezzo e valore (scoraggia aggiungere utenti). Usage-based: allineato al valore consumato, ma la bolletta imprevedibile spaventa i CFO B2B. Tiered: semplice da vendere, ma spreca margine ai bordi degli scaglioni."] },
+    { l: "Da ricordare", i: ["Nessun modello di pricing è «giusto» in assoluto: la scelta dipende da chi compri (buyer persona) e da cosa il prodotto fa scalare davvero."] },
+  ]},
+  { id: "fc-pmcase", s: "Product Management", t: "Caso da colloquio: la struttura", b: [
+    { l: "Definizione", i: ["Il caso classico da colloquio PM non ha UNA risposta giusta: esiste una struttura che i migliori candidati seguono sempre, anche sotto pressione."] },
+    { l: "Come funziona", i: ["6 passi: (1) chiarisci l'obiettivo e la metrica di business dietro la domanda, (2) scegli esplicitamente un segmento di utenti, (3) mappa 3-4 ipotesi di problema radicate in comportamento reale e scegline una, (4) prioritizza 2-3 soluzioni con un framework esplicito (RICE/value-vs-effort), (5) definisci metrica primaria + guardrail, (6) dichiara trade-off e rischi — cosa NON farai e perché."] },
+    { l: "Da ricordare", i: ["Un intervistatore giudica meno «l'idea geniale» e più il modo in cui ci sei arrivato. Un candidato che vede solo il lato positivo del suo piano non ha pensato abbastanza a fondo."] },
+  ]},
 ];
+/* Inglese delle flashcard qui sopra, per id: t = fronte, b = voci di ogni blocco
+   nello stesso ordine. Le carte senza voce qui restano solo in italiano. */
+const FLASH_EN_CARDS = {
+  "fc-pystrutture": { t: "Data structures: list, tuple, dict, set", b: [
+    ["Four containers, one question to choose between them: do I access by position (list/tuple) or by key/membership (dict/set)? Does it change (list/dict/set) or stay fixed (tuple)?"],
+    ["list: O(1) access by index, O(n) search. dict: key→value map, O(1) average access — the workhorse for records/config/JSON. set: no duplicates, “x in set” test in O(1).", "Comprehensions ([x for x in ... if ...], {k:v for ...}) build these structures in one line: transform + filter, like an in-memory SELECT … WHERE."],
+    ["“x in list” walks element by element (O(n)); “x in set/dict” goes almost straight there (hash, O(1)). If all you need is “have I seen it already?”, use a set."],
+    ["dict is the one you'll use most (every record/JSON is a dict, typically a list of dicts); set is the shortcut for membership; when the 4 built-ins aren't enough there's collections (Counter, defaultdict, deque, namedtuple)."],
+  ]},
+  "fc-pyfunzioni": { t: "Functions: parameters, defaults, *args/**kwargs", b: [
+    ["A function is a named piece of logic: it takes parameters and returns an output with return. It saves you repeating yourself and gives an idea a name."],
+    ["Defaults make a parameter optional; keyword arguments make it readable (order no longer matters).", "*args gathers extra positional arguments into a tuple, **kwargs extra keyword arguments into a dict — the way libraries accept “any options”.", "Transforming a list: think comprehension before a for+append loop — same result, one readable line."],
+    ["def f(x=[]) — a mutable default value (list/dict) is created ONCE and shared by every call. Safe pattern: def f(x=None) and create it inside."],
+    ["Parameters in, return out. They're the bricks every endpoint you build is made of."],
+  ]},
+  "fc-pyerrori": { t: "Error handling: try/except/else/finally", b: [
+    ["An error raises an exception which, if unhandled, stops the program with a traceback. try attempts, except catches a specific TYPE, else runs only if there was no error, finally ALWAYS runs (cleanup: closing files/connections)."],
+    ["excepts are checked top-down: the first one that “matches” wins, so the most specific goes before the most generic (e.g. FileNotFoundError is an OSError).", "raise + a custom error class (e.g. InsufficientBalance) turns a violated business rule into a clean 400/409 instead of a generic 500."],
+    ["A bare except: (or except Exception) swallows every error and hides the real bugs. Catch only the type you know how to handle, let the rest bubble up."],
+    ["Try (try), catch the right type (except), always clean up (finally). Not “nothing ever goes wrong”, but “when it goes wrong, I know what happens”."],
+  ]},
+  "fc-pyfile": { t: "Reading/writing files: text, JSON, CSV", b: [
+    ["You open with with open(...): the file closes itself even if an error blows up halfway — no “leaked” resources."],
+    ["Modes: \"r\" read · \"w\" write (truncates!) · \"a\" append · \"b\" binary. json.dump/load translates Python dicts ⇄ JSON text (True→true, None→null). csv.DictReader reads each row as a dict."],
+    ["\"w\" wipes the file's existing content — to add at the end you need \"a\". Always encoding=\"utf-8\", or accents/emoji break."],
+    ["Text for logs, JSON for exchanging objects (dict ⇄ text, the bridge between memory and disk), CSV for tables. Same idea as the JSON body of an HTTP request."],
+  ]},
+  "fc-pyoop": { t: "Classes & OOP", b: [
+    ["A class is a mould that keeps data (attributes) and behaviour (methods) together. From one mould you create many objects (instances), each with its own state. self is “this object”."],
+    ["Encapsulation: methods are the ONLY way to change the state, and they can enforce the rules (e.g. no negative balance).", "Inheritance: the subclass inherits everything and can override — an “is-a” relationship. @dataclass generates __init__/__repr__/__eq__ for free."],
+    ["Use a class when data and state-changing behaviour live together (a cart, a connection). If you only need to carry data, a dict or a @dataclass is enough — not everything has to be an object."],
+    ["OOP = state + behaviour packaged together, protected by methods (encapsulation). Inheritance reuses and specialises; @dataclass removes the boilerplate."],
+  ]},
+  "fc-pyavanzato": { t: "Iterators, generators, decorators, context managers", b: [
+    ["Four tools that set apart people who “know Python”: you meet them everywhere — web frameworks, AI libraries, code that processes big data."],
+    ["Generator (yield): produces values one at a time, lazily, without building the whole list in memory — huge files or infinite streams.", "Iterator: the protocol behind every for (__iter__/__next__); lists, dicts, files and generators are all iterable.", "Decorator (@something): wraps a function to add behaviour (logging, timing, caching) WITHOUT touching its body — sugar for fn = deco(fn).", "Context manager (with, __enter__/__exit__): guarantees setup on entry and teardown on exit, always — even on error. It's the mechanism behind open(), locks, transactions."],
+    ["Generators/iterators to walk big data without loading it all; decorators to wrap reusable behaviour; context managers for reliable setup/teardown."],
+  ]},
+  "fc-pyasync": { t: "Concurrency & async: the GIL, I/O- vs CPU-bound", b: [
+    ["The GIL (Global Interpreter Lock) stops several threads from executing Python bytecode truly in parallel. The right path depends on the KIND of work."],
+    ["I/O-bound (network, disk, DB): use async/await or threads. The time goes on waiting — while one call waits, the others start; the GIL isn't a problem because nobody is computing.", "CPU-bound (pure computation): threads do NOT help (the GIL serialises them) — you need multiprocessing, several interpreters to really use several cores."],
+    ["Concurrency (juggling many pending things, async/threads) ≠ parallelism (actually running them at the same instant, multiprocessing). Mixing them up is the #1 cause of “I added threads and it's no faster”."],
+    ["Waiting on the outside (network/disk/DB) → async/threads. Computing on the inside (numbers, images) → multiprocessing. It's the reasoning behind a fast scraper (I/O) or a heavy batch (CPU)."],
+  ]},
+  "fc-pytyping": { t: "Type hints & Pydantic", b: [
+    ["Type hints declare types (optionally); mypy checks them statically and finds bugs BEFORE running. Pydantic validates and converts “dirty” incoming data (JSON, forms, LLM output) into typed objects."],
+    ["A Pydantic model is a contract: if the data doesn't respect it, it stops at the boundary with a clear ValidationError instead of propagating garbage — the same principle as database constraints, brought into the code."],
+    ["Type hints + mypy = bugs found while writing, not while running. Pydantic = validating at the boundaries — it's the heart of FastAPI and of structured outputs for LLMs (schema = contract on the output)."],
+  ]},
+  "fc-pypackaging": { t: "Environments, packages, tests", b: [
+    ["A virtual environment (venv/Poetry/uv) isolates a project's dependencies; a lockfile pins the exact, reproducible versions of the whole tree, indirect ones included."],
+    ["The test pyramid: lots of unit tests (fast, isolated, cheap), fewer integration tests, very few end-to-end (slow, fragile). Test behaviour, not internal details.", "pytest is the deploy gate: red tests = the pipeline blocks the release, it doesn't “go through anyway”."],
+    ["Isolate and declare dependencies for reproducible environments (goodbye “it worked on my machine”), then test: these are the habits that turn a script into software a team can work on."],
+  ]},
+  "fc-dsarray": { t: "Arrays & hash maps", b: [
+    ["Array: a row of numbered slots, O(1) access by index, but finding a value scans everything (O(n)). Hash map (dict/set): turns the key into an index via a hash function and goes straight to the right slot."],
+    ["hash(key) % n_buckets picks the bucket. With too many collisions a bucket becomes a list to scan (degrading towards O(n)) — which is why a hash map resizes (doubles its buckets) as the load factor grows."],
+    ["Golden rule: “am I searching for something inside a loop?” → a dict/set almost always turns O(n²) into O(n) (e.g. Two Sum: remember what you've already seen in a set/dict)."],
+    ["Array = O(1) access by position, linear search. Hash map = O(1) average access by key, at the price of losing order and degrading with collisions."],
+  ]},
+  "fc-dslist": { t: "Linked lists", b: [
+    ["Nodes aren't contiguous: each holds the value + a pointer to the next. Inserting/removing (with the node already in hand) costs O(1) — you re-stitch two pointers. The price: no access by index (O(n))."],
+    ["The “fast & slow” pattern (Floyd): two pointers moving at different speeds find a cycle or the middle with O(1) extra memory."],
+    ["Array: fast random access, inserting in the middle is O(n). Linked list: the opposite. In Python: list (a dynamic array) for access; collections.deque (a doubly linked list) for fast queues at both ends."],
+    ["Pick by the bottleneck: random access → array; inserting/removing at the ends or at already-known points → linked list."],
+  ]},
+  "fc-dsstackqueue": { t: "Stacks & queues", b: [
+    ["The same collection, a different exit policy. Stack = LIFO (the last one in goes out). Queue = FIFO (the oldest goes out). Both O(1) at the right ends."],
+    ["Stack: recursion (the call stack), balanced brackets, DFS, monotonic stack. Queue: BFS, background jobs, producer→consumer buffers."],
+    ["In Python, list.pop(0) as a queue is O(n) (it compacts the array) — use collections.deque, O(1) at both ends."],
+    ["Ask yourself: does the problem want to go back to the last thing touched (stack) or serve in order of arrival (queue)?"],
+  ]},
+  "fc-dstree": { t: "Trees & BSTs + traversals", b: [
+    ["In a binary search tree, left is always smaller and right bigger: search/insert/delete in O(log n) on a balanced tree — you halve the space at every step, like binary search."],
+    ["in-order (left·root·right) → sorted values for free. pre-order → copying/serialising. post-order → deleting, computing sizes from the bottom up. BFS → shortest path, level-by-level exploration."],
+    ["A “plain” BST can degenerate into a list (O(n)) if you insert already-sorted values — you need self-balancing variants (AVL, red-black). Postgres's index is a B-tree, a wide, balanced cousin of this idea."],
+    ["4 traversals as tools: in-order = sorted, BFS = by level. They're the basis of the DFS/BFS you see again throughout the LeetCode section."],
+  ]},
+  "fc-dsheap": { t: "Heaps & priority", b: [
+    ["A heap (priority queue) isn't fully sorted: it only keeps the invariant “every parent ≤ its children” — enough to give the minimum in O(1) and push/pop in O(log n)."],
+    ["Top-K with a heap of size K: O(n log K) instead of sorting everything (O(n log n)). It also powers Dijkstra and priority schedulers."],
+    ["Interview signal: “the K largest/closest/most frequent” or “the next event in time order” → think heap. It saves you sorting the whole set."],
+  ]},
+  "fc-dsgraph": { t: "Graphs & BFS/DFS", b: [
+    ["A graph is nodes joined by edges, cycles allowed. The only difference in code compared with a tree: you need a “visited” set so you don't pass over nodes again and end up in an infinite loop."],
+    ["BFS (queue): explores in waves, finds the shortest path (unweighted edges), level by level. DFS (stack/recursion): goes deep down one branch — whether a path exists, cycles, topological sort, backtracking."],
+    ["Without the visited set, BFS/DFS on a graph with cycles runs forever. It's mistake number one."],
+    ["BFS = queue = waves = shortest path. DFS = stack/recursion = deep = existence/cycles/backtracking. Represent the graph as an adjacency list + a visited set."],
+  ]},
+  "fc-dstrie": { t: "Tries (prefixes)", b: [
+    ["A trie stores words sharing their common prefixes: looking up a word, or all words with a prefix, costs O(length) — regardless of how many words you have."],
+    ["It's the engine behind autocomplete/typeahead, spell checkers, IP routing and prefix filters."],
+    ["It trades more memory (one node per letter of the branches) for lightning-fast prefix searches — for small data it may not be worth it."],
+    ["Whenever a problem says “common prefix”, “autocomplete” or “dictionary of words”, the trie is the natural answer."],
+  ]},
+  "fc-dsunion": { t: "Union-Find (disjoint set)", b: [
+    ["Union-Find answers “are these two in the same group?” (find) and “merge two groups” (union), in almost O(1) with path compression + union by rank."],
+    ["Every element points to a leader; the root (the leader's leader…) identifies the group. find(a) == find(b) → connected. union merges the roots."],
+    ["It beats BFS/DFS for counting groups when edges arrive one at a time over time and you want to answer “connected?” after each one, without redoing the whole exploration."],
+    ["Two almost-O(1) operations: find and union. The tool of choice for “how many groups?” and “is there a cycle?” — components, cycles, Kruskal (MST)."],
+  ]},
+  "fc-lcpattern": { t: "Spotting the pattern", b: [
+    ["Almost every coding-interview problem falls into ~10 patterns. The real work is translating the problem statement into the right pattern — not having memorised 500 problems."],
+    ["A 6-step method: (1) clarify input/output/constraints, (2) work an example by hand, (3) propose brute force and state its cost, (4) find the bottleneck and the pattern that removes it, (5) write it, (6) test with edge cases (empty, one element, duplicates)."],
+    ["Half the score in an interview is showing HOW you get to the pattern, not just the final code. Say out loud the signal you recognise before you write."],
+  ]},
+  "fc-lctwoptr": { t: "Two pointers", b: [
+    ["A sorted array + you're looking for a pair/triple → two indices converging from opposite ends: O(n²) becomes O(n), zero extra memory."],
+    ["Sum too low → move the left one up (you need a bigger number). Sum too high → move the right one down."],
+    ["It only works if the array is sorted (or sortable). If it isn't and you're looking for a pair with a given sum, the right pattern is the hash map."],
+    ["Signal: sorted array + pair/triple. Cousins: fast & slow for cycles in linked lists, “read with one, write with the other” for removing duplicates in place."],
+  ]},
+  "fc-lcsliding": { t: "Sliding window", b: [
+    ["A CONTIGUOUS subarray/substring + “longest/shortest/sum” → a window with two ends l/r: grow it to the right while the condition holds, shrink it from the left when it breaks."],
+    ["Overall, every element enters and leaves the window only once: that's what makes the whole thing O(n) instead of recomputing each window from scratch (O(n²))."],
+    ["Two flavours: a FIXED-size window (moving average) or a VARIABLE one (it grows/shrinks based on a condition)."],
+  ]},
+  "fc-lcbinary": { t: "Binary search (including “on the answer”)", b: [
+    ["Sorted data (or a monotonic yes/no condition) → looking at the middle tells you which way to go: you throw away half at every comparison, O(log n)."],
+    ["“Binary search on the answer”: you look for the minimum/maximum value that satisfies a monotonic condition (works/doesn't work), not an element inside an array — it's the variant that marks out a strong candidate."],
+    ["The two classic bugs: an infinite loop (wrong lo/hi or < vs <=) and overflow of (lo+hi) — use lo + (hi-lo)//2. Decide up front whether you're looking for “equal”, “first ≥” or “last ≤”."],
+    ["Signal: sorted input, or a monotonic “minimum/maximum value that satisfies X”."],
+  ]},
+  "fc-lctraversal": { t: "BFS/DFS on a grid (flood fill · islands)", b: [
+    ["A matrix is a hidden graph: every cell is a node connected to its 4 (or 8) neighbours. “Count the islands”, “flood fill”, “surrounded regions” are all the same pattern."],
+    ["Scan the grid; when you find land not yet visited, sink it (BFS or DFS) marking the whole island on the grid itself, and count +1. BFS if you fear stack overflow on huge grids."],
+    ["The same engine you saw on graphs (Data structures), applied to a grid: mark visited cells on the structure itself so you don't count them twice."],
+  ]},
+  "fc-lcbacktrack": { t: "Backtracking", b: [
+    ["“All the combinations/permutations/subsets” → DFS over a decision tree that doesn't exist in memory: you generate it by walking it. Template: choose · explore (recurse) · undo the choice."],
+    ["Pruning cuts the branches that can't lead to a valid solution, reducing the exploration."],
+    ["Inherently expensive (exponential, it explores everything) — fine when you MUST enumerate every solution. If you only want “how many/the best” with repeated subproblems, DP usually beats it."],
+    ["A universal three-move template; all that changes is what counts as a “complete solution” and which branches to prune."],
+  ]},
+  "fc-lcdp": { t: "Dynamic programming", b: [
+    ["The problem breaks down into subproblems that REPEAT. Instead of recomputing them (naive recursion, exponential), you store each subproblem once and reuse it."],
+    ["Top-down: recursion + memoisation (lru_cache). Bottom-up: fill a table from the base case upwards, often more memory-efficient. The core: defining the state (what dp[i] captures) and the transition (how it's derived from the previous ones)."],
+    ["Signal: “in how many ways”, “minimum/maximum cost”, choices with repeated subproblems. State + transition are the skeleton of every DP."],
+  ]},
+  "fc-lcheap": { t: "Heaps & top-K", b: [
+    ["“The K largest/closest/most frequent” doesn't require sorting everything (O(n log n)): a heap of size K is enough, O(n log K) — it even works on an infinite stream."],
+    ["For each new element: if it beats the worst one in the heap, it goes in and the worst is kicked out. At the end the heap holds exactly the K best (unsorted)."],
+    ["Counter-intuitive: for the K LARGEST you use a MIN-heap of size K (the minimum on top is the “worst on the podium” to throw out), and vice versa for the smallest."],
+    ["Signal: “the K largest/smallest/closest/most frequent”, “stream”. A heap of size K = constant memory, no need to keep everything."],
+  ]},
+  "fc-lcintervals": { t: "Intervals (merging, counting overlaps)", b: [
+    ["Data = intervals [start, end] (bookings, calendars, ranges) → an almost automatic first move: sort them by start time."],
+    ["After sorting, a single linear pass: if the next one starts before the last active one ends (c ≤ b), they overlap → extend the end to the maximum; otherwise a new block."],
+    ["For “how many resources are needed in parallel” (e.g. meeting rooms), think of a min-heap of end times rather than a simple merge."],
+  ]},
+  "fc-lcstack": { t: "Monotonic stack", b: [
+    ["“Next greater/smaller element to the right” looks like O(n²); a monotonic stack (indices, decreasing values) solves it in O(n): every index gets one push and at most one pop."],
+    ["The stack only holds the elements still waiting for an answer. When a bigger element arrives, it satisfies and pops all the ones on top that were waiting."],
+    ["The same pattern for the largest rectangle in a histogram, daily temperatures, stock spans. It looks O(n²), it's O(n) — the pattern that surprises people most."],
+  ]},
+  "fc-panoramica": { t: "Overview: the client → API → server → DB → hosting chain", b: [
+    ["The backend is a chain of layers: client (browser/app) → API/HTTP (the contract) → server (logic) → database (permanent storage) → hosting (where it runs). A request comes in at the top and goes down to the data, then the response goes back up."],
+    ["When you hear “the app is slow”, the right question isn't “how is the code written” but which LAYER the delay is in: network, server or database."],
+  ]},
+  "fc-http": { t: "HTTP: methods, status codes, idempotency", b: [
+    ["HTTP is turn-based request→response. The 4 CRUD methods: GET (read, changes nothing), POST (create), PUT (update/replace), DELETE (remove)."],
+    ["Status codes: 2xx ok, 3xx redirect, 4xx client error, 5xx server error. 401 = I don't know who you are; 403 = I know who you are but you lack permission; 404 = the resource doesn't exist; 429 = slow down (rate limit)."],
+    ["Idempotent = repeating the same request leaves the same final state. GET/PUT/DELETE are, POST isn't: two identical POSTs create two resources — which is why a client can safely retry a GET after a timeout, but not a POST."],
+    ["Method + URL + an honest status code are the minimum contract of every API. Error handling starts with choosing the right code."],
+  ]},
+  "fc-json": { t: "JSON: the language of APIs", b: [
+    ["JSON is made only of \"key\": value pairs. Values are strings, numbers, booleans, null, or other nested objects/lists — nothing else (no native dates or functions)."],
+    ["One comma or quote too many/too few breaks parsing: the server replies 400 Bad Request before even looking at the business logic."],
+    ["Malformed JSON = a client error (400), not a server one. It's the form in which every request/response body travels."],
+  ]},
+  "fc-rest": { t: "REST: putting methods + JSON + status codes together", b: [
+    ["A REST API applies HTTP methods + JSON + status codes to resources (e.g. /users). Every call maps to an equivalent SQL query behind the scenes."],
+    ["The full CRUD loop: POST (→201, new row), GET on that id (→200), PUT to change it (→200), DELETE, then GET again on the same id → 404."],
+    ["REST is HTTP + JSON + status codes applied consistently to resources named with nouns in the URLs."],
+  ]},
+  "fc-apidesign": { t: "API design: predictability + contract", b: [
+    ["A well-designed API can be “guessed”: nouns in the URLs, verbs in the HTTP methods, honest status codes, and a single shape for every error ({error:{code, message, request_id}})."],
+    ["An Idempotency-Key on a write (POST) makes retries safe: the client resends the same key after a timeout and the server recognises the duplicate without charging twice.", "Contract-first with OpenAPI: you define the contract (endpoints, types, errors) before the code, then generate clients/docs/mocks and front-end/back-end work in parallel."],
+    ["REST for public APIs over resources. GraphQL when the client wants few round trips and tailored data. gRPC between two of your own microservices, fast and typed. They're not religions: they mix within the same company."],
+    ["Versioning, pagination and rate limits need locking down from day one: adding them later, to an API already in use, is painful. An API people can guess is an API people adopt."],
+  ]},
+  "fc-websocket": { t: "WebSockets & realtime", b: [
+    ["HTTP is request→response; when it's the SERVER that must alert the client the instant something happens, that model breaks. A WebSocket is an always-open, two-way channel."],
+    ["It starts as an HTTP request with an Upgrade header, the server replies 101 Switching Protocols, and from there the same TCP connection stays open and becomes full-duplex (wss:// when encrypted).", "Polling is a losing compromise: the more often you ask, the less delay but the more wasted requests; the less often, the reverse. A WebSocket removes the dilemma."],
+    ["If the flow is only server→client (notifications, feeds, streaming LLM tokens), SSE (Server-Sent Events) is simpler and lighter. A WebSocket is needed when the client also has to push continuously (chat, games, collaborative editing)."],
+    ["The price of persistence is state: with many users across several servers you need a “user → which server they're connected to” registry, plus heartbeats (ping/pong) and automatic reconnection."],
+  ]},
+  "fc-testing": { t: "Testing: the pyramid, TDD, mocks/fakes", b: [
+    ["Tests don't prove the code is right: they give you the courage to change it without fear, telling you in a second whether you've broken something."],
+    ["Pyramid: lots of unit tests (one isolated function, fast), fewer integration tests (several pieces together, e.g. code+DB), very few e2e (the whole flow, slow and fragile).", "TDD: red (write the failing test) → green (minimum code to make it pass) → refactor (clean up with the safety net).", "Mocks/stubs replace slow or external dependencies (APIs, payments); a fake is a light but real implementation (an in-memory DB) when a stub is too fake."],
+    ["Flaky tests (sometimes they pass, sometimes not) erode trust. 100% code coverage without useful asserts is theatre: what counts are the CASES you check (edge, error, empty), not the percentage."],
+    ["Test behaviour (what goes in → what comes out), not internal details, so the tests survive refactoring. In CI, green tests are the deploy gate."],
+  ]},
+  "fc-sdmetodo": { t: "Method & building blocks", b: [
+    ["System design isn't magic: it's composing a few recurring building blocks to handle a certain scale, choosing the right trade-offs each time. First the method (always the same), then the blocks."],
+    ["Two words to always keep in mind: horizontal scaling (add interchangeable machines, not a bigger machine) and stateless (servers keep no state, so they're interchangeable behind a load balancer)."],
+    ["Almost every “how does it scale?” is answered by combining these blocks — Uber, Netflix, Ticketmaster are all combinations of the same pieces."],
+  ]},
+  "fc-sdstime": { t: "Back-of-envelope estimates", b: [
+    ["Before drawing anything, you do rough maths: two multiplications are enough to know whether you need one machine or a thousand. You don't need precision, you need the order of magnitude."],
+    ["DAU × actions/user = writes/day; divided by 86,400 s = average QPS, ×3 for the peak. The read:write ratio tells you where to invest first: read-heavy → cache and read replicas are the priority."],
+    ["100 QPS → one machine and done. 100,000 QPS → load balancer, cache, replicas, maybe sharding. Always do this sum at the start of a design."],
+  ]},
+  "fc-sddati": { t: "Scaling data: replication, sharding, consistent hashing", b: [
+    ["When the data no longer fits on one machine, you split it (sharding). With hash % N, adding a node reshuffles almost every key — a disaster in production. Consistent hashing fixes it: a new node on a ring only steals the keys of its arc (~K/N move)."],
+    ["Replication = read copies of the DB: it scales reads, but may lag slightly (replica lag → eventual consistency). Sharding = slices by key: it scales writes and storage, but cross-shard queries hurt."],
+    ["CAP: when the network between nodes splits, you choose Consistent (refuse until you're sure) or Available (answer with slightly stale data) — not both during the failure. Many systems at scale choose availability + eventual consistency."],
+    ["Replication for reads, shards for writes/storage, consistent hashing to move little data when the fleet of nodes changes."],
+  ]},
+  "fc-sdasync": { t: "Queues & async", b: [
+    ["Not everything has to happen while the user waits: sending an email, generating a thumbnail, charging a payment — the API accepts right away and puts the work on a queue, a worker does it later."],
+    ["If the consumer is slower than the arrivals, the queue grows (backpressure): a short burst is absorbed, if it lasts the queue fills up and messages are lost — you scale by adding workers in parallel."],
+    ["The three golden rules: idempotency (a message that arrives twice mustn't do damage, e.g. a double charge), retries (if the worker fails, the message goes back on the queue), a dead-letter queue (after N failed attempts, it goes to a separate queue for inspection)."],
+    ["The queue decouples producer and consumer, absorbs peaks and enables retries — at the price of having to handle duplicates and ordering."],
+  ]},
+  "fc-sdtinyurl": { t: "URL shortener: ID generation + read-heavy", b: [
+    ["The perfect case for understanding unique ID generation and read-heavy systems: very few writes (you create a link), very many reads (~100:1)."],
+    ["A counter + base62 for short, unique codes, handing out blocks of ids to each server (a Key Generation Service) so no global lock is needed on every write. Read = an indexed key lookup + cache."],
+    ["301 (permanent) if you want minimal load and links never change — the browser/CDN caches it. 302 (temporary) if click statistics matter: every click goes through you."],
+    ["Read-heavy 100:1 → everything revolves around cache + an indexed key lookup. ID generation without a central bottleneck is a pattern you'll meet everywhere."],
+  ]},
+  "fc-sduber": { t: "Uber: geographic matching", b: [
+    ["The heart of Uber is a very high-frequency geographic question: “which drivers are near me, right now?”. With millions of drivers, scanning them all on every request is impossible: you need a spatial index."],
+    ["Geohash (a fixed grid, simple, easy to shard) or quadtree (an adaptive grid that gets finer where needed) split the map into cells; you only search your cell + the neighbouring ones. Positions, which change every ~4 s, live in memory (Redis), not on disk."],
+    ["A recurring pattern: don't scan everything, narrow the field first. The same scheme for deliveries, maps, “friends nearby”."],
+  ]},
+  "fc-sdnetflix": { t: "Netflix: CDN and streaming", b: [
+    ["A read-heavy, bandwidth-heavy system: few uploads, billions of hours watched. The question isn't “how do I store the videos” but “how do I bring them close to the user” — CDN and caching."],
+    ["A one-off pipeline: upload → transcode into many resolutions/bitrates → segmentation → CDN distribution. Adaptive bitrate: the player measures the network and switches quality on every segment.", "Push (pre-positioning) for popular titles at the edge before anyone asks for them; pull (cache on first access) for the long tail — the first user pays for everyone."],
+    ["The “compute once, serve a billion times” pattern: move the expensive work earlier and asynchronous, then make reading trivial and close by (CDN)."],
+  ]},
+  "fc-sdticket": { t: "Ticketmaster: contention and overselling", b: [
+    ["The central problem isn't the scale of reads: it's not selling the same seat twice when two requests arrive at the same instant."],
+    ["A reservation with a temporary lock (TTL): if you don't pay within N minutes, the seat frees itself. A UNIQUE constraint on seat_id in the booking as the final safety net — it makes overselling impossible even if the application logic gets it wrong."],
+    ["For the peak of a flash sale, a virtual waiting room that admits N users/sec protects the backend and makes the queue fair, instead of letting everyone in at once."],
+    ["Whenever several requests compete for a limited resource: TTL reservation + transactions + idempotency + a uniqueness constraint in the DB as the final net. Correctness before scale."],
+  ]},
+  "fc-sdcrawler": { t: "Web crawler: BFS at planetary scale", b: [
+    ["A web crawler is a graph traversal (BFS) at planetary scale. Two problems dominate: not revisiting the same pages (the web is full of cycles) and not hammering the same site (politeness)."],
+    ["A URL frontier (a queue, often with priorities) + dedup with a bloom filter: at billions of URLs an exact set doesn't fit in memory, a bloom filter says “maybe seen”/“never seen” in little space with rare false positives.", "Rate limiting per domain + distribution by domain via consistent hashing (the same worker always handles the same domain → consistent politeness)."],
+    ["A work queue + probabilistic dedup + politeness + distribution by key are patterns that come back in ETL, scraping, indexing."],
+  ]},
+  "fc-sddelivery": { t: "Home delivery: a state-based workflow", b: [
+    ["A home delivery is a three-sided workflow (customer, restaurant, courier) that lives over time and can fail at every step. The right model is an event-driven state machine, not request-response."],
+    ["Every transition is an event published on a queue: notifications/payments/tracking react without the order knowing about them. If a step fails (no courier), a compensation kicks in (retry with a wider radius, refund), not a crash."],
+    ["Orchestration (one service drives the steps) for the main flow — you need visibility and clear compensations; events/choreography for side effects (notifications, analytics)."],
+    ["When a process lives over time and crosses several actors, model it as a state machine + events, with compensations designed in from the start, not as an afterthought."],
+  ]},
+  "fc-sdchat": { t: "Realtime chat: push, offline, fan-out", b: [
+    ["A chat is two-way realtime communication: the server must be able to push a message, not wait for the client to ask. It must handle the normal case — the recipient being offline — by delivering when they come back."],
+    ["WebSocket + a “connection→server” registry routes incoming messages to the right node. If offline, the message goes into an inbox/queue and is delivered (flushed) on reconnection. A sequence number preserves order."],
+    ["Fan-out on write (every member already has their messages ready to read, expensive for huge groups) vs fan-out on read (a single write, more expensive reads) — a hybrid based on a group-size threshold."],
+    ["The same building blocks as notifications, live feeds and presence: realtime push, a queue for offline users, ordering by sequence, the fan-out dilemma."],
+  ]},
+  "fc-crche": { t: "The 6 lenses of code review", b: [
+    ["Review isn't an exam or a bug hunt: it's how a team shares responsibility for the code, spreads knowledge and catches problems BEFORE they become production incidents."],
+    ["6 lenses, in order of priority: correctness → security → design → readability → tests → performance."],
+    ["Correctness and security first (if they're wrong, nothing else matters), then design/readability (they cost over time), and performance last, only where it really matters. Don't block a PR over a space: that's a “nit”."],
+  ]},
+  "fc-crfeedback": { t: "Giving good feedback", b: [
+    ["A review comment is an act of communication: the same technical content can build trust or trigger defensiveness depending on how it's written."],
+    ["Golden rules: be specific (point to the concrete case), propose a solution, label the severity (blocking vs “nit”), talk about the code not the person, always explain why."],
+    ["Before sending, ask yourself: “is it clear what to change and why? would it sound hostile read out loud?”. Praise what's done well too — review isn't only about defects."],
+  ]},
+  "fc-crpractice": { t: "Training your eye: recurring patterns", b: [
+    ["Reviewing is a skill you train: your eye learns to trip over recurring patterns — string concatenation in queries (SQL injection), unchecked values, sensitive data in logs, untested branches."],
+    ["Mental order: first the problems that block (injection, crashes, PII in logs), then what's missing (tests), finally the nits."],
+    ["A good reviewer always separates “this must be fixed before the merge” from “this is a detail”, and communicates that severity."],
+  ]},
+  "fc-crflow": { t: "The PR flow: size matters", b: [
+    ["The number one factor in review quality is the size of the PR: under ~200-400 lines the review is effective; on a mega-PR the reviewer slides into an “LGTM” without having understood anything."],
+    ["The PR author's checklist: small and focused, a description that explains WHY, a self-review done (remove console.log/TODOs/dead code), green CI, no secrets in the diff."],
+    ["“Lots of small PRs” beats “one giant one” almost every time. Golden rule: if you couldn't review it well yourself, don't ask a colleague to."],
+  ]},
+  "fc-pmrole": { t: "What a PM does in B2B SaaS", b: [
+    ["A PM has no direct authority over anyone: they connect engineering, design, sales, customer success and leadership around a shared problem. The “Product Manager” title hides very different roles (PM, PO, PgM, Growth PM, Technical PM)."],
+    ["The PM decides the “what” and the “why” (not the technical “how”, that belongs to eng). The PO is more tactical (backlog/sprint). The PgM coordinates several teams towards a date. The Growth PM cycles fast experiments on the funnel. The Technical PM serves platforms/APIs for developers."],
+    ["A PM works through influence, not hierarchy. Before an interview, always find out which variant of PM the company is after — it changes expectations a lot."],
+  ]},
+  "fc-pmdiscovery": { t: "Customer discovery", b: [
+    ["Before building, a good PM validates that the problem really exists — not by asking whether people would like a feature, but by getting them to describe real behaviour that has already happened."],
+    ["Good questions: open, anchored in the past, specific to a real event (“tell me about the last time you…”). Bad questions: hypothetical (“would you use…?”), leading (“wouldn't you like it if…?”) or polarising — they systematically overestimate future interest."],
+    ["Jobs-to-be-Done (situation → motivation → expected outcome) keeps you out of the trap of collecting feature requests instead of real problems."],
+  ]},
+  "fc-pmprioritize": { t: "Prioritisation: RICE and other frameworks", b: [
+    ["Prioritising isn't choosing “the best thing”: it's making the reach/impact/confidence/effort trade-off explicit and debatable, instead of leaving it in the head of whoever shouts loudest in the meeting."],
+    ["RICE = (Reach × Impact × Confidence) / Effort. It isn't objective (Impact and Confidence remain human estimates), but it makes the estimate explicit and open to discussion."],
+    ["MoSCoW quickly aligns a stakeholder on a single release. Kano (basic/performance/delighter) tells you where to invest beyond the basics. Value-vs-Effort is the two-minute whiteboard version when you don't need RICE's precision."],
+    ["RICE is great for comparing many heterogeneous features on a single, comparable number."],
+  ]},
+  "fc-pmroadmap": { t: "Roadmaps: Now/Next/Later, different audiences", b: [
+    ["The same priority list has to be communicated differently to different audiences, and kept separate from the backlog — the internal execution detail no outside stakeholder needs."],
+    ["Now/Next/Later has decreasing confidence horizons: Now almost certain, Later only indicative. The same feature (“enterprise SSO”) is framed differently for execs/eng/sales/customers — never lie, but emphasise what matters to the listener."],
+    ["Confusing the roadmap with the backlog, or promising “Later” as “Now”, is the most common recipe for burning the trust of sales and customers."],
+    ["Roadmap = intent and priorities communicated outwards (few items, a broad horizon). Backlog = internal execution detail (hundreds of granular items)."],
+  ]},
+  "fc-pmprd": { t: "Writing a PRD", b: [
+    ["A PRD isn't a legal contract or the technical spec: it's the alignment artefact — what's being built, for whom, and how you'll know whether it worked."],
+    ["It answers 4 questions: the problem (with a number, falsifiable — not “improve onboarding” but “62% don't finish setup within 14 days”), success metrics (threshold + time), scope/out of scope (saying what is NOT included prevents scope creep), edge cases thought through upfront (they cost a paragraph; discovered in production they cost an incident)."],
+    ["A PRD is alignment, not a contract: you update it when a new fact arrives, you don't defend the original version on principle."],
+  ]},
+  "fc-pmmetrics": { t: "B2B SaaS metrics: NRR, GRR, LTV:CAC", b: [
+    ["In B2B SaaS the king metric is expansion among those who stay, not just user growth: you can lose half the small logos and still grow if those who stay keep spending more."],
+    ["NRR = (start + expansion − contraction − churn) / start. Above 100% the company grows even with zero new customers. GRR is the same formula without expansion.", "LTV:CAC below 1 = you lose money on every sale; above 3 is generally considered healthy in B2B SaaS."],
+    ["NRR matters more than “logo” growth: a high NRR says the product sells itself inside existing customers — the cheapest channel there is."],
+  ]},
+  "fc-pmokr": { t: "OKRs: objectives and measurable Key Results", b: [
+    ["OKRs link the company's objective to day-to-day work through a chain of measurable Key Results. The most common risk isn't having the wrong objectives: it's filling the KRs with vanity metrics."],
+    ["A real KR has a baseline, a target and a deadline, and it's an outcome (what changes for the customer/business) — not an output (how much work you did). E.g. vanity: “ship 12 features”; real: “activation from 41% to 55% by Q3”."],
+    ["If you can “win” the KR without anything really improving for the customer or the business, it's a vanity metric."],
+  ]},
+  "fc-pmexperiment": { t: "Experimentation in B2B: when NOT to run an A/B test", b: [
+    ["Textbook A/B testing assumes consumer traffic (thousands of events a day); in B2B SaaS there are often tens or hundreds of accounts, not millions of users — a “statistically significant” result can be a dangerous illusion."],
+    ["The smaller the sample, the bigger the effect has to be before you can trust it. Below a few hundred accounts: sequential rollouts (gradual releases, watching guardrail metrics), a canary on a few “friendly” accounts, or qualitative interviews."],
+    ["Low traffic doesn't mean no evidence: it means DIFFERENT evidence."],
+  ]},
+  "fc-pmstakeholder": { t: "Stakeholders & influence without authority", b: [
+    ["A PM has no formal authority over design/eng/sales/CS, yet has to bring everyone together on a decision. Influence is built through clarity about roles (RACI: Responsible/Accountable/Consulted/Informed) and data, not hierarchy."],
+    ["Faced with a conflict (e.g. sales wants to promise a custom feature, eng says it breaks the architecture), a good PM brings data: generalisability (how many other prospects would want it), the real cost in eng-weeks, a cheaper alternative — instead of a bare “no” or an automatic “yes”."],
+    ["An explicit RACI prevents 90% of “who was supposed to decide this?” conflicts. Whoever brings data wins, not whoever has the highest title in the company."],
+  ]},
+  "fc-pmgtm": { t: "GTM & pricing", b: [
+    ["Go-to-market doesn't start on launch day: the pricing model chosen months earlier determines who you can sell to, how much, and how easy the conversation with sales will be."],
+    ["Seat-based: predictable for both sides, but it misaligns price and value (it discourages adding users). Usage-based: aligned with the value consumed, but an unpredictable bill scares B2B CFOs. Tiered: simple to sell, but it wastes margin at the edges of the tiers."],
+    ["No pricing model is “right” in absolute terms: the choice depends on who buys (the buyer persona) and on what the product really scales with."],
+  ]},
+  "fc-pmcase": { t: "The interview case: its structure", b: [
+    ["The classic PM interview case has no ONE right answer: there's a structure the best candidates always follow, even under pressure."],
+    ["6 steps: (1) clarify the goal and the business metric behind the question, (2) explicitly choose a user segment, (3) map 3-4 problem hypotheses rooted in real behaviour and pick one, (4) prioritise 2-3 solutions with an explicit framework (RICE/value-vs-effort), (5) define a primary metric + guardrails, (6) state the trade-offs and risks — what you WON'T do and why."],
+    ["An interviewer judges “the brilliant idea” less than the way you got there. A candidate who only sees the upside of their own plan hasn't thought it through deeply enough."],
+  ]},
+};
+for (const c of FLASHCARDS) if (!c.en && FLASH_EN_CARDS[c.id]) c.en = FLASH_EN_CARDS[c.id];
+FLASHCARDS.push(...BK_FLASHCARDS);
 
 /* Deck di flashcard: fronte = concetto, click per girare, retro = blocchi.
    Autovalutazione (so / da ripassare) e progresso, persistiti via `store`. */
@@ -14594,22 +15378,23 @@ function Flashcards({ progress, setProgress }) {
               </div>
               {!flipped ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 px-4">
-                  <h3 className="font-display text-2xl sm:text-3xl text-white leading-tight text-balance">{card.t}</h3>
+                  <h3 className="font-display text-2xl sm:text-3xl text-white leading-tight text-balance">{T(card.t, card.en?.t)}</h3>
                   <p className="text-[13px] text-zinc-500">{T("Prova a spiegartelo ad alta voce, poi gira la carta.", "Try explaining it out loud, then flip the card.")}</p>
                 </div>
               ) : (
                 <div className="flex-1 space-y-3">
-                  <h3 className="text-[15px] font-semibold text-zinc-200">{card.t}</h3>
+                  <h3 className="text-[15px] font-semibold text-zinc-200">{T(card.t, card.en?.t)}</h3>
                   {card.b.map((blk, bi) => (
                     <div key={bi} className={`rounded-lg border ${TONE[FLASH_TONE[blk.l]].border} bg-zinc-950 px-3 py-2.5`}>
                       <div className={`text-[10px] uppercase tracking-wide font-mono mb-1.5 ${TONE[FLASH_TONE[blk.l]].text}`}>{flashLabel(blk.l)}</div>
                       <ul className="space-y-1.5">
-                        {blk.i.map((it, ii) => (
+                        {T(blk.i, card.en?.b?.[bi]).map((it, ii) => (
                           <li key={ii} className="flex gap-2 text-[13px] text-zinc-300 leading-relaxed"><span className="mt-1.5 h-1 w-1 rounded-full shrink-0 bg-zinc-600" />{it}</li>
                         ))}
                       </ul>
                     </div>
                   ))}
+                  {card.diag && <ArchifyLink file={card.diag} hint={T("il caso di System Design", "the System Design case")} />}
                 </div>
               )}
             </div>
@@ -15534,6 +16319,9 @@ const MODULES = [
   { id: "testing", label: "Testing", en: "Testing", section: "Fondamenta", icon: FlaskConical, el: TestingModule },
   { id: "schema", label: "Tabelle & schema", en: "Tables & schema", section: "SQL & Database", icon: Table2, el: SchemaModule },
   { id: "modello", label: "Modellare i dati", en: "Modelling the data", section: "SQL & Database", icon: Network, el: ModelloModule },
+  BK_MOD.dmschema,
+  BK_MOD.dmtempo,
+  BK_MOD.sfdati,
   { id: "query", label: "Interrogare (SQL)", en: "Querying (SQL)", section: "SQL & Database", icon: SearchIcon, el: QueryModule },
   { id: "aggregazioni", label: "Aggregazioni & GROUP BY", en: "Aggregates & GROUP BY", section: "SQL & Database", icon: Sigma, el: AggregazioniModule },
   { id: "join", label: "JOIN", en: "JOIN", section: "SQL & Database", icon: GitMerge, el: JoinModule },
@@ -15548,20 +16336,28 @@ const MODULES = [
   { id: "ormn1", label: "ORM & il problema N+1", en: "ORMs & the N+1 problem", section: "SQL & Database", icon: ArrowLeftRight, el: OrmN1Module },
   { id: "playground", label: "Playground SQL", en: "SQL playground", section: "SQL & Database", icon: Terminal, el: PlaygroundModule },
   { id: "hosting", label: "Hosting & latenza", en: "Hosting & latency", section: "Infrastruttura", icon: Cloud, el: HostingModule },
-  { id: "deploy", label: "Deploy & CI/CD", en: "Deploys & CI/CD", section: "Infrastruttura", icon: Rocket, el: DeployModule },
+  BK_MOD.vm,
   { id: "docker", label: "Docker & container", en: "Docker & containers", section: "Infrastruttura", icon: Ship, el: DockerModule },
+  BK_MOD.k8s,
   { id: "cloud", label: "Cloud & servizi gestiti", en: "Cloud & managed services", section: "Infrastruttura", icon: Container, el: CloudModule },
+  BK_MOD.terraform,
   { id: "cloudflare", label: "Cloudflare & l'edge", en: "Cloudflare & the edge", section: "Infrastruttura", icon: Orbit, el: CloudflareModule },
-  { id: "auth", label: "Auth & sicurezza", en: "Auth & security", section: "Infrastruttura", icon: ShieldCheck, el: AuthModule },
-  { id: "oauth", label: "OAuth · PKCE & token", en: "OAuth · PKCE & tokens", section: "Infrastruttura", icon: KeyRound, el: OauthModule },
-  { id: "security", label: "Sicurezza web (OWASP)", en: "Web security (OWASP)", section: "Infrastruttura", icon: Lock, el: SecurityModule },
+  { id: "deploy", label: "Deploy & CI/CD", en: "Deploys & CI/CD", section: "Infrastruttura", icon: Rocket, el: DeployModule },
+  BK_MOD.ambienti,
+  BK_MOD.flags,
   { id: "caching", label: "Caching", en: "Caching", section: "Infrastruttura", icon: Gauge, el: CachingModule },
   { id: "logging", label: "Logging & osservabilità", en: "Logging & observability", section: "Infrastruttura", icon: ScrollText, el: LoggingModule },
+  BK_MOD.sfinfra,
+  { id: "auth", label: "Auth · 401/403 & JWT", en: "Auth · 401/403 & JWT", section: "Auth & sicurezza", icon: ShieldCheck, el: AuthModule },
+  { id: "oauth", label: "OAuth · PKCE & token", en: "OAuth · PKCE & tokens", section: "Auth & sicurezza", icon: KeyRound, el: OauthModule },
+  BK_MOD.oauthflussi,
+  { id: "authent", label: "Auth enterprise · SSO", en: "Enterprise auth · SSO", section: "Auth & sicurezza", icon: Fingerprint, el: AuthentModule },
+  { id: "security", label: "Sicurezza web (OWASP)", en: "Web security (OWASP)", section: "Auth & sicurezza", icon: Lock, el: SecurityModule },
+  BK_MOD.sfauth,
   { id: "apidocs", label: "Leggere una doc API", en: "Reading API docs", section: "Integrazioni & dati", icon: FileJson, el: ApiDocsModule },
   { id: "integrazioni", label: "Integrazioni & webhook", en: "Integrations & webhooks", section: "Integrazioni & dati", icon: Webhook, el: IntegrazioniModule },
   { id: "scraping", label: "Scraping", en: "Scraping", section: "Integrazioni & dati", icon: MousePointerClick, el: ScrapingModule },
   { id: "migrazioni", label: "Migrazioni dei dati", en: "Data migrations", section: "Integrazioni & dati", icon: Repeat, el: MigrazioniModule },
-  { id: "authent", label: "Auth enterprise · SSO", en: "Enterprise auth · SSO", section: "Integrazioni & dati", icon: Fingerprint, el: AuthentModule },
   { id: "ciplaybook", label: "Playbook integrazioni", en: "Integration playbook", section: "Integrazioni cliente", icon: Milestone, el: CiPlaybookModule },
   { id: "cimigrate", label: "Migrazione dati", en: "Data migration", section: "Integrazioni cliente", icon: DatabaseZap, el: CiMigrateModule },
   { id: "cicrm", label: "Integrare un CRM", en: "Integrating a CRM", section: "Integrazioni cliente", icon: Contact, el: CiCrmModule },
@@ -15592,6 +16388,10 @@ const MODULES = [
   { id: "sdstime", label: "Stime a spanne", en: "Back-of-envelope estimates", section: "System Design", icon: TrendingUp, el: SdStimeModule },
   { id: "sddati", label: "Scalare i dati", en: "Scaling the data", section: "System Design", icon: Share2, el: SdDatiModule },
   { id: "sdasync", label: "Code & asincronia", en: "Queues & async", section: "System Design", icon: Workflow, el: SdAsyncModule },
+  BK_MOD.kafka,
+  BK_MOD.outbox,
+  BK_MOD.temporal,
+  BK_MOD.sfeventi,
   { id: "sdtinyurl", label: "URL shortener", en: "URL shortener", section: "System Design", icon: Link2, el: SdTinyUrlModule },
   { id: "sduber", label: "Uber · matching geo", en: "Uber · geo matching", section: "System Design", icon: MapPin, el: SdUberModule },
   { id: "sdnetflix", label: "Netflix · streaming/CDN", en: "Netflix · streaming/CDN", section: "System Design", icon: Video, el: SdNetflixModule },
@@ -15619,7 +16419,7 @@ const MODULES = [
 ];
 /** Display label for a module in the active language. */
 const mlabel = (m) => T(m.label, m.en);
-const SECTIONS = ["Python", "Strutture dati", "LeetCode", "Fondamenta", "SQL & Database", "Infrastruttura", "Integrazioni & dati", "Integrazioni cliente", "AI", "Workflow agentici", "System Design", "Code review", "Product Management", "Ripasso"];
+const SECTIONS = ["Python", "Strutture dati", "LeetCode", "Fondamenta", "SQL & Database", "Infrastruttura", "Auth & sicurezza", "Integrazioni & dati", "Integrazioni cliente", "AI", "Workflow agentici", "System Design", "Code review", "Product Management", "Ripasso"];
 
 export default function LezioneBasiBackend() {
   const [active, setActive] = useState("panoramica");
@@ -15627,7 +16427,7 @@ export default function LezioneBasiBackend() {
   const [mode, setMode] = useState(() => store.get("mode", "lezione"));
   const [flash, setFlash] = useState(() => store.get("flash", {}));
   const [lang, setLang] = useState(() => store.get("lang", "it"));
-  LANG = lang; // set before children render — see the LANGUAGE block at the top
+  setActiveLang(lang); // set before children render — see i18n.js
   const idx = MODULES.findIndex((m) => m.id === active);
   const cur = MODULES[idx];
   const Cur = cur.el;
