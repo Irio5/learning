@@ -1,0 +1,118 @@
+export default {
+  "fc-oauth-1": { t: "OAuth · Authorization Code + PKCE", b: [
+    ["A flow for delegating access to an app without giving it the password. PKCE (Proof Key for Code Exchange) protects the flow on public clients (SPA, mobile) where a client secret can't be kept safe."],
+    ["1. The app generates a throwaway secret, the code_verifier (a random string), and computes its SHA-256 hash → code_challenge. The verifier never leaves the app.", "2. Redirect to /authorize with client_id, redirect_uri, scope, state (anti-CSRF) and code_challenge. No secret travels in this step.", "3. The Authorization Server authenticates the user (password + MFA, or the corporate SSO) and sends back to the redirect_uri a single-use, short-lived authorization code, with the state.", "4. POST /token (a direct channel, not via the browser) with code + code_verifier. The AS recomputes SHA-256(verifier) and compares it with the challenge from step 1: only whoever STARTED the flow can redeem the code (an intercepted code alone is worth nothing).", "5. The AS responds: access token (short-lived, minutes) + refresh token (+ id_token if it's OIDC). From here the app calls the API with Authorization: Bearer <access_token>."],
+    ["PKCE ties the code to whoever started the flow. Short access tokens; don't let secrets travel in the browser."],
+  ]},
+  "fc-oauth-2": { t: "OAuth · JWT validation, attacks, storage & revocation", b: [
+    ["Token validation on the resource side: RS256 signature verified via JWKS (public key), plus the iss / aud / exp claims.", "Revocation: short access tokens + refresh rotation with reuse detection (a reused refresh token = a theft signal → the whole chain is invalidated)."],
+    ["alg:none: the attacker rewrites the header to {alg:none} and removes the signature; naive libraries accept a token “without a signature”. Fix: the expected algorithm fixed in configuration (a whitelist, e.g. only RS256), never trust the header.", "Key confusion (RS256→HS256): the attacker forges an HS256 token using the PUBLIC key (known to everyone) as the HMAC secret; if the library accepts both algorithms it goes through. Fix: a strict algorithm↔key binding.", "Stolen token (XSS, logs, URLs): a readable token gets copied anywhere. Fix: the browser must not be able to read it + short life + rotation."],
+    ["Token storage: localStorage = NEVER (any JS/XSS or a compromised npm dependency reads it, no mitigation).", "httpOnly + Secure + SameSite cookie = the standard (httpOnly: JS can't read it; Secure: HTTPS only; SameSite mitigates CSRF).", "BFF (Backend-for-Frontend) = the most robust: the OAuth tokens NEVER reach the browser, a proxy backend holds them; the client only gets a session cookie. More infrastructure, minimal attack surface (the enterprise choice)."],
+    ["Algorithm fixed server-side (never negotiated with the token); tokens out of JS's reach; short access + refresh rotation. Enterprise: SAML/OIDC SSO, SCIM, MFA, RBAC + per-engagement scoping, defence in depth app + RLS."],
+  ]},
+  "fc-security": { t: "Web security · OWASP", b: [
+    ["Security isn't a module you add at the end: it's a way of not trusting. The mother rule is one — never trust input — and almost all the defences follow from it."],
+    ["SQL injection: concatenating input into the query turns it into code (input '; DROP TABLE users; -- deletes the table). Cure: a parameterised query (execute(\"… WHERE name = %s\", (name,))) → input is ALWAYS data, never a command.", "XSS: input rendered as real HTML/JS runs in every visitor's browser (stealing session cookies). Cure: escape the output (< becomes &lt;) → the browser shows it as text.", "CORS: which origins (domains) can call your API from the browser; misconfigured = a hole or a broken app.", "HTTPS/TLS: encrypts traffic in transit; without it, anyone on the network reads tokens and passwords. Non-negotiable.", "Secrets in env + least privilege: keys outside the code, every component with the minimum permissions."],
+    ["The common thread is “data ≠ instructions” (SQL injection, XSS, prompt injection), “don't trust input” (validation, Pydantic), “minimal permissions” (auth, MCP, cloud): the same idea returning at every level."],
+  ]},
+  "fc-caching": { t: "Caching", b: [
+    ["A cache keeps a ready copy of a piece of data that is expensive to produce, so later requests don't start over from the database.", "MISS = not in cache, go to the DB (slow, ~80ms). HIT = already in cache, an almost instant response (~2ms)."],
+    ["Several levels: browser (the client reuses files already downloaded: images, CSS), CDN (servers near the user serving static copies), Redis (an in-memory server-side cache for query/computation results)."],
+    ["Easy to switch on, hard to invalidate: the risk is serving stale data (e.g. the price that changed). The cache must be invalidated when the source changes.", "“There are only two hard things: naming things and cache invalidation.”"],
+    ["Use it where data changes rarely and is read often."],
+  ]},
+  "fc-logging": { t: "Logging & observability", b: [
+    ["When something goes wrong in production you can't “look” inside the server: you read the logs. Every line has a time, a severity level and — crucially — a request-id that ties together everything that happened for a single request."],
+    ["The three pillars of observability: Logs (what happened, line by line, for pinpoint debugging); Metrics (numbers aggregated over time: requests/sec, % errors, average latency); Traces (the path of a single request across the services).", "You click a request-id to isolate the whole story of that request."],
+    ["The request-id is the single most useful thing: when a customer says “at 10:05 I got an error”, you search for it and see the whole story. Without it, you have thousands of disconnected lines. It's also the first thing you'll ask the customer for in a support role."],
+  ]},
+  "fc-schema": { t: "Tables, schema & constraints", b: [
+    ["A table has a schema: for each column a type (INTEGER, TEXT…) and constraints the database enforces for you. They are the first line of defence against dirty data."],
+    ["PRIMARY KEY (PK): the row's unique identity, with an automatic index.", "FOREIGN KEY (FK): links to another table (orders.user_id → users.id).", "UNIQUE: no duplicates (e.g. the email).", "NOT NULL: a required value.", "DEFAULT: a value if you omit the column (e.g. role = 'member').", "CHECK: a condition (e.g. age >= 18)."],
+    ["Thinking the constraints live in the app code: they live in the DATABASE and apply on every write, even from a second app touching the same table."],
+    ["It's the database that protects integrity, not the trust that you won't make mistakes."],
+  ]},
+  "fc-modello": { t: "Modelling the data · relations & normalisation", b: [
+    ["Before even writing queries, it matters how you split the data into tables. The rule: every fact has a single home. You don't rewrite the user's name on every order — you write it once in users and in the order you put only its id. That link is the foreign key."],
+    ["1:1 (users ↔ profiles): a UNIQUE FK. The rarest case — you split to take heavy/rare columns out of the main table.", "1:N (users → orders): the most common. The FK is ALWAYS on the “many” side (it's the order that points to its user).", "N:M (orders ↔ products): can't be linked directly. You need a “bridge” table (order_items) with an FK to each of the two → they become two ordinary 1:N."],
+    ["If you notice you're copying the same data across many rows, almost always a table is missing.", "N:M confuses: there's no direct arrow, you always need the table in the middle (JOINs exist to put these tables back together)."],
+    ["You split data to avoid repeating it, you relink it with ids; the FK sits on the “many” side. This is most of the “normalisation” that's useful for working."],
+  ]},
+  "fc-sql": { t: "SQL · querying (SELECT)", b: [
+    ["SQL is the (declarative) language for querying the database. A SELECT says three things: which columns (SELECT), from which table (FROM), with which filters (WHERE). You describe the RESULT, the database chooses the method."],
+    ["WHERE with = != <> > < >= <= LIKE, AND/OR, IS NULL / IS NOT NULL.", "LIKE '%acme%' → partial text (% = anything).", "GROUP BY col + COUNT/SUM/AVG/MIN/MAX; HAVING filters the groups.", "ORDER BY col [ASC|DESC]; LIMIT n (ORDER BY + LIMIT = the top-N ranking)."],
+    ["A non-existent column or table → a precise error (“column does not exist”). Understanding the error is half the craft: it tells you right away where to look."],
+    ["Don't memorise the syntax: know what question to ask the data and recognise the building blocks — filtering (WHERE), aggregating (COUNT/SUM…), grouping (GROUP BY), ordering (ORDER BY)."],
+  ]},
+  "fc-agg": { t: "Aggregates & GROUP BY", b: [
+    ["An aggregate squashes many rows into a single number (COUNT/SUM/AVG/MIN/MAX). GROUP BY says “do it separately for each group”: one row per group with that group's aggregate."],
+    ["WHERE vs HAVING: WHERE filters the ROWS before grouping; HAVING filters the GROUPS after. “Only orders over €50” → WHERE. “Only users with more than one order” → HAVING COUNT(*) > 1 (that count only exists after grouping)."],
+    ["If you put COUNT/SUM in SELECT, every other “plain” column must be in GROUP BY, otherwise the DB doesn't know which value to show for the group (SELECT name, COUNT(*) FROM users → error). You're describing a whole group, not a row."],
+    ["GROUP BY = one aggregate per group; every non-aggregated column goes in the GROUP BY."],
+  ]},
+  "fc-join": { t: "JOIN · INNER vs LEFT", b: [
+    ["Data is split into tables to avoid repeating it (one user, many orders). A JOIN recombines them by matching a key: users.id = orders.user_id."],
+    ["INNER JOIN = intersection: only the rows that match on both sides.", "LEFT JOIN = the whole left table, plus whatever matches on the right, with NULL where there's nothing.", "E.g.: users without orders vanish in INNER, stay (with order columns NULL) in LEFT."],
+    ["90% of JOIN bugs come from choosing INNER when you needed LEFT, and losing rows without noticing.", "Trap: LEFT JOIN + WHERE on a nullable column (e.g. WHERE o.status = 'paid') → rows with NULL status don't pass the filter and vanish: the LEFT has turned back into an INNER."],
+    ["INNER = intersection; LEFT = keeps the left with NULL where there's no match."],
+  ]},
+  "fc-null": { t: "NULL & missing values", b: [
+    ["NULL isn't zero and isn't an empty string: it means “I don't know / missing”. Every comparison with NULL is neither true nor false, it's “unknown” — and an “unknown” row never passes the filter."],
+    ["For missing values use IS NULL / IS NOT NULL, never = NULL.", "COALESCE(phone, 'n/a') returns the value if present, otherwise the fallback you give it (so you don't show “NULL” in the interface)."],
+    ["WHERE phone = NULL → 0 rows, ALWAYS: it's a dead filter (NULL isn't “equal” to anything, not even another NULL).", "LEFT JOIN + WHERE on a nullable column → the LEFT turns back into an INNER (the NULL rows don't pass).", "Half of the “data is missing from the report” bugs are a NULL that propagates and makes the row vanish."],
+    ["For missing values always IS NULL / IS NOT NULL, never = NULL. NULL propagates: a filter or calculation that touches it often makes the row vanish."],
+  ]},
+  "fc-indici": { t: "Indexes & performance", b: [
+    ["An index isn't a column and isn't “the data”: it's an extra structure, kept separately, that the DB builds and updates by itself — basically a sorted copy of a column with, next to each value, a pointer to the real row. It only exists to find the row quickly."],
+    ["Without an index = Seq Scan: reads in physical order until it finds it (linear, O(n)).", "With an index = Index Scan: binary search, a few jumps (logarithmic, O(log n)). On 10 million rows, ~24 steps remain.", "The PRIMARY KEY already has an automatic index: that's why searching by id is fast (it isn't the id that's magic, it's its index). On other columns (email, city) you add the index yourself: CREATE INDEX users_email_idx ON users(email)."],
+    ["An index isn't free: it takes space and slows down WRITES (every INSERT/UPDATE has to update it).", "When it's NOT needed: small tables; columns with few distinct values (e.g. an active yes/no flag → it scans half the table anyway); columns never used in filters. Rule: index the columns you often search or JOIN on."],
+    ["The index is the difference between 5ms and 500ms. When you create a table, ask yourself “which column will I search on?”."],
+  ]},
+  "fc-relazioni": { t: "Foreign keys & transactions", b: [
+    ["The database protects the links between tables. Two mechanisms: foreign keys (what happens when you delete a referenced row) and transactions (multi-step operations that must not leave half-done data)."],
+    ["FK ON DELETE RESTRICT: protects — you can't delete a user who has orders (you avoid “orphan” orders).", "FK ON DELETE CASCADE: propagates — you delete the user and their orders disappear with them.", "Transaction: BEGIN … COMMIT. If the server crashes midway → automatic ROLLBACK, balances restored, as if it never began (atomicity, the A in ACID)."],
+    ["A bank transfer (take from A, add to B) WITHOUT a transaction + a crash midway → A debited but B never credited: €30 vanished into thin air.", "Every operation that touches multiple rows/tables and must stay consistent goes inside a transaction."],
+    ["RESTRICT protects / CASCADE propagates; a transaction makes a group of operations “all or nothing”."],
+  ]},
+  "fc-postgres-1": { t: "Postgres · SQL vs engine, what happens inside", b: [
+    ["SQL isn't a database: it's a standard LANGUAGE (like English) for querying data. Postgres is an ENGINE — a real server — that “speaks” SQL and keeps the data on disk. The same SELECT holds for different engines, but it's the engine that decides HOW to run it."],
+    ["What happens inside a query: connection (one process per connection) → parser → planner (picks the execution plan) → executor → reads pages from RAM or disk → sees its MVCC snapshot → WAL/commit (durability) → response.", "90% of SQL is identical everywhere (SELECT, JOIN, GROUP BY), but each engine has its own dialect: when searching for solutions, search “postgres …”, not “sql …”."],
+    ["SQL is the language, Postgres is the engine that runs it. Getting good = understanding what happens UNDER the SELECT (parser → planner → executor, MVCC, WAL)."],
+  ]},
+  "fc-postgres-2": { t: "Postgres · EXPLAIN, isolation, upsert, JSONB, extensions", b: [
+    ["EXPLAIN / EXPLAIN ANALYZE shows the real plan with timings: “Index Scan” + low cost = good; “Seq Scan” on millions of rows = the signature of a slow query. The first diagnostic tool is reading the plan, not guessing.", "Transaction isolation: Read Committed (default) → Repeatable Read (MVCC snapshot, stricter than the standard) → Serializable (the strongest). More isolation = more consistency but less concurrency; for real contention (seats, balances) → Serializable or an explicit lock (SELECT … FOR UPDATE).", "Upsert: INSERT … ON CONFLICT (id) DO UPDATE — a single atomic command instead of “read-decide-write” in three steps with race conditions.", "JSONB: a semi-structured column; data->>'field' extracts as text; a GIN index for fast searches inside the JSON."],
+    ["Extensions are Postgres's superpower (CREATE EXTENSION): PostGIS (geographic queries), pg_trgm (“looks like…” search), pgvector (Postgres as a vector database for AI/RAG). Often you don't need a new DB, you need an extension of the one you have."],
+    ["MVCC/VACUUM and connection pooling: that's where apps grow badly (dead rows not cleaned up, too many connections)."],
+    ["EXPLAIN (why it's slow), the right isolation (contention), upsert/JSONB, extensions (pgvector for AI)."],
+  ]},
+  "fc-vectordb": { t: "Vector database · semantic search", b: [
+    ["SQL searches for exact values (LIKE '%cat%' doesn't find “feline”). An embedding turns a text into a list of numbers (a vector) that captures its MEANING: texts with similar sense end up close in a geometric space. A vector database stores these vectors and answers “which are the closest, i.e. the most similar in meaning?”."],
+    ["Text → embedding (e.g. 1536 dimensions); the DB finds the k records with the nearest vector (k-Nearest Neighbors).", "Distance: cosine (looks at the vector's DIRECTION, the default for text, ignores length) vs Euclidean (straight-line distance).", "On millions of vectors one-by-one comparison is slow → ANN indexes (Approximate Nearest Neighbor, e.g. HNSW): they almost always find the true neighbours, much faster (a speed vs precision/recall trade-off).", "pgvector: CREATE EXTENSION vector; a vector(1536) column; ORDER BY embedding <=> :query LIMIT k; an HNSW index. Operators: <=> cosine, <-> Euclidean, <#> inner product. Advantage: the embeddings sit next to the normal data → you filter in SQL AND order by similarity in one go."],
+    ["pgvector: if you already have Postgres and the data is from thousands to a few million — one system, transactions, joins, no syncing two DBs (it's what Supabase uses). The sensible default.", "Dedicated DBs (Pinecone, Weaviate, Qdrant, Milvus): when vectors are very numerous (tens/hundreds of millions) or you need advanced features. One more piece to manage."],
+    ["Search by meaning, not exact words: embeddings → nearest neighbours (cosine/Euclidean) + ANN indexes (HNSW). It's the semantic memory that powers RAG."],
+  ]},
+  "fc-supabase": { t: "Supabase · Postgres as a platform", b: [
+    ["Supabase isn't “another database”: it's Postgres turned into a platform. At the centre a REAL, complete Postgres, and around it ready-made login, an auto-generated REST API, realtime, storage and vector search — open source. “The Firebase alternative”, but with a real SQL database."],
+    ["Database: plain Postgres (same tables, constraints, SQL, extensions with pgvector), without you managing the server.", "Instant API: you create a table and Supabase (via PostgREST) generates a complete REST API (GET/POST/PATCH/DELETE), plus a JS client — no hand-written backend.", "Auth: ready-made login (email/password, magic link, Google/GitHub); every user has an id (auth.uid()).", "Realtime: you subscribe to a table and receive every INSERT/UPDATE/DELETE over WebSocket (it's Postgres's WAL streamed to the clients).", "Storage: S3-style buckets, with the same policies as the DB. Vector/AI: pgvector for RAG."],
+    ["Since the API is exposed DIRECTLY to the browser, security lives IN the database, as Row Level Security (RLS). Forgetting RLS is THE #1 hole: anyone who knows the URL reads everyone's data. Rule: public table → RLS on + policies, always.", "Confusing the anon key (browser, public, harmless ONLY because RLS keeps it in check) with the service_role key (bypasses RLS, server-side only)."],
+    ["Postgres + a platform (auto API, auth, realtime, storage, pgvector). Security lives in the DB with RLS; keep anon key and service_role separate."],
+  ]},
+  "fc-multitenancy": { t: "Multi-tenancy · B2B SaaS", b: [
+    ["A B2B SaaS doesn't have “users”: it has customer companies (the tenants), each with its own users. The first big architecture choice (costly to change later): single-tenant (one instance per customer, isolated but doesn't scale) or multi-tenant (everyone on the same infrastructure, scales but isolation must be designed)."],
+    ["Inside multi-tenant, three degrees of isolation (from most shared to most separate): pool (shared schema + a tenant_id column, the cheapest, upheld by RLS); bridge (one schema per tenant); silo (one database per tenant, maximum isolation but costly).", "RLS enforces the tenant filter on EVERY query: you don't trust the developer to remember WHERE tenant_id = … in every query."],
+    ["Dimensions of the trade-off: cost, isolation/compliance, blast radius, onboarding, migrations, noisy neighbour.", "In a regulated sector, physically separate data = the simplest, most defensible answer in an audit (“where does our data end up?”).", "A strong (senior) answer = hybrid: pool + strict RLS as the default for the masses, a dedicated database (silo) for the single heavily-regulated enterprise that demands it."],
+    ["In the pool without RLS → a data leak (acme sees globex's invoices): in a fintech it's the incident that kills the company.", "Noisy neighbour: in the pool a tenant with heavy queries slows down the others → rate limits/quotas per tenant."],
+    ["Single vs multi-tenant; inside multi-tenant pool/bridge/silo. Default = pool + RLS, silo only if isolation is a compliance requirement."],
+  ]},
+  "fc-pgmigra": { t: "Postgres migrations with no downtime", b: [
+    ["Changing the schema in production without stopping the app. The base pattern is expand → backfill → contract. On top, the Postgres-specific traps that separate those who have “read about migrations” from those who've done them in production."],
+    ["The 4 Postgres traps (naive → safe): 1) CREATE INDEX blocks writes → CREATE INDEX CONCURRENTLY.", "2) ADD COLUMN … NOT NULL rewrites/locks the table → add nullable → batched backfill → CHECK NOT VALID → VALIDATE.", "3) A single-shot backfill blocks → do it in batches.", "4) A migration waiting for a lock blocks everything → a low lock_timeout + retry.", "Alembic in CI: alembic upgrade head on a test DB on every PR (the broken migration is found in CI, not in prod), a single head (diverging branches → merge), autogenerate always re-read by hand (it doesn't see renames, it treats them as drop+add)."],
+    ["Zero-downtime = expand → batched backfill → contract, plus the 4 moves (INDEX CONCURRENTLY, NOT NULL via CHECK NOT VALID→VALIDATE, batched backfill, low lock_timeout). Versioned migrations in the repo and tried in CI.", "For an FDE, “migration” also has the other meaning: bringing the customer's data into the product (see “Data migration” in Customer integrations)."],
+  ]},
+  "fc-ormn1": { t: "ORMs & the N+1 problem", b: [
+    ["An ORM (Object-Relational Mapper, e.g. SQLAlchemy/Django) lets you work with Python objects instead of writing SQL by hand (user.orders instead of a query). Very convenient, and precisely for that reason it hides a performance trap."],
+    ["N+1 problem: you do 1 query for the list (all the users), then every access to u.orders silently fires a SEPARATE query for each user → 1 + N queries. The DB gets hammered and the page slows down as the data grows.", "Cure: eager loading — you tell the ORM to fetch the orders TOGETHER with the users (joinedload / JOIN / prefetch) → 1-2 constant queries in total instead of 1+N."],
+    ["The slow list that gets worse with the data is almost always an unnoticed N+1."],
+    ["Use the abstraction but keep an eye on the SQL it generates (with EXPLAIN). The ORM lets you write less code, not understand the database less."],
+  ]},
+};

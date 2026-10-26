@@ -26,7 +26,7 @@ let n = 0;
 for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".html"))) {
   const p = path.join(dir, f);
   let h = fs.readFileSync(p, "utf8");
-  h = h.replace(/<html lang="[^"]*"/, '<html lang="it"');
+  h = h.replace(/<html lang="[^"]*"/, f.endsWith(".en.html") ? '<html lang="en"' : '<html lang="it"');
   if (!h.includes('id="platform-skin"')) h = h.replace("</head>", `${SKIN}\n</head>`);
   fs.writeFileSync(p, h);
   n++;

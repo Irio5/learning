@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CAP · during a partition",
+    "subtitle": "How the pieces fit together",
+    "output": "new-cap-theorem.en.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guide me",
+        "focus": [
+          "cp",
+          "ap"
+        ],
+        "note": "The pieces of the architecture, one at a time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "partition",
+      "type": "external",
+      "label": "Network partition",
+      "sublabel": "an isolated node",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "choose",
+      "type": "backend",
+      "label": "You must choose",
+      "sublabel": "C or A",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "CP",
+      "sublabel": "refuses → consistent",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ap",
+      "type": "messagebus",
+      "label": "AP",
+      "sublabel": "serves stale → available",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "partition_choose",
+      "from": "partition",
+      "to": "choose",
+      "variant": "default"
+    },
+    {
+      "id": "choose_cp",
+      "from": "choose",
+      "to": "cp",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "choose_ap",
+      "from": "choose",
+      "to": "ap",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key trade-offs",
+      "items": [
+        "CP: CP: better an error than a wrong value (e.g. bank balance).",
+        "AP: AP: better slightly old data than no data (e.g. social feed)."
+      ]
+    }
+  ]
+}

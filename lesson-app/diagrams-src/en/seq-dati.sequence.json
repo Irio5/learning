@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Finding the data in the right shard",
+    "subtitle": "Who calls whom, step by step",
+    "output": "seq-dati.en.html",
+    "viewBox": [
+      780,
+      480
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard"
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App server"
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "Shard router"
+    },
+    {
+      "id": "shardB",
+      "type": "database",
+      "label": "Shard B"
+    },
+    {
+      "id": "replica",
+      "type": "database",
+      "label": "Read replica"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "app",
+      "to": "router",
+      "y": 170,
+      "label": "get(key=42)",
+      "variant": "default",
+      "note": "hash(key) → node — With consistent hashing the key maps to ONE node; adding a node moves only ~1/N of the keys."
+    },
+    {
+      "id": "m1",
+      "from": "router",
+      "to": "shardB",
+      "y": 210,
+      "label": "read key=42",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "shardB",
+      "to": "router",
+      "y": 250,
+      "label": "value",
+      "variant": "return"
+    },
+    {
+      "id": "m3",
+      "from": "router",
+      "to": "app",
+      "y": 290,
+      "label": "value",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "shardB",
+      "to": "replica",
+      "y": 330,
+      "label": "repl",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "router",
+      "from": 170,
+      "to": 210,
+      "type": "backend"
+    },
+    {
+      "participant": "shardB",
+      "from": 210,
+      "to": 250,
+      "type": "database"
+    },
+    {
+      "participant": "router",
+      "from": 250,
+      "to": 290,
+      "type": "backend"
+    },
+    {
+      "participant": "app",
+      "from": 290,
+      "to": 330,
+      "type": "backend"
+    }
+  ]
+}

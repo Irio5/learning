@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Human-in-the-loop via signal",
+    "subtitle": "The run stays suspended (even for days) until the auditor approves — without consuming resources",
+    "output": "new-hitl-signal.en.html",
+    "viewBox": [
+      820,
+      640
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "starts the run"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "orchestratore"
+    },
+    {
+      "id": "wf",
+      "type": "backend",
+      "label": "Workflow run",
+      "sublabel": "Temporal"
+    },
+    {
+      "id": "auditor",
+      "type": "external",
+      "label": "Auditor",
+      "sublabel": "human reviewer"
+    }
+  ],
+  "segments": [
+    {
+      "from": 175,
+      "to": 300,
+      "label": "Start"
+    },
+    {
+      "from": 310,
+      "to": 405,
+      "label": "Durable wait"
+    },
+    {
+      "from": 415,
+      "to": 520,
+      "label": "Resume"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "user",
+      "to": "api",
+      "y": 185,
+      "label": "start run",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m1",
+      "from": "api",
+      "to": "wf",
+      "y": 228,
+      "label": "start workflow",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "wf",
+      "to": "auditor",
+      "y": 271,
+      "label": "requests approval",
+      "variant": "dashed",
+      "note": "await condition(approved) suspends the run durably: 0 resources while it waits."
+    },
+    {
+      "id": "m3",
+      "from": "auditor",
+      "to": "api",
+      "y": 350,
+      "label": "approves (UI)",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "api",
+      "to": "wf",
+      "y": 393,
+      "label": "signal: approved",
+      "variant": "emphasis",
+      "note": "A signal is a message to a running run: it wakes it exactly where it was."
+    },
+    {
+      "id": "m5",
+      "from": "wf",
+      "to": "api",
+      "y": 460,
+      "label": "run completed",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "api",
+      "to": "user",
+      "y": 503,
+      "label": "result",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Why a signal",
+      "items": [
+        "No DB polling or long sleeps",
+        "The run can wait for days without consuming resources",
+        "It resumes exactly from where it stopped"
+      ]
+    }
+  ]
+}

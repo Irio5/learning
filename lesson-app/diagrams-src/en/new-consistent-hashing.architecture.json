@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Consistent hashing · the ring",
+    "subtitle": "How the pieces fit together",
+    "output": "new-consistent-hashing.en.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guide me",
+        "focus": [
+          "ring",
+          "nodeB"
+        ],
+        "note": "The pieces of the architecture, one at a time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "key",
+      "type": "external",
+      "label": "Key",
+      "sublabel": "hash(user_id)",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ring",
+      "type": "cloud",
+      "label": "Ring",
+      "sublabel": "position = hash",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeA",
+      "type": "messagebus",
+      "label": "Node A",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeB",
+      "type": "backend",
+      "label": "Node B",
+      "sublabel": "assigned (clockwise)",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nodeC",
+      "type": "messagebus",
+      "label": "Node C",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "key_ring",
+      "from": "key",
+      "to": "ring",
+      "variant": "default"
+    },
+    {
+      "id": "ring_nodeB",
+      "from": "ring",
+      "to": "nodeB",
+      "variant": "default"
+    },
+    {
+      "id": "ring_nodeA",
+      "from": "ring",
+      "to": "nodeA",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "ring_nodeC",
+      "from": "ring",
+      "to": "nodeC",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key trade-offs",
+      "items": [
+        "Ring: The key goes to the first node clockwise on the ring.",
+        "Node B: Adding/removing a node moves only ~1/N of the keys, not all of them (vs hash % N)."
+      ]
+    }
+  ]
+}

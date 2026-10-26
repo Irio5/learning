@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "RAG · from question to cited answer",
+    "subtitle": "The question becomes a vector, retrieves the nearest chunks, which become context for the LLM",
+    "output": "new-rag-pipeline.en.html",
+    "viewBox": [
+      1160,
+      460
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "principale",
+        "label": "Percorso",
+        "focus": [
+          "q",
+          "emb",
+          "vdb",
+          "ctx",
+          "llm"
+        ],
+        "note": "The main flow, left→right."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "Domanda"
+    },
+    {
+      "label": "Embedding"
+    },
+    {
+      "label": "Recupero"
+    },
+    {
+      "label": "Contesto"
+    },
+    {
+      "label": "Generazione"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "q",
+      "type": "frontend",
+      "label": "Domanda",
+      "sublabel": "utente",
+      "stage": 0,
+      "row": 1,
+      "tag": "testo"
+    },
+    {
+      "id": "emb",
+      "type": "backend",
+      "label": "Embedding",
+      "sublabel": "text → vector",
+      "stage": 1,
+      "row": 1,
+      "tag": "modello"
+    },
+    {
+      "id": "vdb",
+      "type": "database",
+      "label": "Vector DB",
+      "sublabel": "nearest-neighbour search",
+      "stage": 2,
+      "row": 1,
+      "tag": "ANN"
+    },
+    {
+      "id": "ctx",
+      "type": "backend",
+      "label": "Top-k chunk",
+      "sublabel": "the most similar",
+      "stage": 3,
+      "row": 1,
+      "tag": "contesto"
+    },
+    {
+      "id": "llm",
+      "type": "backend",
+      "label": "LLM",
+      "sublabel": "cited answer",
+      "stage": 4,
+      "row": 1,
+      "tag": "grounded"
+    }
+  ],
+  "flows": [
+    {
+      "id": "q-emb",
+      "from": "q",
+      "to": "emb",
+      "label": "testo",
+      "classification": "query",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "emb-vdb",
+      "from": "emb",
+      "to": "vdb",
+      "label": "vettore",
+      "classification": "embedding",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "vdb-ctx",
+      "from": "vdb",
+      "to": "ctx",
+      "label": "k nearest",
+      "classification": "chunk",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "ctx-llm",
+      "from": "ctx",
+      "to": "llm",
+      "label": "prompt + context",
+      "classification": "augment",
+      "variant": "default",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Why it works",
+      "items": [
+        "SQL looks for exact values: “feline” doesn't find “cat”",
+        "The embedding captures MEANING: similar texts end up close together",
+        "The Vector DB answers: “which are the nearest?”"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Indexing (offline)",
+      "items": [
+        "Documents are split into chunks and turned into vectors once",
+        "They live in the Vector DB, ready for search",
+        "At query time only the question is compared against the index"
+      ]
+    }
+  ]
+}

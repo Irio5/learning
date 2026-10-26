@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Durable execution (Temporal)",
+    "subtitle": "Deterministic code, side effects in activities, resume from event history after a crash, waits via signal",
+    "output": "temporal-durable-execution.en.html",
+    "viewBox": [
+      1040,
+      680
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "principale",
+        "label": "Main path",
+        "focus": [
+          "scheduled",
+          "running",
+          "activity",
+          "gate",
+          "completed"
+        ],
+        "note": "From the queued workflow to the durable result."
+      },
+      {
+        "id": "ripresa",
+        "label": "Resume after crash",
+        "focus": [
+          "running",
+          "crashed",
+          "replay"
+        ],
+        "note": "A crash doesn't lose state: the replay reconstructs from the event history."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Esecuzione"
+    },
+    {
+      "id": "waiting",
+      "label": "Durable waits"
+    },
+    {
+      "id": "recovery",
+      "label": "Resume after crash"
+    }
+  ],
+  "states": [
+    {
+      "id": "scheduled",
+      "type": "start",
+      "label": "Scheduled",
+      "sublabel": "queued workflow",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "entry"
+    },
+    {
+      "id": "running",
+      "type": "active",
+      "label": "Running",
+      "sublabel": "deterministic code",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "replay-safe"
+    },
+    {
+      "id": "activity",
+      "type": "active",
+      "label": "Activity",
+      "sublabel": "side effects: I/O, LLM",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "idempotent retry"
+    },
+    {
+      "id": "gate",
+      "type": "decision",
+      "label": "Approved?",
+      "sublabel": "human-in-the-loop",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "gate"
+    },
+    {
+      "id": "completed",
+      "type": "success",
+      "label": "Completed",
+      "sublabel": "durable result",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "done"
+    },
+    {
+      "id": "crashed",
+      "type": "failure",
+      "label": "Worker crash",
+      "sublabel": "process dies",
+      "lane": "recovery",
+      "col": 1,
+      "tag": "no state lost"
+    },
+    {
+      "id": "replay",
+      "type": "active",
+      "label": "Replay",
+      "sublabel": "replays the event history",
+      "lane": "recovery",
+      "col": 2,
+      "yOffset": 84,
+      "tag": "→ Running"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "sched-run",
+      "from": "scheduled",
+      "to": "running",
+      "variant": "default"
+    },
+    {
+      "id": "run-act",
+      "from": "running",
+      "to": "activity",
+      "variant": "default"
+    },
+    {
+      "id": "act-gate",
+      "from": "activity",
+      "to": "gate",
+      "variant": "default"
+    },
+    {
+      "id": "gate-done",
+      "from": "gate",
+      "to": "completed",
+      "variant": "default"
+    },
+    {
+      "id": "run-crash",
+      "from": "running",
+      "to": "crashed",
+      "variant": "security",
+      "route": "drop"
+    },
+    {
+      "id": "crash-replay",
+      "from": "crashed",
+      "to": "replay",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Why deterministic",
+      "items": [
+        "After a crash the code is RE-executed from the event history",
+        "If it took different paths, the replay wouldn't reconstruct the state",
+        "Side effects live in activities: they aren't redone on replay"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Waits at no cost",
+      "items": [
+        "A durable timer is a persistent sleep, not a blocked thread",
+        "await condition(approved) suspends the run durably",
+        "It resumes exactly where it was when the signal arrives"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Uscite",
+      "items": [
+        "An activity that exhausts its retries leads to Failed",
+        "If the signal doesn't arrive within the timeout → Timed out",
+        "A worker crash isn't terminal: you replay"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The skeleton of almost every backend",
+    "subtitle": "Recurring building blocks and their trade-offs",
+    "output": "case-metodo.en.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guide me",
+        "focus": [
+          "client",
+          "lb",
+          "app",
+          "db",
+          "cache",
+          "queue",
+          "worker"
+        ],
+        "note": "The pieces of the architecture, one at a time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load balancer",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App server",
+      "sublabel": "stateless ×N",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Cache",
+      "sublabel": "Redis",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Message queue",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker",
+      "pos": [
+        670,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client_lb",
+      "from": "client",
+      "to": "lb",
+      "variant": "default"
+    },
+    {
+      "id": "lb_app",
+      "from": "lb",
+      "to": "app",
+      "variant": "default"
+    },
+    {
+      "id": "app_cache",
+      "from": "app",
+      "to": "cache",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "app_db",
+      "from": "app",
+      "to": "db",
+      "variant": "default"
+    },
+    {
+      "id": "cache_db",
+      "from": "cache",
+      "to": "db",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          180
+        ],
+        [
+          845,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "app_queue",
+      "from": "app",
+      "to": "queue",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          635,
+          330
+        ],
+        [
+          635,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "queue_worker",
+      "from": "queue",
+      "to": "worker",
+      "variant": "default"
+    },
+    {
+      "id": "worker_db",
+      "from": "worker",
+      "to": "db",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          845,
+          480
+        ],
+        [
+          845,
+          330
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key trade-offs",
+      "items": [
+        "Load balancer: It becomes a potential single point of failure itself → you put at least two; sessions must not live in i",
+        "App server: State (sessions, uploads in progress) must be moved out, to a shared cache/DB.",
+        "Database: It's the natural bottleneck under load: this is where caches, replicas and sharding come from.",
+        "Cache: It must be invalidated when the source changes, or you serve stale data."
+      ]
+    }
+  ]
+}

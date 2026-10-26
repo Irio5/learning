@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Fan-out · write vs read",
+    "subtitle": "How the pieces fit together",
+    "output": "new-fan-out.en.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guide me",
+        "focus": [
+          "wfan",
+          "rfan",
+          "inbox"
+        ],
+        "note": "The pieces of the architecture, one at a time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "author",
+      "type": "security",
+      "label": "Author",
+      "sublabel": "publishes 1 post",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "wfan",
+      "type": "backend",
+      "label": "Fan-out write",
+      "sublabel": "writes N inboxes",
+      "pos": [
+        250,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "inbox",
+      "type": "database",
+      "label": "Follower feed",
+      "sublabel": "ready to read",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "reader",
+      "type": "external",
+      "label": "Reader",
+      "sublabel": "opens the feed",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "rfan",
+      "type": "backend",
+      "label": "Fan-out read",
+      "sublabel": "expands on demand",
+      "pos": [
+        250,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "posts",
+      "type": "backend",
+      "label": "Followed posts",
+      "sublabel": "merged at runtime",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "author_wfan",
+      "from": "author",
+      "to": "wfan",
+      "variant": "default"
+    },
+    {
+      "id": "wfan_inbox",
+      "from": "wfan",
+      "to": "inbox",
+      "variant": "default"
+    },
+    {
+      "id": "reader_rfan",
+      "from": "reader",
+      "to": "rfan",
+      "variant": "default"
+    },
+    {
+      "id": "rfan_posts",
+      "from": "rfan",
+      "to": "posts",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key trade-offs",
+      "items": [
+        "Fan-out write: Costly write for whoever has millions of followers (celebrities): many inboxes to update.",
+        "Fan-out read: Cheap write, but the read expands the feed every time: cost shifted to reads.",
+        "Follower feed: Hybrid: fan-out on write for regular users, on read for celebrities."
+      ]
+    }
+  ]
+}

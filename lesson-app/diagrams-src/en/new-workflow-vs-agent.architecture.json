@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Workflow vs agent",
+    "subtitle": "How the pieces fit together",
+    "output": "new-workflow-vs-agent.en.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guide me",
+        "focus": [
+          "wf",
+          "agent"
+        ],
+        "note": "The pieces of the architecture, one at a time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "task",
+      "type": "external",
+      "label": "Task",
+      "sublabel": "to automate",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "decide",
+      "type": "backend",
+      "label": "Known steps?",
+      "sublabel": "design choice",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "wf",
+      "type": "backend",
+      "label": "Workflow",
+      "sublabel": "fixed path",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "messagebus",
+      "label": "Agent",
+      "sublabel": "the LLM decides the steps",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "task_decide",
+      "from": "task",
+      "to": "decide",
+      "variant": "default"
+    },
+    {
+      "id": "decide_wf",
+      "from": "decide",
+      "to": "wf",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "decide_agent",
+      "from": "decide",
+      "to": "agent",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key trade-offs",
+      "items": [
+        "Workflow: Known steps → workflow: predictable, testable, cheaper.",
+        "Agent: Unknown steps → agent: flexible but less predictable. Autonomy only where needed."
+      ]
+    }
+  ]
+}

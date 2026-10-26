@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Orchestrator–workers",
+    "subtitle": "How the pieces fit together",
+    "output": "new-orchestrator-workers.en.html",
+    "visual_preset": "blueprint",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "guidami",
+        "label": "Guide me",
+        "focus": [
+          "orch",
+          "w1",
+          "synth"
+        ],
+        "note": "The pieces of the architecture, one at a time."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "task",
+      "type": "external",
+      "label": "Task",
+      "sublabel": "unknown shape",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "orch",
+      "type": "backend",
+      "label": "Orchestrator",
+      "sublabel": "decomposes at runtime",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w1",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "sub-task",
+      "pos": [
+        460,
+        150
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w2",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "sub-task",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "w3",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "sub-task",
+      "pos": [
+        460,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "synth",
+      "type": "backend",
+      "label": "Synthesis",
+      "sublabel": "merges the results",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "task_orch",
+      "from": "task",
+      "to": "orch",
+      "variant": "default"
+    },
+    {
+      "id": "orch_w1",
+      "from": "orch",
+      "to": "w1",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          180
+        ]
+      ]
+    },
+    {
+      "id": "orch_w2",
+      "from": "orch",
+      "to": "w2",
+      "variant": "default"
+    },
+    {
+      "id": "orch_w3",
+      "from": "orch",
+      "to": "w3",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          425,
+          330
+        ],
+        [
+          425,
+          480
+        ]
+      ]
+    },
+    {
+      "id": "w1_synth",
+      "from": "w1",
+      "to": "synth",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          180
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    },
+    {
+      "id": "w2_synth",
+      "from": "w2",
+      "to": "synth",
+      "variant": "default"
+    },
+    {
+      "id": "w3_synth",
+      "from": "w3",
+      "to": "synth",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          635,
+          480
+        ],
+        [
+          635,
+          330
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Key trade-offs",
+      "items": [
+        "Orchestrator: It decides at runtime how many and which sub-tasks are needed: the shape isn't known in advance.",
+        "Worker: The workers run in parallel, each with its own context.",
+        "Synthesis: Synthesis merges the results: the basis of agentic research/reports."
+      ]
+    }
+  ]
+}

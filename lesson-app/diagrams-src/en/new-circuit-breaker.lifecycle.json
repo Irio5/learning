@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Circuit breaker",
+    "subtitle": "When a downstream service is down, stop calling it (fail-fast) and retry cautiously",
+    "output": "new-circuit-breaker.en.html",
+    "viewBox": [
+      980,
+      600
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "principale",
+        "label": "Ciclo",
+        "focus": [
+          "closed",
+          "open",
+          "halfopen",
+          "recovered"
+        ],
+        "note": "From normal traffic to recovery, via fail-fast."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Breaker state"
+    }
+  ],
+  "states": [
+    {
+      "id": "closed",
+      "type": "start",
+      "label": "Closed",
+      "sublabel": "normal traffic",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "sano"
+    },
+    {
+      "id": "open",
+      "type": "failure",
+      "label": "Open",
+      "sublabel": "fail-fast, no calls",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "errors > threshold"
+    },
+    {
+      "id": "halfopen",
+      "type": "decision",
+      "label": "Half-open",
+      "sublabel": "1 probe request",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "after cooldown"
+    },
+    {
+      "id": "recovered",
+      "type": "success",
+      "label": "Closed again",
+      "sublabel": "service recovered",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "sano"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "close-open",
+      "from": "closed",
+      "to": "open",
+      "variant": "security"
+    },
+    {
+      "id": "open-half",
+      "from": "open",
+      "to": "halfopen",
+      "variant": "default"
+    },
+    {
+      "id": "half-rec",
+      "from": "halfopen",
+      "to": "recovered",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Why fail-fast",
+      "items": [
+        "Calling a dead service wastes resources and propagates slowness",
+        "Open answers immediately with an error instead of waiting for the timeout",
+        "Protects the caller from cascading collapse"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "The cycle",
+      "items": [
+        "Too many errors in Closed → it opens (Open)",
+        "After a cooldown → Half-open lets 1 probe through",
+        "Probe ok → back to Closed; probe fails → Open again"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Invoice → ERP · with validation gate",
+    "subtitle": "The LLM extracts from the PDF; deterministic checks block wrong data before the ERP",
+    "output": "new-invoice-erp.en.html",
+    "viewBox": [
+      980,
+      600
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "principale",
+        "label": "Percorso",
+        "focus": [
+          "extracted",
+          "validating",
+          "gate",
+          "posted"
+        ],
+        "note": "From extraction to writing into the ERP."
+      },
+      {
+        "id": "scarti",
+        "label": "Scarti",
+        "focus": [
+          "gate",
+          "rejected"
+        ],
+        "note": "What gets stopped before touching the ERP."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Document processing"
+    },
+    {
+      "id": "reject",
+      "label": "Human review"
+    }
+  ],
+  "states": [
+    {
+      "id": "extracted",
+      "type": "start",
+      "label": "Estratto",
+      "sublabel": "LLM reads the PDF",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "extraction only"
+    },
+    {
+      "id": "validating",
+      "type": "active",
+      "label": "Validating",
+      "sublabel": "schema, sum of lines = total",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "deterministico"
+    },
+    {
+      "id": "gate",
+      "type": "decision",
+      "label": "Gate",
+      "sublabel": "rules passed?",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "guardrail"
+    },
+    {
+      "id": "posted",
+      "type": "success",
+      "label": "Posted",
+      "sublabel": "written to ERP",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "real action"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Rifiutato",
+      "sublabel": "to a human",
+      "lane": "reject",
+      "col": 2,
+      "tag": "bloccato"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "ext-val",
+      "from": "extracted",
+      "to": "validating",
+      "variant": "default"
+    },
+    {
+      "id": "val-gate",
+      "from": "validating",
+      "to": "gate",
+      "variant": "default"
+    },
+    {
+      "id": "gate-post",
+      "from": "gate",
+      "to": "posted",
+      "variant": "default"
+    },
+    {
+      "id": "gate-rej",
+      "from": "gate",
+      "to": "rejected",
+      "variant": "security",
+      "route": "drop"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "The LLM does only one thing",
+      "items": [
+        "It extracts the data from the PDF (the non-deterministic part)",
+        "The rest is a deterministic, traceable pipeline",
+        "No data touches the ERP without passing the gate"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Validation gate",
+      "items": [
+        "Exact checks: schema, sum of lines = total, required fields",
+        "They block wrong LLM outputs before a real action",
+        "Backbone of document processing"
+      ]
+    }
+  ]
+}

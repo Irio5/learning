@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Queue · retry, DLQ and backpressure",
+    "subtitle": "A message is processed; if it fails it retries, and after N attempts it ends up in the dead-letter queue",
+    "output": "new-queue-dlq.en.html",
+    "viewBox": [
+      980,
+      600
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "principale",
+        "label": "Percorso",
+        "focus": [
+          "enqueued",
+          "processing",
+          "done"
+        ],
+        "note": "The happy path: queued, processed, done."
+      },
+      {
+        "id": "guasti",
+        "label": "Guasti",
+        "focus": [
+          "processing",
+          "retry",
+          "dlq"
+        ],
+        "note": "What happens when processing fails."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Elaborazione"
+    },
+    {
+      "id": "guasti",
+      "label": "Guasti"
+    }
+  ],
+  "states": [
+    {
+      "id": "enqueued",
+      "type": "start",
+      "label": "Enqueued",
+      "sublabel": "queued",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "entry"
+    },
+    {
+      "id": "processing",
+      "type": "active",
+      "label": "Processing",
+      "sublabel": "idempotent worker",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "at-least-once"
+    },
+    {
+      "id": "done",
+      "type": "success",
+      "label": "Done",
+      "sublabel": "ACK",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "fatto"
+    },
+    {
+      "id": "retry",
+      "type": "waiting",
+      "label": "Retry",
+      "sublabel": "backoff",
+      "lane": "guasti",
+      "col": 1,
+      "tag": "budget N"
+    },
+    {
+      "id": "dlq",
+      "type": "failure",
+      "label": "Dead-letter",
+      "sublabel": "to inspect",
+      "lane": "guasti",
+      "col": 2,
+      "yOffset": 84,
+      "tag": "N exhausted"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "enq-proc",
+      "from": "enqueued",
+      "to": "processing",
+      "variant": "default"
+    },
+    {
+      "id": "proc-done",
+      "from": "processing",
+      "to": "done",
+      "variant": "default"
+    },
+    {
+      "id": "proc-retry",
+      "from": "processing",
+      "to": "retry",
+      "variant": "security",
+      "route": "drop"
+    },
+    {
+      "id": "retry-dlq",
+      "from": "retry",
+      "to": "dlq",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Retry & DLQ",
+      "items": [
+        "A message can arrive twice: the worker is idempotent (dedup by id)",
+        "With retry budget left, it goes back to Processing",
+        "Attempts exhausted → dead-letter queue, without blocking the others"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Backpressure",
+      "items": [
+        "If arrivals exceed consumption, the queue grows",
+        "That's the signal to add workers in parallel",
+        "If it fills up completely, messages are lost: size the consumers"
+      ]
+    }
+  ]
+}

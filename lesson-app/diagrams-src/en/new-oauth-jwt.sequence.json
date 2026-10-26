@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "OAuth 2.0 + JWT · login and protected call",
+    "subtitle": "The user authenticates once; then the signed token proves who they are, with no server-side session",
+    "output": "new-oauth-jwt.en.html",
+    "viewBox": [
+      900,
+      620
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "browser"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "App",
+      "sublabel": "client"
+    },
+    {
+      "id": "idp",
+      "type": "security",
+      "label": "Auth server",
+      "sublabel": "OAuth IdP"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "protected resource"
+    }
+  ],
+  "segments": [
+    {
+      "from": 175,
+      "to": 340,
+      "label": "Login (once)"
+    },
+    {
+      "from": 350,
+      "to": 560,
+      "label": "Authenticated calls"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "user",
+      "to": "app",
+      "y": 185,
+      "label": "click “sign in”",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "app",
+      "to": "idp",
+      "y": 228,
+      "label": "redirect + PKCE",
+      "variant": "security"
+    },
+    {
+      "id": "m2",
+      "from": "user",
+      "to": "idp",
+      "y": 271,
+      "label": "credenziali",
+      "variant": "security",
+      "note": "Only the IdP sees the credentials, never your app."
+    },
+    {
+      "id": "m3",
+      "from": "idp",
+      "to": "app",
+      "y": 314,
+      "label": "authorization code",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "app",
+      "to": "idp",
+      "y": 357,
+      "label": "code → token",
+      "variant": "security"
+    },
+    {
+      "id": "m5",
+      "from": "idp",
+      "to": "app",
+      "y": 400,
+      "label": "signed JWT",
+      "variant": "return",
+      "note": "header.payload.signature: the signature makes it unforgeable."
+    },
+    {
+      "id": "m6",
+      "from": "app",
+      "to": "api",
+      "y": 460,
+      "label": "GET /data  Bearer JWT",
+      "variant": "emphasis",
+      "note": "The API verifies signature and expiry locally with the public key: no server-side session."
+    },
+    {
+      "id": "m7",
+      "from": "api",
+      "to": "app",
+      "y": 503,
+      "label": "200 + data",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Who proves what",
+      "items": [
+        "The IdP authenticates; the API trusts the signature",
+        "PKCE binds the code to the client that asked for it",
+        "The JWT says who you are and with what role — stateless"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Trade-off",
+      "items": [
+        "Stateless scales, but a JWT can't be revoked before it expires",
+        "Short expiries + refresh tokens as the trade-off",
+        "Never put secrets in the payload: it's only signed, not encrypted"
+      ]
+    }
+  ]
+}

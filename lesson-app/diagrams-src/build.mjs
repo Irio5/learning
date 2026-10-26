@@ -9,15 +9,27 @@ const __dir = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.resolve(__dir, "../src/Lesson.jsx");
 const jsx = fs.readFileSync(SRC, "utf8");
 
+// LANG_OUT=en → genera i JSON inglesi in ./en (renderizzati come <slug>.en.html).
+// I dataset ARCH_*/SEQ_* in Lesson.jsx sono bilingui via T(it, en): qui T è valutato nella lingua scelta.
+const LANG = process.env.LANG_OUT === "en" ? "en" : "it";
+const L = (it, en) => (LANG === "en" ? en : it);
+const T = L; // usato dall'eval dei dataset di Lesson.jsx
+const SUF = LANG === "en" ? ".en" : "";
+const OUT = LANG === "en" ? path.join(__dir, "en") : __dir;
+if (LANG === "en") fs.mkdirSync(OUT, { recursive: true });
+// Mappa IT→EN per le stringhe fisse degli EXTRA_ARCH (non vivono in Lesson.jsx).
+const EXTRA_MAP = LANG === "en" ? JSON.parse(fs.readFileSync(path.join(__dir, "en-extra.json"), "utf8")) : {};
+const tr = (x) => (typeof x === "string" ? (EXTRA_MAP[x] ?? x) : x);
+
 const ARCH = ["METODO","STIME","DATI","ASYNC","TINYURL","UBER","NETFLIX","TICKET","CRAWLER","DELIVERY","CHAT"];
 const SEQ  = [...ARCH];
 
 // --- estrazione object literal per nome ---
 function extract(name) {
-  const marker = `const ${name} = {`;
+  const marker = `const ${name} = memoByLang(() => (`;
   const start = jsx.indexOf(marker);
   if (start < 0) throw new Error(`non trovato: ${name}`);
-  let i = start + marker.length - 1; // sul '{'
+  let i = start + marker.length; // sul '{'
   let depth = 0, inStr = null;
   for (; i < jsx.length; i++) {
     const c = jsx[i], p = jsx[i - 1];
@@ -26,7 +38,7 @@ function extract(name) {
     if (c === "{") depth++;
     else if (c === "}") { depth--; if (depth === 0) { i++; break; } }
   }
-  let body = jsx.slice(start + `const ${name} = `.length, i);
+  let body = jsx.slice(start + marker.length, i);
   // togli icon: Ident  e  distractors: [...]
   body = body.replace(/icon:\s*[A-Za-z_$][\w$]*\s*,?/g, "");
   body = body.replace(/,?\s*distractors:\s*\[[\s\S]*?\]\s*(?=})/g, "");
@@ -78,14 +90,14 @@ function toArchitecture(name, d) {
   });
   const trades = d.steps.filter((s) => s.trade && s.trade.trim()).slice(0, 4)
     .map((s) => `${byId[s.id]?.label || s.id}: ${s.trade}`.slice(0, 120));
-  const cards = trades.length ? [{ dot: "amber", title: "Compromessi chiave", items: trades }] : [];
+  const cards = trades.length ? [{ dot: "amber", title: L("Compromessi chiave", "Key trade-offs"), items: trades }] : [];
   // Guided view nativa: un solo view con TUTTI i nodi nell'ordine dei nostri step ->
   // il loro Story Beat Navigator diventa esattamente la sequenza del nostro "Guidami"
   // (#view=guidami&beat=<nodeId>), driven dal lato React che tiene il testo pieno.
-  const views = [{ id: "guidami", label: "Guidami", focus: d.steps.map((s) => s.id), note: "I pezzi dell'architettura, uno alla volta." }];
+  const views = [{ id: "guidami", label: L("Guidami", "Guide me"), focus: d.steps.map((s) => s.id), note: L("I pezzi dell'architettura, uno alla volta.", "The pieces of the architecture, one at a time.") }];
   return {
     schema_version: 1, diagram_type: "architecture",
-    meta: { title: cap(d.title), subtitle: "Mattoni ricorrenti e i loro compromessi", output: `${name}.html`, visual_preset: "blueprint", quality_profile: "standard", views },
+    meta: { title: cap(d.title), subtitle: L("Mattoni ricorrenti e i loro compromessi", "Recurring building blocks and their trade-offs"), output: `${name}${SUF}.html`, visual_preset: "blueprint", quality_profile: "standard", views },
     components, connections, cards,
   };
 }
@@ -130,7 +142,7 @@ function toSequence(name, d) {
   const w = Math.max(780, participants.length * 165);
   return {
     schema_version: 1, diagram_type: "sequence",
-    meta: { title: cap(d.title), subtitle: "Chi chiama chi, passo per passo", output: `${name}.html`, viewBox: [w, Math.max(480, y + 50)], visual_preset: "blueprint", animation: "trace", quality_profile: "standard" },
+    meta: { title: cap(d.title), subtitle: L("Chi chiama chi, passo per passo", "Who calls whom, step by step"), output: `${name}${SUF}.html`, viewBox: [w, Math.max(480, y + 50)], visual_preset: "blueprint", animation: "trace", quality_profile: "standard" },
     participants, messages, activations,
   };
 }
@@ -253,16 +265,17 @@ const EXTRA_ARCH = {
 for (const n of ARCH) {
   const d = extract(`ARCH_${n}`);
   const slug = `case-${n.toLowerCase()}`;
-  fs.writeFileSync(path.join(__dir, `${slug}.architecture.json`), JSON.stringify(toArchitecture(slug, d), null, 2));
+  fs.writeFileSync(path.join(OUT, `${slug}.architecture.json`), JSON.stringify(toArchitecture(slug, d), null, 2));
 }
 for (const [slug, d] of Object.entries(EXTRA_ARCH)) {
-  const j = toArchitecture(slug, d);
-  j.meta.subtitle = "Come i pezzi si compongono";
-  fs.writeFileSync(path.join(__dir, `${slug}.architecture.json`), JSON.stringify(j, null, 2));
+  const dd = JSON.parse(JSON.stringify(d), (k, v) => tr(v));
+  const j = toArchitecture(slug, dd);
+  j.meta.subtitle = L("Come i pezzi si compongono", "How the pieces fit together");
+  fs.writeFileSync(path.join(OUT, `${slug}.architecture.json`), JSON.stringify(j, null, 2));
 }
 for (const n of SEQ) {
   const d = extract(`SEQ_${n}`);
   const slug = `seq-${n.toLowerCase()}`;
-  fs.writeFileSync(path.join(__dir, `${slug}.sequence.json`), JSON.stringify(toSequence(slug, d), null, 2));
+  fs.writeFileSync(path.join(OUT, `${slug}.sequence.json`), JSON.stringify(toSequence(slug, d), null, 2));
 }
 console.log("generati", ARCH.length + SEQ.length, "JSON");

@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Embeddings · searching by meaning",
+    "subtitle": "A text becomes a list of numbers; texts with similar meaning end up close together in space",
+    "output": "new-embeddings-search.en.html",
+    "viewBox": [
+      1160,
+      460
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "principale",
+        "label": "Percorso",
+        "focus": [
+          "text",
+          "model",
+          "space",
+          "ann",
+          "result"
+        ],
+        "note": "From text to result by similarity."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "Testo"
+    },
+    {
+      "label": "Embedding"
+    },
+    {
+      "label": "Spazio"
+    },
+    {
+      "label": "Ricerca"
+    },
+    {
+      "label": "Risultato"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "text",
+      "type": "frontend",
+      "label": "Testo",
+      "sublabel": "query or document",
+      "stage": 0,
+      "row": 1,
+      "tag": "linguaggio"
+    },
+    {
+      "id": "model",
+      "type": "backend",
+      "label": "Embedding model",
+      "sublabel": "text → vector",
+      "stage": 1,
+      "row": 1,
+      "tag": "N numbers"
+    },
+    {
+      "id": "space",
+      "type": "database",
+      "label": "Vector space",
+      "sublabel": "close = similar",
+      "stage": 2,
+      "row": 1,
+      "tag": "geometria"
+    },
+    {
+      "id": "ann",
+      "type": "backend",
+      "label": "k-NN / ANN",
+      "sublabel": "the closest ones",
+      "stage": 3,
+      "row": 1,
+      "tag": "veloce"
+    },
+    {
+      "id": "result",
+      "type": "frontend",
+      "label": "Risultati",
+      "sublabel": "by meaning",
+      "stage": 4,
+      "row": 1,
+      "tag": "semantico"
+    }
+  ],
+  "flows": [
+    {
+      "id": "t-m",
+      "from": "text",
+      "to": "model",
+      "label": "testo",
+      "classification": "input",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "m-s",
+      "from": "model",
+      "to": "space",
+      "label": "vettore",
+      "classification": "embedding",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "s-a",
+      "from": "space",
+      "to": "ann",
+      "label": "confronto",
+      "classification": "distanza",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "a-r",
+      "from": "ann",
+      "to": "result",
+      "label": "top-k",
+      "classification": "vicini",
+      "variant": "emphasis",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "The idea",
+      "items": [
+        "“cat” and “feline” are different words but close in meaning",
+        "They become vectors close together in space",
+        "The search finds the nearest ones, not identical strings"
+      ]
+    }
+  ]
+}

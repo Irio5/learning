@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Observability · one request-id runs through everything",
+    "subtitle": "The same id follows the request at every hop: logs, metrics and traces reconstruct it",
+    "output": "new-request-observability.en.html",
+    "viewBox": [
+      900,
+      620
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "richiesta"
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "generates req-id"
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Servizio",
+      "sublabel": "logica"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "query"
+    },
+    {
+      "id": "obs",
+      "type": "messagebus",
+      "label": "Observability",
+      "sublabel": "log / trace"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "client",
+      "to": "gw",
+      "y": 185,
+      "label": "GET /order/42",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m1",
+      "from": "gw",
+      "to": "obs",
+      "y": 228,
+      "label": "req-id=abc · start span",
+      "variant": "dashed",
+      "note": "The gateway mints a request-id and propagates it in every downstream header."
+    },
+    {
+      "id": "m2",
+      "from": "gw",
+      "to": "svc",
+      "y": 271,
+      "label": "forward (X-Request-Id: abc)",
+      "variant": "default"
+    },
+    {
+      "id": "m3",
+      "from": "svc",
+      "to": "db",
+      "y": 314,
+      "label": "SELECT … (log req-id)",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "db",
+      "to": "svc",
+      "y": 357,
+      "label": "righe",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "svc",
+      "to": "obs",
+      "y": 400,
+      "label": "log + metric (req-id)",
+      "variant": "dashed",
+      "note": "If something blows up, a 500 and an ERROR line with the same req-id reconstruct the whole story."
+    },
+    {
+      "id": "m6",
+      "from": "svc",
+      "to": "gw",
+      "y": 443,
+      "label": "200 + data",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "gw",
+      "to": "client",
+      "y": 486,
+      "label": "200 (X-Request-Id: abc)",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The three pillars",
+      "items": [
+        "Logs: point-in-time lines with the req-id",
+        "Metrics: aggregated numbers (latency, error rate)",
+        "Traces: the path of ONE request hop by hop"
+      ]
+    }
+  ]
+}

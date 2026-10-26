@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Rate limit · 429 and backoff",
+    "subtitle": "The server says “slow down”; the client waits and retries with exponential backoff + jitter",
+    "output": "new-rate-limit-429.en.html",
+    "viewBox": [
+      820,
+      660
+    ],
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "chiamante"
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "API gateway",
+      "sublabel": "rate limiter"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "servizio"
+    }
+  ],
+  "segments": [
+    {
+      "from": 175,
+      "to": 260,
+      "label": "OK"
+    },
+    {
+      "from": 270,
+      "to": 400,
+      "label": "Over the limit"
+    },
+    {
+      "from": 410,
+      "to": 520,
+      "label": "Retry with backoff"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m0",
+      "from": "client",
+      "to": "gw",
+      "y": 185,
+      "label": "richiesta",
+      "variant": "default"
+    },
+    {
+      "id": "m1",
+      "from": "gw",
+      "to": "api",
+      "y": 228,
+      "label": "within quota → forward",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "api",
+      "to": "client",
+      "y": 271,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "m3",
+      "from": "client",
+      "to": "gw",
+      "y": 320,
+      "label": "too many requests",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m4",
+      "from": "gw",
+      "to": "client",
+      "y": 363,
+      "label": "429 + Retry-After",
+      "variant": "return",
+      "note": "Token bucket empty: the gateway rejects without even touching the API."
+    },
+    {
+      "id": "m5",
+      "from": "client",
+      "to": "gw",
+      "y": 440,
+      "label": "retry after waiting",
+      "variant": "dashed",
+      "note": "Exponential backoff + jitter: it prevents all clients from retrying at the same instant (thundering herd)."
+    },
+    {
+      "id": "m6",
+      "from": "gw",
+      "to": "api",
+      "y": 483,
+      "label": "quota recovered → forward",
+      "variant": "default"
+    },
+    {
+      "id": "m7",
+      "from": "api",
+      "to": "client",
+      "y": 526,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Golden rules",
+      "items": [
+        "Respect Retry-After: don't hammer",
+        "Exponential backoff + jitter against retry storms",
+        "The limit protects the service upstream of the API"
+      ]
+    }
+  ]
+}
